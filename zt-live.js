@@ -700,4 +700,77 @@
     if (db) { local = db; apply(db); }
     countVisit(db || local, ok);
   });
+
+  /* ===== Búsqueda global (lupa) ===== */
+  var ZT_SEARCH_INDEX = [{"n":"iPhone 13","h":"Producto ZonaTech.dc.html?m=iphone13","s":"iPhone · USD 400"},{"n":"iPhone 15","h":"Producto ZonaTech.dc.html?m=iphone15","s":"iPhone · USD 500"},{"n":"iPhone 16 Pro","h":"Producto ZonaTech.dc.html?m=iphone16pro","s":"iPhone · USD 820"},{"n":"AirPods Max","h":"Apple ZonaTech.dc.html#card-airpodsmax","s":"Accesorio Apple"},{"n":"iPad 11ª gen","h":"Apple ZonaTech.dc.html#card-ipad11","s":"Accesorio Apple"},{"n":"Samsung A07","h":"Producto Android.dc.html?id=and-samsung-a07","s":"Celular · 128 GB · 4 GB · USD 186"},{"n":"Samsung A17","h":"Producto Android.dc.html?id=and-samsung-a17","s":"Celular · 128 GB · 4 GB · USD 259"},{"n":"Samsung A26 5G","h":"Producto Android.dc.html?id=and-samsung-a26","s":"Celular · 256 GB · 8 GB · USD 393"},{"n":"Samsung A36 5G","h":"Producto Android.dc.html?id=and-samsung-a36","s":"Celular · 256 GB · 8 GB · USD 434"},{"n":"Redmi A5","h":"Producto Android.dc.html?id=and-redmi-a5","s":"Celular · 128 GB · 4 GB · USD 186"},{"n":"Xiaomi 15c","h":"Producto Android.dc.html?id=and-xiaomi-15c-4","s":"Celular · 256 GB · 4 GB · USD 205"},{"n":"Xiaomi 15c","h":"Producto Android.dc.html?id=and-xiaomi-15c-8","s":"Celular · 256 GB · 8 GB · USD 229"},{"n":"Xiaomi Note 14","h":"Producto Android.dc.html?id=and-xiaomi-note14","s":"Celular · 256 GB · 8 GB · USD 252"},{"n":"Xiaomi Note 14 Pro 5G","h":"Producto Android.dc.html?id=and-xiaomi-note14pro","s":"Celular · 256 GB · 8 GB · USD 381"},{"n":"Xiaomi Note 15","h":"Producto Android.dc.html?id=and-xiaomi-note15-128","s":"Celular · 128 GB · 6 GB · USD 252"},{"n":"Xiaomi Note 15","h":"Producto Android.dc.html?id=and-xiaomi-note15-256","s":"Celular · 256 GB · 8 GB · USD 300"},{"n":"Xiaomi Note 15 5G","h":"Producto Android.dc.html?id=and-xiaomi-note15-5g","s":"Celular · 256 GB · 8 GB · USD 355"},{"n":"Xiaomi Note 15 Pro","h":"Producto Android.dc.html?id=and-xiaomi-note15pro","s":"Celular · 512 GB · 12 GB · USD 435"},{"n":"Xiaomi Note 15 Pro Plus 5G","h":"Producto Android.dc.html?id=and-xiaomi-note15proplus","s":"Celular · 512 GB · 12 GB · USD 573"},{"n":"Poco C71","h":"Producto Android.dc.html?id=and-poco-c71-64","s":"Celular · 64 GB · 3 GB · USD 152"},{"n":"Poco C71","h":"Producto Android.dc.html?id=and-poco-c71-128","s":"Celular · 128 GB · 4 GB · USD 173"},{"n":"Poco C85","h":"Producto Android.dc.html?id=and-poco-c85","s":"Celular · 256 GB · 8 GB · USD 230"},{"n":"Poco X7 Pro 5G","h":"Producto Android.dc.html?id=and-poco-x7pro-256","s":"Celular · 256 GB · 12 GB · USD 420"},{"n":"Poco X7 Pro 5G","h":"Producto Android.dc.html?id=and-poco-x7pro-512","s":"Celular · 512 GB · 12 GB · USD 507"},{"n":"Motorola G06","h":"Producto Android.dc.html?id=and-moto-g06","s":"Celular · 128 GB · 4 GB · USD 180"},{"n":"Motorola G15","h":"Producto Android.dc.html?id=and-moto-g15","s":"Celular · 256 GB · 4 GB · USD 241"},{"n":"Infinix Smart 10","h":"Producto Android.dc.html?id=and-infinix-smart10","s":"Celular · 128 GB · 4 GB · USD 176"},{"n":"Infinix Hot 60i","h":"Producto Android.dc.html?id=and-infinix-hot60i-4","s":"Celular · 256 GB · 4 GB · USD 214"},{"n":"Infinix Hot 60i","h":"Producto Android.dc.html?id=and-infinix-hot60i-8","s":"Celular · 256 GB · 8 GB · USD 239"},{"n":"Infinix Hot 60 Pro","h":"Producto Android.dc.html?id=and-infinix-hot60pro","s":"Celular · 256 GB · 8 GB · USD 300"},{"n":"Infinix Hot 60 Pro Plus","h":"Producto Android.dc.html?id=and-infinix-hot60proplus","s":"Celular · 256 GB · 8 GB · USD 316"},{"n":"Smart TV EcoPower","h":"Producto Smart TV.dc.html?id=tv-ecopower","s":"Smart TV · 32\" · Full HD · USD 182"},{"n":"Smart TV RCA 40\"","h":"Producto Smart TV.dc.html?id=tv-rca-40","s":"Smart TV · 40\" · Full HD · USD 300"},{"n":"Smart TV Philco 58\"","h":"Producto Smart TV.dc.html?id=tv-philco-58","s":"Smart TV · 58\" · Ultra HD (4K) · USD 490"}];
+  function ztBuildIndex() {
+    var list = ZT_SEARCH_INDEX.slice();
+    try {
+      var db = getLocal();
+      var cat = (db && db.catalog) || {};
+      Object.keys(cat).forEach(function (id) {
+        var o = cat[id];
+        if (!o || o.deleted || o.hidden || !o.custom || !o.name) return;
+        list.push({ n: o.name, h: detailHrefFor(o.cat || '', id), s: (o.cat || 'Producto') + (o.usd ? ' · USD ' + o.usd : '') });
+      });
+    } catch (e) {}
+    return list;
+  }
+  function ztOpenSearch() {
+    if (document.getElementById('zt-search-ov')) { document.getElementById('zt-search-input').focus(); return; }
+    var idx = ztBuildIndex();
+    var ov = document.createElement('div');
+    ov.id = 'zt-search-ov';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(13,13,14,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;padding:14vh 16px 16px;animation:ztFadeIn .2s ease;';
+    var box = document.createElement('div');
+    box.style.cssText = 'width:100%;max-width:620px;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 40px 90px -30px rgba(0,0,0,.6);display:flex;flex-direction:column;max-height:72vh;';
+    var head = document.createElement('div');
+    head.style.cssText = 'display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid rgba(0,0,0,.07);';
+    head.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#86868B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>';
+    var input = document.createElement('input');
+    input.id = 'zt-search-input';
+    input.placeholder = 'Buscá tu equipo…';
+    input.style.cssText = 'flex:1;border:none;outline:none;font-family:inherit;font-size:18px;color:#1D1D1F;background:transparent;';
+    var close = document.createElement('button');
+    close.setAttribute('aria-label', 'Cerrar');
+    close.style.cssText = 'border:none;background:#F2F2F2;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:17px;color:#6E6E73;line-height:1;flex-shrink:0;';
+    close.textContent = '\u00d7';
+    head.appendChild(input); head.appendChild(close);
+    var results = document.createElement('div');
+    results.style.cssText = 'overflow-y:auto;padding:6px;';
+    box.appendChild(head); box.appendChild(results); ov.appendChild(box);
+    document.body.appendChild(ov);
+    function render(q) {
+      q = (q || '').trim().toLowerCase();
+      var matches = !q ? idx.slice(0, 8) : idx.filter(function (it) { return (it.n + ' ' + it.s).toLowerCase().indexOf(q) >= 0; });
+      if (!matches.length) { results.innerHTML = '<div style="padding:26px;text-align:center;color:#A1A1A6;font-size:14.5px;">Sin resultados para \u201c' + q + '\u201d</div>'; return; }
+      results.innerHTML = '';
+      matches.slice(0, 30).forEach(function (it) {
+        var a = document.createElement('a');
+        a.href = it.h;
+        a.style.cssText = 'display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:14px;text-decoration:none;color:#1D1D1F;transition:background .15s;';
+        a.onmouseenter = function () { a.style.background = '#F5F5F4'; };
+        a.onmouseleave = function () { a.style.background = 'transparent'; };
+        a.innerHTML = '<span style="width:36px;height:36px;border-radius:10px;background:#F4F1EC;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:#C9502A;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>' +
+          '<span style="display:flex;flex-direction:column;gap:1px;min-width:0;"><span style="font-size:15.5px;font-weight:600;letter-spacing:-.01em;">' + it.n + '</span><span style="font-size:12.5px;color:#86868B;">' + it.s + '</span></span>';
+        results.appendChild(a);
+      });
+    }
+    render('');
+    input.addEventListener('input', function () { render(input.value); });
+    function shut() { ov.remove(); document.removeEventListener('keydown', onKey); }
+    function onKey(e) { if (e.key === 'Escape') shut(); }
+    close.addEventListener('click', shut);
+    ov.addEventListener('click', function (e) { if (e.target === ov) shut(); });
+    document.addEventListener('keydown', onKey);
+    setTimeout(function () { input.focus(); }, 40);
+  }
+  (function(){ if(document.getElementById('zt-search-style')) return; var s=document.createElement('style'); s.id='zt-search-style'; s.textContent='@keyframes ztFadeIn{from{opacity:0}to{opacity:1}}'; (document.head||document.documentElement).appendChild(s); })();
+  window.ztOpenSearch = ztOpenSearch;
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('.zt-search-btn');
+    if (b) { e.preventDefault(); ztOpenSearch(); }
+  });
+
+
 })();

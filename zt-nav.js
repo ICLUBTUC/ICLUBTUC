@@ -84,6 +84,7 @@
     +     '<a href="Portal Clientes ZonaTech.dc.html#financiar">Cotizador</a>'
     +   '</nav>'
     +   '<div style="margin-left:auto;display:flex;align-items:center;gap:8px;">'
+    +     '<button class="zt-search-btn" aria-label="Buscar" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.1);border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg></button>'
     +     '<a class="zt-acct" href="Portal Clientes ZonaTech.dc.html">'
     +       '<span style="width:32px;height:32px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
     +         '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#1D1D1F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.2" r="3.4"></circle><path d="M4.8 19.5c1.35-3.2 4-4.7 7.2-4.7s5.85 1.5 7.2 4.7"></path></svg>'

@@ -490,7 +490,7 @@
               <span style="font-size:16px; font-weight:700;">{{ c.name }}</span>
               <span style="font-size:11px; font-weight:700; letter-spacing:.05em; color:{{ c.stC }}; background:{{ c.stB }}; padding:5px 11px; border-radius:980px;">{{ c.stL }}</span>
             </div>
-            <span style="font-size:13px; color:#A1A1A6;">Tel {{ c.phone }} · Saldo {{ c.saldoStr }} · Límite {{ c.limStr }} · {{ c.lastAcc }}</span>
+            <span style="font-size:13px; color:#A1A1A6;">Tel {{ c.phone }} · Saldo {{ c.saldoStr }} · Pagado {{ c.pagadoStr }} · {{ c.lastAcc }}</span>
           </div>
           <div data-adm-actions style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
             <button onClick="{{ c.view }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#fff; background:#C9502A; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Ver cuenta</button>
@@ -1276,7 +1276,7 @@
   <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:6px; animation:ztReveal .8s .05s both;">
     <div style="font-size:12.5px; font-weight:600; letter-spacing:.2em; color:#C9502A;">CONSULTAR FINANCIACIÓN</div>
     <h1 style="margin:0; font-size:clamp(28px,4.5vw,40px); font-weight:700; letter-spacing:-.035em; line-height:1.05;">Simulá tu plan en cuotas</h1>
-    <p style="margin:0; font-size:15.5px; color:#6E6E73; line-height:1.5;">Elegí tu producto y te mostramos todos los planes. Al final le mandás la consulta directo a ZonaTech — sin necesidad de crear una cuenta.</p>
+    <p style="margin:0; font-size:15.5px; color:#6E6E73; line-height:1.5;">Elegí tu equipo y te mostramos todos los planes. Al final le mandás la consulta directo a tu asesor del club — sin necesidad de crear una cuenta.</p>
   </div>
 
   <!-- PASO 1 · CREAR USUARIO -->
@@ -1318,7 +1318,7 @@
 
       <!-- Q1 -->
       <div style="background:#fff; border-radius:22px; padding:24px 26px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:14px; animation:ztReveal .6s both;">
-        <span style="font-size:15px; font-weight:700; letter-spacing:-.01em;">Bienvenido a ZonaTech. ¿Ya elegiste algún producto o servicio?</span>
+        <span style="font-size:15px; font-weight:700; letter-spacing:-.01em;">Bienvenido al club. ¿Ya elegiste tu equipo?</span>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <sc-for list="{{ finQ1 }}" as="o" hint-placeholder-count="2">
             <button onClick="{{ o.pick }}" style="font-family:inherit; font-size:14px; font-weight:600; color:{{ o.color }}; background:{{ o.bg }}; border:1.5px solid {{ o.border }}; border-radius:980px; padding:11px 22px; cursor:pointer; transition:background .25s, border-color .25s, color .25s;">{{ o.txt }}</button>
@@ -1329,7 +1329,7 @@
 
       <sc-if value="{{ finStepAsesor }}" hint-placeholder-val="{{ false }}">
         <div style="background:#1D1D1F; border-radius:22px; padding:26px 30px; color:#fff; display:flex; flex-direction:column; gap:16px; animation:ztReveal .5s both;">
-          <span style="font-size:15px; font-weight:600; line-height:1.5;">¡Sin problema! Un asesor de ZonaTech te ayuda a elegir el equipo ideal y armamos la financiación juntos.</span>
+          <span style="font-size:15px; font-weight:600; line-height:1.5;">¡Sin problema! Tu asesor del club te ayuda a elegir el equipo ideal y armamos la financiación juntos.</span>
           <a href="{{ finAsesorHref }}" target="_blank" rel="noopener" style="align-self:flex-start; display:inline-flex; align-items:center; gap:9px; text-decoration:none; background:#fff; color:#1D1D1F; font-size:14.5px; font-weight:600; padding:13px 24px; border-radius:980px;" style-hover="color:#1D1D1F;">Hablar con un asesor<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
         </div>
       </sc-if>
@@ -1388,7 +1388,7 @@
 
       <sc-if value="{{ finStepTarjeta }}" hint-placeholder-val="{{ false }}">
         <div style="background:#1D1D1F; border-radius:22px; padding:26px 30px; color:#fff; display:flex; flex-direction:column; gap:16px; animation:ztReveal .5s both;">
-          <span style="font-size:15px; font-weight:600; line-height:1.5;">Con tarjeta de crédito trabajamos los planes de cada banco. Coordiná con ZonaTech para ver las cuotas disponibles con tu tarjeta.</span>
+          <span style="font-size:15px; font-weight:600; line-height:1.5;">Con tarjeta de crédito trabajamos los planes de cada banco. Coordiná con tu asesor del club para ver las cuotas disponibles con tu tarjeta.</span>
           <a href="{{ finTarjetaHref }}" target="_blank" rel="noopener" style="align-self:flex-start; display:inline-flex; align-items:center; gap:9px; text-decoration:none; background:#fff; color:#1D1D1F; font-size:14.5px; font-weight:600; padding:13px 24px; border-radius:980px;" style-hover="color:#1D1D1F;">Consultar planes con tarjeta<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
         </div>
       </sc-if>
@@ -1455,10 +1455,10 @@
             </sc-for>
           </div>
           <a href="{{ finSendHref }}" onClick="{{ finSendClick }}" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; gap:10px; text-decoration:none; background:#fff; color:#1D1D1F; font-size:15.5px; font-weight:700; padding:15px; border-radius:980px; transition:transform .35s cubic-bezier(.22,1,.36,1);" style-hover="transform:translateY(-2px); color:#1D1D1F;">
-            Enviar consulta a ZonaTech por WhatsApp
+            Enviar consulta al club por WhatsApp
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
           </a>
-          <span style="font-size:12px; color:rgba(255,255,255,.4); line-height:1.5;">Es una estimación. ZonaTech revisa tu consulta y te confirma la financiación por WhatsApp.</span>
+          <span style="font-size:12px; color:rgba(255,255,255,.4); line-height:1.5;">Es una estimación. El club revisa tu consulta y te confirma la financiación por WhatsApp.</span>
         </div>
       </sc-if>
 
@@ -2469,9 +2469,10 @@ class Component extends DCLogic {
         aClients: keys.map((k) => {
           const c = db.clients[k];
           const saldo = this._saldo(c);
+          const pagadoTot = (c.movs || []).reduce((a, m) => a + (m.imp > 0 ? m.imp : 0), 0);
           return {
             name: c.name, phone: k,
-            saldoStr: this._fmt(saldo), limStr: this._fmt(c.lim || 0),
+            saldoStr: this._fmt(saldo), limStr: this._fmt(c.lim || 0), pagadoStr: this._fmt(pagadoTot),
             lastAcc: c.accesos && c.accesos[0] ? 'Último acceso ' + c.accesos[0].fecha : 'Nunca ingresó',
             stL: c.blocked ? 'BLOQUEADO' : saldo <= 0 ? 'SIN DEUDA' : 'ACTIVO',
             stC: c.blocked ? '#C9502A' : saldo <= 0 ? '#1F8A5B' : '#B0700F',
@@ -2770,7 +2771,7 @@ class Component extends DCLogic {
         { label: 'Plan elegido', value: finPlanChosen + ' pagos de ' + this._usd(per) + ' · ' + this._ars(per * finRate) },
         { label: 'Total financiado', value: this._usd(total) + ' · ' + this._ars(total * finRate) }
       ];
-      const msg = 'Hola ZonaTech! \uD83D\uDC4B Soy un nuevo cliente y quiero consultar una financiación.\n'
+      const msg = 'Hola ICLUB! \uD83D\uDC4B Quiero sumarme al club y consultar una financiación.\n'
         + '\n\u2500\u2500\u2500 DETALLE \u2500\u2500\u2500\n'
         + '\n\uD83D\uDECD\uFE0F Producto:\n' + finProdChosen.name + '\n'
         + '\n\uD83D\uDCB5 Precio de contado:\n' + this._usd(finPrice) + ' · ' + this._ars(finPrice * finRate) + '\n'
@@ -2800,7 +2801,7 @@ class Component extends DCLogic {
         optBtn('Todavía no', fin.elegido === 'no', () => setFin({ elegido: 'no', prodId: null, medio: null, adelanto: null, planN: null }))
       ],
       finNoElegido: fin.elegido === 'no',
-      finAsesorHref: 'https://wa.me/' + finWa + '?text=' + encodeURIComponent('Hola ZonaTech! Quiero asesoramiento para elegir un producto y ver la financiación.'),
+      finAsesorHref: 'https://wa.me/' + finWa + '?text=' + encodeURIComponent('Hola ICLUB! Quiero asesoramiento para elegir mi equipo y ver la financiación.'),
       finShowProducts: fin.elegido === 'si',
       finProdSearch: fin.prodSearch || '',
       setFinProdSearch: (e) => setFin({ prodSearch: e.target.value }),
@@ -2830,7 +2831,7 @@ class Component extends DCLogic {
         optBtn('Tarjeta de crédito', fin.medio === 'tarjeta', () => setFin({ medio: 'tarjeta', planN: null }))
       ],
       finTarjeta: !!finProdChosen && fin.medio === 'tarjeta',
-      finTarjetaHref: 'https://wa.me/' + finWa + '?text=' + encodeURIComponent('Hola ZonaTech! Quiero pagar ' + (finProdChosen ? finProdChosen.name : 'un producto') + ' con tarjeta de crédito. ¿Qué planes tienen?'),
+      finTarjetaHref: 'https://wa.me/' + finWa + '?text=' + encodeURIComponent('Hola ICLUB! Quiero pagar ' + (finProdChosen ? finProdChosen.name : 'un producto') + ' con tarjeta de crédito. ¿Qué planes tienen?'),
       finShowQ4: !!finProdChosen && fin.medio === 'financiamiento',
       finQ4: [
         optBtn('Sí, tengo adelanto', fin.adelanto === 'si', () => setFin({ adelanto: 'si', planN: null, adelConfirmed: false })),

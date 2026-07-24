@@ -98,6 +98,23 @@
   </div>
 </section>
 
+
+<section class="rec-block" style="max-width:1020px; margin:0 auto; padding:0 32px 80px;">
+  <div style="display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:22px; flex-wrap:wrap;"><h2 style="margin:0; font-size:clamp(22px,3vw,32px); font-weight:700; letter-spacing:-.03em;">También te puede interesar</h2><a href="Android ZonaTech.dc.html" style="text-decoration:none; color:#C9502A; font-size:15px; font-weight:600;">Ver todos →</a></div>
+  <div class="rec-grid" style="display:flex; gap:14px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; padding:4px; margin:-4px;">
+    <sc-for list="{{ rec }}" as="r" hint-placeholder-count="3">
+      <a href="{{ r.href }}" style="position:relative; flex:0 0 220px; scroll-snap-align:start; background:#fff; border:1px solid rgba(0,0,0,.07); border-radius:20px; overflow:hidden; display:flex; flex-direction:column; text-decoration:none; color:inherit; transition:transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s;" style-hover="transform:translateY(-4px); box-shadow:0 24px 55px -30px rgba(0,0,0,.25);">
+        <div style="height:200px; background:linear-gradient(160deg,{{ r.gFrom }},{{ r.gTo }});"><image-slot id="{{ r.imageId }}" style="width:100%;height:100%;display:block;" shape="rect" fit="cover" placeholder="{{ r.name }}"></image-slot></div>
+        <div style="padding:14px 16px 16px; display:flex; flex-direction:column; gap:2px; flex:1;">
+          <span style="font-size:15px; font-weight:600; letter-spacing:-.01em;">{{ r.name }}</span>
+          <span style="font-size:12.5px; color:#86868B;">{{ r.sub }}</span>
+          <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:10px; margin-top:auto; padding-top:12px;"><div style="display:flex; flex-direction:column;"><span style="font-size:18px; font-weight:700; letter-spacing:-.02em;">{{ r.priceMain }}</span><span style="font-size:12px; color:#A1A1A6; font-weight:500;">{{ r.priceSub }}</span></div><span style="width:38px; height:38px; border-radius:980px; border:1.5px solid rgba(0,0,0,.12); display:inline-flex; align-items:center; justify-content:center; color:#1D1D1F;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></div>
+        </div>
+      </a>
+    </sc-for>
+  </div>
+</section>
+
 <sc-if value="{{ cartOpen }}" hint-placeholder-val="{{ false }}">
   <div onClick="{{ closeCart }}" style="position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.4); animation:ztFade .3s both;">
     <div onClick="{{ stop }}" style="position:absolute; top:0; right:0; height:100%; width:min(430px,100vw); box-sizing:border-box; background:#FAFAF9; box-shadow:-30px 0 80px -40px rgba(0,0,0,.5); display:flex; flex-direction:column; animation:ztSlide .42s cubic-bezier(.22,1,.36,1) both;">
@@ -215,7 +232,9 @@ class Component extends DCLogic {
     const active='background:#fff; color:#1D1D1F; box-shadow:0 1px 3px rgba(0,0,0,.12);';
     const idle='background:transparent; color:#86868B;';
     const waText = encodeURIComponent('Hola! Quiero comprar el ' + p.name + ' (USD ' + p.usd + ').');
-    const qEl = () => (typeof document!=='undefined') ? document.getElementById('zt-qty') : null;
+
+    const rec = Object.keys(PRODUCTS).filter(k=>k!==id).map(k=>{ const q=PRODUCTS[k]; return { href:'Producto Android.dc.html?id='+k, imageId:k, name:q.name, sub:q.storage+' · '+q.ram+' RAM', gFrom:q.gFrom, gTo:q.gTo, priceMain:fmt(q.usd), priceSub: cur==='ARS'?('USD '+q.usd.toLocaleString('es-AR')):('ARS '+Math.round(q.usd*RATE).toLocaleString('es-AR')) }; });
+    const recAllHref = 'Android ZonaTech.dc.html';
     return {
       product: { name:p.name, tagline:p.tagline, storage:p.storage, ram:p.ram, gFrom:p.gFrom, gTo:p.gTo, imageId:id, waLink:'Finalizar Compra.dc.html?id='+id+'&cat=Celulares&name='+encodeURIComponent(p.name)+'&usd='+p.usd },
       priceMain: fmt(p.usd),
@@ -230,7 +249,7 @@ class Component extends DCLogic {
       closeCart:()=>this.setState({cartOpen:false}),
       stop:(e)=>{ if(e&&e.stopPropagation) e.stopPropagation(); },
       hasItems: count>0, cartEmpty: count===0, cartCount: count,
-      cartOpen: this.state.cartOpen, cartItems: items, cartSubtotal: fmt(subtotal), checkoutHref: checkoutHref
+      cartOpen: this.state.cartOpen, cartItems: items, cartSubtotal: fmt(subtotal), checkoutHref: checkoutHref, rec: rec, recAllHref: recAllHref
     };
   }
 }
