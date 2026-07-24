@@ -32,9 +32,9 @@
   <div style="font-size:11px; font-weight:700; letter-spacing:.22em; color:#86868B;">PASO FINAL · COMPRA DE SOCIO</div>
 
   <div style="background:#fff; border-radius:22px; padding:18px; display:flex; align-items:center; gap:16px; box-shadow:0 1px 3px rgba(0,0,0,.06);">
-    <div style="width:82px; height:82px; border-radius:16px; background:#F4F1EC; flex-shrink:0; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-      <sc-if value="{{ hasPhoto }}" hint-placeholder-val="{{ false }}"><span style="width:100%; height:100%; display:block; background-image:{{ photoBg }}; background-size:contain; background-position:center; background-repeat:no-repeat;" role="img" aria-label="{{ prodName }}"></span></sc-if>
-      <sc-if value="{{ noPhoto }}" hint-placeholder-val="{{ true }}"><span style="font-family:'Space Grotesk',sans-serif; font-size:30px; font-weight:700; color:#C9C6C0;">{{ monogram }}</span></sc-if>
+    <div style="width:62px; height:82px; border-radius:16px; background:#F4F1EC; flex-shrink:0; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+      <sc-if value="{{ hasPhoto }}" hint-placeholder-val="{{ false }}">{{ photoNode }}</sc-if>
+      <sc-if value="{{ noPhoto }}" hint-placeholder-val="{{ true }}"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#B7B2A8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.6"></circle><path d="M21 15l-5-5L5 21"></path></svg></sc-if>
     </div>
     <div style="display:flex; flex-direction:column; gap:4px; min-width:0;">
       <span style="font-size:16.5px; font-weight:600; letter-spacing:-.01em;">{{ prodName }}</span>
@@ -147,6 +147,41 @@ class Component extends DCLogic {
       err: '', sent: false
     };
   }
+  _resolveSlotPhoto(j, id) {
+    if (!j || typeof j !== 'object') return '';
+    const pick = (v) => v ? (typeof v === 'string' ? v : v.u) : '';
+    const cands = ['prod-front-' + id, 'prod-photo-' + id, 'apple-' + id, 'and-' + id, 'tv-' + id, id];
+    for (const k of cands) { const u = pick(j[k]); if (u) return u; }
+    const fb = Object.keys(j).filter(k => !/back|thumb|hero|promo/i.test(k))
+      .find(k => k === id || k.endsWith('-' + id) || k.endsWith(id));
+    return fb ? pick(j[fb]) : '';
+  }
+  componentDidMount() {
+    const id = this.state.id;
+    if (!id) return;
+    if (!this.state.photo) {
+      fetch('imageslots.state.json').then(r => r.ok ? r.json() : null).then(j => {
+        const u = this._resolveSlotPhoto(j, id);
+        if (u && !this.state.photo) this.setState({ photo: u });
+      }).catch(() => {});
+    }
+    const SB_URL = 'https://pbmsymvvemvbwhxmgddg.supabase.co';
+    const SB_KEY = 'sb_publishable_dt4zRwkE4_NbZrXvbpZjIw_1Uhe7pFn';
+    try {
+      fetch(SB_URL + '/rest/v1/portal_state?id=eq.main&select=data', {
+        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
+      }).then(r => r.json()).then(rows => {
+        const db = rows && rows[0] && rows[0].data;
+        if (!db) return;
+        try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(db)); } catch (e) {}
+        const ov = db.catalog && db.catalog[id];
+        const patch = {};
+        if (ov && ov.photo && ov.photo !== this.state.photo) patch.photo = ov.photo;
+        if (db.settings && db.settings.rate && db.settings.rate !== this.state.rate) patch.rate = db.settings.rate;
+        if (Object.keys(patch).length) this.setState(patch);
+      }).catch(() => {});
+    } catch (e) {}
+  }
   _persist() {
     const s = this.state;
     try { localStorage.setItem('zt-checkout-profile-v1', JSON.stringify({ dir: s.dir, city: s.city, cp: s.cp, factName: s.factName, dni: s.dni })); } catch (e) {}
@@ -164,13 +199,17 @@ class Component extends DCLogic {
     const dot = (sel) => 'width:19px; height:19px; border-radius:50%; flex-shrink:0; box-sizing:border-box; ' + (sel ? 'border:6px solid #0A84FF;' : 'border:2px solid rgba(0,0,0,.25);') + ' background:#fff;';
     return {
       prodName: s.name, prodShort: s.name.length > 22 ? s.name.slice(0, 22) + '…' : s.name,
-      hasPhoto: !!s.photo, noPhoto: !s.photo, photoBg: s.photo ? ('url("' + s.photo + '")') : 'none',
+      hasPhoto: !!s.photo, noPhoto: !s.photo,
+      photoNode: s.photo ? React.createElement('img', { src: s.photo, alt: s.name, style: { width: '100%', height: '100%', objectFit: 'contain', display: 'block' } }) : null,
       monogram: (s.name || 'I').trim().charAt(0).toUpperCase(),
       unitLine: this._fmt(s.usd) + (s.rate ? (' · ARS ' + Math.round(s.usd * s.rate).toLocaleString('es-AR')) : '') + ' c/u',
       qty: s.qty,
       incQty: () => this.setState({ qty: s.qty + 1 }),
       decQty: () => this.setState({ qty: Math.max(1, s.qty - 1) }),
-      goBack: () => history.back(),
+      goBack: () => {
+        if (window.history.length > 1 && document.referrer) { history.back(); }
+        else { location.href = 'Hero ZonaTech.dc.html'; }
+      },
       isEnvio: s.entrega === 'envio',
       setEnvio: () => this.setState({ entrega: 'envio' }),
       setRetiro: () => this.setState({ entrega: 'retiro' }),

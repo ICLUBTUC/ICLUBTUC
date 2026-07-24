@@ -364,7 +364,7 @@
       + '</div>'
       + '<div style="display:flex;align-items:baseline;gap:12px;margin-top:8px;"><span style="font-size:30px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;color:#1D1D1F;">USD ' + fmtInt(ov.usd || 0) + '</span><span style="font-size:15px;color:#A1A1A6;">ARS ' + fmtInt((ov.usd || 0) * rate) + ' · precio final</span></div>'
       + '<div style="display:flex;flex-direction:column;gap:9px;margin-top:8px;max-width:430px;">'
-        + '<a href="' + wa + '" target="_blank" rel="noopener" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:10px;height:50px;background:#1D1D1F;color:#fff;font-size:16.5px;font-weight:600;border-radius:16px;font-family:inherit;">Comprar ahora<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>'
+        + '<a href="' + wa + '" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:10px;height:50px;background:#1D1D1F;color:#fff;font-size:16.5px;font-weight:600;border-radius:16px;font-family:inherit;">Comprar ahora<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>'
         + '<a href="Portal Clientes ZonaTech.dc.html#financiar" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:2px;color:#C9502A;font-size:14.5px;font-weight:600;font-family:inherit;">Consultar financiamiento en cuotas →</a>'
         + '<div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;padding-top:14px;border-top:1px solid rgba(0,0,0,.08);">'
           + '<div style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:#1D1D1F;"><span style="width:8px;height:8px;border-radius:50%;background:' + eyeCol + ';box-shadow:0 0 0 3px ' + (ov.sinStock ? 'rgba(201,80,42,.15)' : 'rgba(31,138,91,.15)') + ';flex-shrink:0;"></span><span><strong style="font-weight:600;">' + (ov.sinStock ? 'Sin stock' : 'En stock') + '</strong> <span style="color:#86868B;">· ' + (ov.sinStock ? 'consultanos por WhatsApp' : 'entrega inmediata') + '</span></span></div>'
@@ -742,7 +742,8 @@
     document.body.appendChild(ov);
     function render(q) {
       q = (q || '').trim().toLowerCase();
-      var matches = !q ? idx.slice(0, 8) : idx.filter(function (it) { return (it.n + ' ' + it.s).toLowerCase().indexOf(q) >= 0; });
+      if (!q) { results.innerHTML = '<div style="padding:30px;text-align:center;color:#C9C6C0;font-size:14px;">Escrib\u00ed para buscar tu equipo</div>'; return; }
+      var matches = idx.filter(function (it) { return (it.n + ' ' + it.s).toLowerCase().indexOf(q) >= 0; });
       if (!matches.length) { results.innerHTML = '<div style="padding:26px;text-align:center;color:#A1A1A6;font-size:14.5px;">Sin resultados para \u201c' + q + '\u201d</div>'; return; }
       results.innerHTML = '';
       matches.slice(0, 30).forEach(function (it) {

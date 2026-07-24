@@ -110,7 +110,7 @@
   .ztc-slide{min-width:100%; box-sizing:border-box;}
   .ztc-slide-inner{display:grid; grid-template-columns:1.02fr 1fr; align-items:center; gap:clamp(24px,4vw,56px); max-width:1240px; margin:0 auto; padding:44px 78px; min-height:calc(100vh - 72px); box-sizing:border-box;}
   .ztc-img{height:min(52vh,520px);}
-  .ztc-img img{filter:drop-shadow(0 24px 34px rgba(20,20,22,.16)) drop-shadow(0 4px 8px rgba(20,20,22,.07));}
+  .ztc-img img{height:100%; width:100%; object-fit:contain; filter:drop-shadow(0 24px 34px rgba(20,20,22,.16)) drop-shadow(0 4px 8px rgba(20,20,22,.07));}
   .ztc-text{display:flex; flex-direction:column; align-items:flex-start; gap:16px;}
   .ztc-dot{width:9px; height:9px; border-radius:50%; background:rgba(0,0,0,.2); border:none; padding:0; cursor:pointer; transition:background .3s, transform .3s;}
   .ztc-dot.active{background:#1D1D1F; transform:scale(1.3);}
@@ -220,7 +220,7 @@
             </div>
           </div>
           <div class="ztc-img" style="height:min(52vh,520px); display:flex; align-items:center; justify-content:center;">
-            <img src="iphone17pro-cutout.png" alt="iPhone 17 Pro" style="max-width:100%; max-height:min(52vh,520px); width:auto; object-fit:contain; display:block;">
+            <img src="iphone17pro-cutout.png" alt="iPhone 17 Pro" style="max-width:100%; max-height:100%; width:auto; object-fit:contain; display:block;">
           </div>
         </div>
       </div>
