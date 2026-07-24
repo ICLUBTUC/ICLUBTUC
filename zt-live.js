@@ -1,0 +1,703 @@
+/* ZonaTech — aplica el catálogo del panel admin a la tienda pública + cuenta visitas */
+(function () {
+  var SB_URL = 'https://pbmsymvvemvbwhxmgddg.supabase.co';
+  var SB_KEY = 'sb_publishable_dt4zRwkE4_NbZrXvbpZjIw_1Uhe7pFn';
+  var LS = 'zt-portal-fin-db-v2';
+
+  function fmtInt(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  function getLocal() {
+    try { var raw = localStorage.getItem(LS); if (raw) { var db = JSON.parse(raw); if (db && db.clients) return db; } } catch (e) {}
+    return null;
+  }
+  function fetchRemote(cb) {
+    try {
+      fetch(SB_URL + '/rest/v1/portal_state?id=eq.main&select=data', {
+        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
+      }).then(function (r) { return r.json(); }).then(function (rows) {
+        var db = rows && rows[0] && rows[0].data;
+        if (db && db.clients) {
+          try { localStorage.setItem(LS, JSON.stringify(db)); } catch (e) {}
+          cb(db, true);
+        } else cb(null, false);
+      }).catch(function () { cb(null, false); });
+    } catch (e) { cb(null, false); }
+  }
+  function pushRemote(db) {
+    try {
+      fetch(SB_URL + '/rest/v1/portal_state?id=eq.main', {
+        method: 'PATCH',
+        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ data: db, updated_at: new Date().toISOString() })
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  function saveOv(pid, fields) {
+    var db = getLocal(); if (!db) return;
+    db.catalog = db.catalog || {};
+    db.catalog[pid] = db.catalog[pid] || {};
+    for (var k in fields) db.catalog[pid][k] = fields[k];
+    try { localStorage.setItem(LS, JSON.stringify(db)); } catch (e) {}
+    pushRemote(db);
+    apply(db);
+  }
+  function savePhoto(pid, url) { saveOv(pid, { photo: url, px: 0, py: 0, pz: 1 }); }
+  function frameCss(ov) {
+    return 'translate(' + (ov.px || 0) + '%,' + (ov.py || 0) + '%) scale(' + (ov.pz || 1) + ')';
+  }
+  function makePhotoEditable(wrap, pid) {
+    wrap.title = 'Doble clic para editar la foto';
+    wrap.addEventListener('dblclick', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      var img = wrap.querySelector('img');
+      if (!img) { pickPhoto(pid); return; }
+      if (wrap.getAttribute('data-zt-editing')) return;
+      startFrameEdit(wrap, img, pid);
+    });
+  }
+  function pickPhoto(pid) {
+    var inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*';
+    inp.onchange = function () {
+      var f = inp.files && inp.files[0]; if (!f) return;
+      var rd = new FileReader();
+      rd.onload = function () { savePhoto(pid, rd.result); };
+      rd.readAsDataURL(f);
+    };
+    inp.click();
+  }
+  function startFrameEdit(wrap, img, pid) {
+    var db = getLocal();
+    var ov = (db && db.catalog && db.catalog[pid]) || {};
+    var st = { px: ov.px || 0, py: ov.py || 0, pz: ov.pz || 1 };
+    wrap.setAttribute('data-zt-editing', '1');
+    var oldOutline = wrap.style.outline;
+    wrap.style.outline = '3px solid #0A84FF';
+    wrap.style.cursor = 'grab';
+    img.style.willChange = 'transform';
+    var tip = document.createElement('div');
+    tip.style.cssText = 'position:absolute;left:8px;right:8px;bottom:8px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(29,29,31,.85);color:#fff;font-size:11.5px;font-weight:600;border-radius:12px;padding:8px 12px;pointer-events:auto;';
+    tip.innerHTML = '<span>Arrastr\u00e1 \u00b7 rueda = zoom \u00b7 clic afuera = guardar</span>';
+    var chg = document.createElement('button');
+    chg.textContent = 'Cambiar foto';
+    chg.style.cssText = 'flex:0 0 auto;background:#fff;color:#1D1D1F;border:none;border-radius:980px;padding:6px 12px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;';
+    tip.appendChild(chg);
+    wrap.appendChild(tip);
+    function render() { img.style.transform = frameCss(st); }
+    render();
+    var drag = null;
+    function onDown(e) { drag = { x: e.clientX, y: e.clientY, px: st.px, py: st.py }; wrap.style.cursor = 'grabbing'; e.preventDefault(); }
+    function onMove(e) {
+      if (!drag) return;
+      var r = wrap.getBoundingClientRect();
+      st.px = drag.px + ((e.clientX - drag.x) / r.width) * 100;
+      st.py = drag.py + ((e.clientY - drag.y) / r.height) * 100;
+      render();
+    }
+    function onUp() { drag = null; wrap.style.cursor = 'grab'; }
+    function onWheel(e) {
+      e.preventDefault();
+      st.pz = Math.min(4, Math.max(0.4, st.pz * (e.deltaY < 0 ? 1.07 : 0.93)));
+      render();
+    }
+    function onWrapClick(e) { e.preventDefault(); e.stopPropagation(); }
+    function onDocClick(e) {
+      if (wrap.contains(e.target)) return;
+      e.preventDefault(); e.stopPropagation();
+      finish(true);
+    }
+    function onKey(e) { if (e.key === 'Escape' || e.key === 'Enter') finish(e.key !== 'Escape'); }
+    function finish(save) {
+      wrap.removeAttribute('data-zt-editing');
+      wrap.style.outline = oldOutline;
+      wrap.style.cursor = '';
+      tip.remove();
+      wrap.removeEventListener('click', onWrapClick);
+      wrap.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      wrap.removeEventListener('wheel', onWheel);
+      document.removeEventListener('click', onDocClick, true);
+      document.removeEventListener('keydown', onKey);
+      if (save) saveOv(pid, { px: st.px, py: st.py, pz: st.pz });
+      else { var o = (getLocal() || {}).catalog || {}; img.style.transform = frameCss(o[pid] || {}); }
+    }
+    chg.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); finish(false); pickPhoto(pid); });
+    wrap.addEventListener('click', onWrapClick);
+    wrap.addEventListener('pointerdown', onDown);
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    wrap.addEventListener('wheel', onWheel, { passive: false });
+    setTimeout(function () {
+      document.addEventListener('click', onDocClick, true);
+      document.addEventListener('keydown', onKey);
+    }, 100);
+  }
+
+  function findCard(slot) {
+    var el = slot;
+    for (var i = 0; i < 7 && el; i++) {
+      if (el.hasAttribute && (el.hasAttribute('data-appl-card') || el.hasAttribute('data-cat-card') || el.hasAttribute('data-cc-card'))) return el;
+      if (el.tagName === 'A' && el.querySelector('[data-cc-imgwrap],[data-appl-imgwrap]')) return el;
+      el = el.parentElement;
+    }
+    return slot.parentElement ? slot.parentElement.parentElement : null;
+  }
+  function setPrices(card, usd, rate) {
+    var walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT);
+    var node;
+    while ((node = walker.nextNode())) {
+      var t = node.nodeValue || '';
+      if (/^\s*(USD|US\$)\s*[\d.,]+\s*$/.test(t)) node.nodeValue = t.replace(/[\d.,]+/, fmtInt(usd));
+      else if (/^\s*(ARS|\$)\s*[\d.,]+\s*$/.test(t)) node.nodeValue = t.replace(/[\d.,]+/, fmtInt(usd * rate));
+    }
+  }
+  function markSinStock(card) {
+    if (card.querySelector('[data-zt-nostock]')) return;
+    var wrap = card.querySelector('[data-cc-imgwrap],[data-appl-imgwrap]') || card;
+    wrap.style.position = 'relative';
+    var chip = document.createElement('span');
+    chip.setAttribute('data-zt-nostock', '');
+    chip.textContent = 'SIN STOCK';
+    chip.style.cssText = 'position:absolute;top:12px;left:12px;z-index:5;background:rgba(201,80,42,.95);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:6px 12px;border-radius:980px;font-family:inherit;';
+    wrap.appendChild(chip);
+    card.style.opacity = '.62';
+  }
+  function setPhoto(slot, url) {
+    var wrap = slot.parentElement || slot;
+    var old = wrap.querySelector('[data-zt-photo]');
+    if (old) { if (old.getAttribute('src') === url) return; old.remove(); }
+    wrap.style.position = 'relative';
+    var img = document.createElement('img');
+    img.setAttribute('data-zt-photo', '');
+    img.src = url;
+    img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:4;border-radius:inherit;';
+    wrap.appendChild(img);
+  }
+
+  function detailHrefFor(cat, id) {
+    if (cat === 'Celulares') return 'Producto Android.dc.html?id=' + id;
+    if (cat === 'Smart TV') return 'Producto Smart TV.dc.html?id=' + id;
+    return 'Producto ZonaTech.dc.html?m=' + id;
+  }
+
+  function gridFor(catName) {
+    var refId = (catName === 'Apple') ? 'apple-iphone13' : (catName === 'Accesorios') ? 'acc-airpodsmax' : (catName === 'Smart TV') ? 'tv-ecopower' : 'and-samsung-a07';
+    var ref = document.getElementById(refId);
+    if (!ref) return null;
+    var card = findCard(ref);
+    return card ? card.parentElement : null;
+  }
+  function injectCustomCard(id, ov, rate) {
+    var existing = document.querySelector('[data-zt-custom="' + id + '"]');
+    if (ov.hidden) { if (existing) existing.remove(); return; }
+    var sig = [ov.name, ov.spec, ov.usd, ov.sinStock ? 1 : 0, (ov.photo || '').length, rate, ov.bat || '', ov.pos != null ? ov.pos : '', ov.cat || '', (ov.px || 0).toFixed ? (ov.px || 0).toFixed(1) : 0, (ov.py || 0).toFixed ? (ov.py || 0).toFixed(1) : 0, ov.pz || 1].join('|');
+    if (existing && existing.getAttribute('data-zt-sig') === sig) return;
+    var grid = gridFor(ov.cat || 'Celulares');
+    if (!grid) return;
+    if (existing) existing.remove();
+    if ((ov.cat || '') === 'Apple') {
+      var row = document.createElement('a');
+      row.setAttribute('data-zt-custom', id);
+      row.setAttribute('data-appl-card', '');
+      row.id = 'zt-custom-' + id;
+      row.setAttribute('data-zt-sig', sig);
+      row.href = detailHrefFor(ov.cat, id);
+      row.style.cssText = 'display:flex;flex-direction:column;gap:16px;padding:22px;background:#fff;border-radius:24px;text-decoration:none;color:#1D1D1F;box-shadow:0 12px 40px -18px rgba(0,0,0,.14), 0 2px 6px rgba(0,0,0,.03);transition:box-shadow .4s, transform .4s;will-change:transform;' + (ov.sinStock ? 'opacity:.62;' : '');
+      var rw = document.createElement('div');
+      rw.setAttribute('data-appl-imgwrap', '');
+      rw.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#F2F3F4,#E7EAEC);position:relative;display:flex;align-items:center;justify-content:center;';
+      if (ov.photo) { var ri = document.createElement('img'); ri.src = ov.photo; ri.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;transform:' + frameCss(ov) + ';'; rw.appendChild(ri); }
+      else { var rp = document.createElement('span'); rp.textContent = (ov.name || '?').charAt(0).toUpperCase(); rp.style.cssText = 'font-size:44px;font-weight:700;color:#C9BFB2;'; rw.appendChild(rp); }
+      if (ov.sinStock) { var rc = document.createElement('span'); rc.textContent = 'SIN STOCK'; rc.setAttribute('data-zt-nostock', ''); rc.style.cssText = 'position:absolute;top:12px;left:12px;background:rgba(201,80,42,.95);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:6px 12px;border-radius:980px;'; rw.appendChild(rc); }
+      row.appendChild(rw);
+      makePhotoEditable(rw, id);
+      var rb = document.createElement('div');
+      rb.style.cssText = 'display:flex;flex-direction:column;gap:9px;';
+      rb.innerHTML = '<div style="font-size:10.5px;font-weight:700;letter-spacing:.18em;color:#C9502A;">SEMINUEVO CERTIFICADO</div>'
+        + '<h2 style="margin:0;font-size:19px;font-weight:600;letter-spacing:-.015em;"></h2>'
+        + '<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#6E6E73;"></div>';
+      rb.children[1].textContent = ov.name || '';
+      var specWrap = rb.children[2];
+      var specParts = [];
+      specParts.push('<span>128 GB</span>');
+      if (ov.bat) {
+        specParts.push('<span style="display:inline-flex;align-items:center;gap:6px;"><span style="position:relative;width:22px;height:11px;border:1.3px solid #9B9BA0;border-radius:3px;display:inline-block;flex:0 0 auto;"><span style="position:absolute;inset:1.5px;width:' + Math.max(8, Math.min(100, ov.bat)) + '%;background:#34C759;border-radius:1px;"></span></span>' + ov.bat + '%</span>');
+      }
+      specWrap.innerHTML = specParts.join('<span style="width:3px;height:3px;border-radius:50%;background:#C7C7CC;"></span>');
+      row.appendChild(rb);
+      var priceRow = document.createElement('div');
+      priceRow.style.cssText = 'display:flex;align-items:flex-end;justify-content:space-between;margin-top:auto;padding-top:4px;';
+      priceRow.innerHTML = '<div style="display:flex;flex-direction:column;gap:2px;"><div style="font-size:21px;font-weight:600;letter-spacing:-.01em;">USD ' + fmtInt(ov.usd || 0) + '</div><div style="font-size:12px;color:#A1A1A6;">ARS ' + fmtInt((ov.usd || 0) * rate) + '</div></div>'
+        + '<div data-appl-arrow="" style="width:38px;height:38px;border-radius:50%;background:#F5F1EC;display:flex;align-items:center;justify-content:center;will-change:transform;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></div>';
+      row.appendChild(priceRow);
+      row.setAttribute('data-zt-pos', ov.pos != null ? ov.pos : 9999);
+      grid.appendChild(row);
+      reorderGrid(grid);
+      return;
+    }
+    var card = document.createElement('div');
+    card.setAttribute('data-zt-custom', id);
+    card.id = 'zt-custom-' + id;
+    card.setAttribute('data-zt-sig', sig);
+    card.style.cssText = 'display:flex;flex-direction:column;gap:14px;padding:24px;background:#fff;border-radius:24px;box-shadow:0 18px 50px -28px rgba(0,0,0,.18);font-family:inherit;' + (ov.sinStock ? 'opacity:.62;' : '');
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#F1EFEC,#E7E3DC);position:relative;display:flex;align-items:center;justify-content:center;';
+    if (ov.photo) {
+      var im = document.createElement('img');
+      im.src = ov.photo;
+      im.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;transform:' + frameCss(ov) + ';';
+      wrap.appendChild(im);
+    } else {
+      var ph = document.createElement('span');
+      ph.textContent = (ov.name || '?').charAt(0).toUpperCase();
+      ph.style.cssText = 'font-size:44px;font-weight:700;color:#C9BFB2;';
+      wrap.appendChild(ph);
+    }
+    if (ov.sinStock) {
+      var chip = document.createElement('span');
+      chip.setAttribute('data-zt-nostock', '');
+      chip.textContent = 'SIN STOCK';
+      chip.style.cssText = 'position:absolute;top:12px;left:12px;background:rgba(201,80,42,.95);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:6px 12px;border-radius:980px;';
+      wrap.appendChild(chip);
+    }
+    var wrapLink = document.createElement('a');
+    wrapLink.href = detailHrefFor(ov.cat, id);
+    wrapLink.style.cssText = 'display:block;text-decoration:none;';
+    wrapLink.appendChild(wrap);
+    card.appendChild(wrapLink);
+    makePhotoEditable(wrap, id);
+    wrapLink.addEventListener('click', function (e) { e.preventDefault(); }, true);
+    var body = document.createElement('div');
+    body.style.cssText = 'display:flex;flex-direction:column;gap:5px;';
+    body.innerHTML = '<div style="font-size:11px;font-weight:700;letter-spacing:.16em;color:#1F8A5B;">DISPONIBLE</div>'
+      + '<h3 style="margin:0;font-size:17px;font-weight:600;letter-spacing:-.01em;color:#1D1D1F;"></h3>'
+      + '<div style="font-size:13px;color:#6E6E73;"></div>'
+      + '<div style="display:flex;flex-direction:column;gap:2px;margin-top:6px;"><div style="font-size:20px;font-weight:600;letter-spacing:-.01em;color:#1D1D1F;">USD ' + fmtInt(ov.usd || 0) + '</div><div style="font-size:12px;color:#A1A1A6;">ARS ' + fmtInt((ov.usd || 0) * rate) + '</div></div>'
+      + '<a href="' + ('https://wa.me/5493814680653?text=' + encodeURIComponent('Hola! Quiero comprar el ' + (ov.name || '') + ' (USD ' + fmtInt(ov.usd || 0) + ').')) + '" target="_blank" rel="noopener" style="margin-top:10px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;background:#0A84FF;color:#fff;border-radius:980px;padding:12px 24px;font-size:15px;font-weight:600;align-self:flex-start;">Comprar</a>';
+    var h3lnk = document.createElement('a');
+    h3lnk.href = detailHrefFor(ov.cat, id);
+    h3lnk.style.cssText = 'color:inherit;text-decoration:none;';
+    h3lnk.textContent = ov.name || '';
+    body.children[1].textContent = '';
+    body.children[1].appendChild(h3lnk);
+    var sw2 = body.children[2];
+    sw2.style.cssText = 'font-size:13px;color:#6E6E73;display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
+    if (ov.bat) {
+      var bw2 = document.createElement('span');
+      bw2.style.cssText = 'display:inline-flex;align-items:center;gap:6px;';
+      bw2.innerHTML = '<span style="position:relative;width:38px;height:14px;border:1.5px solid rgba(0,0,0,.3);border-radius:4px;display:inline-block;flex:0 0 auto;"><span style="position:absolute;inset:2px;width:' + Math.max(8, Math.min(100, ov.bat)) + '%;background:#1D1D1F;border-radius:2px;"></span></span><span>Batería ' + ov.bat + '%</span>';
+      sw2.appendChild(bw2);
+    } else { sw2.style.display = 'none'; }
+    card.appendChild(body);
+    card.setAttribute('data-zt-pos', ov.pos != null ? ov.pos : 9999);
+    grid.appendChild(card);
+    reorderGrid(grid);
+  }
+
+  /* Ordena las tarjetas agregadas entre TODOS los productos de la grilla,
+     para que el puesto elegido en el admin cuente nativos + agregados juntos. */
+  function reorderGrid(grid) {
+    if (!grid) return;
+    var children = Array.prototype.slice.call(grid.children);
+    var customs = children.filter(function (el) { return el.hasAttribute && el.hasAttribute('data-zt-custom'); });
+    if (!customs.length) return;
+    var hasAppl = children.some(function (el) { return el.hasAttribute && el.hasAttribute('data-appl-card'); });
+    customs.sort(function (a, b) { return (+a.getAttribute('data-zt-pos') || 0) - (+b.getAttribute('data-zt-pos') || 0); });
+    customs.forEach(function (el) { if (el.parentNode) el.parentNode.removeChild(el); });
+    customs.forEach(function (el) {
+      var pos = parseInt(el.getAttribute('data-zt-pos'), 10);
+      var kids = Array.prototype.filter.call(grid.children, function (k) {
+        if (k.nodeType !== 1 || k.style.display === 'none') return false;
+        return k.hasAttribute('data-zt-custom') || !hasAppl || k.hasAttribute('data-appl-card');
+      });
+      if (!isNaN(pos) && pos < kids.length) grid.insertBefore(el, kids[pos]);
+      else if (kids.length) { var last = kids[kids.length - 1]; if (last.nextSibling) grid.insertBefore(el, last.nextSibling); else grid.appendChild(el); }
+      else grid.appendChild(el);
+    });
+  }
+
+  /* Ficha de producto autogenerada para productos del catálogo (en las páginas Producto …) */
+  function injectCustomDetail(db, rate) {
+    var sec = document.querySelector('.det-section');
+    if (!sec) return;
+    var pid = productIdFromUrl();
+    if (!pid) return;
+    var ov = (db.catalog || {})[pid] || null;
+    if (!ov || !ov.custom || ov.deleted) return;
+    document.body.removeAttribute('data-zt-model');
+    Array.prototype.forEach.call(document.querySelectorAll('.prod-block'), function (el) { el.style.setProperty('display', 'none', 'important'); });
+    var recBlocks = document.querySelectorAll('.rec-block');
+    Array.prototype.forEach.call(recBlocks, function (el, i) { el.style.setProperty('display', i === 0 ? 'block' : 'none', 'important'); });
+    Array.prototype.forEach.call(sec.children, function (el) { if (el.id !== 'zt-custom-detail') el.style.setProperty('display', 'none', 'important'); });
+    var sig = [ov.name, ov.spec, ov.usd, ov.bat || '', (ov.photo || '').length, rate, ov.sinStock ? 1 : 0, ov.cat || '', (ov.px || 0).toFixed ? (ov.px || 0).toFixed(1) : 0, (ov.py || 0).toFixed ? (ov.py || 0).toFixed(1) : 0, ov.pz || 1].join('|');
+    var ex = document.getElementById('zt-custom-detail');
+    if (ex && ex.getAttribute('data-zt-sig') === sig) return;
+    if (ex) ex.remove();
+    var wa = 'Finalizar Compra.dc.html?id=' + encodeURIComponent(pid) + '&cat=' + encodeURIComponent(ov.cat || '') + '&name=' + encodeURIComponent(ov.name || '') + '&usd=' + (ov.usd || 0);
+    var d = document.createElement('div');
+    d.id = 'zt-custom-detail';
+    d.setAttribute('data-zt-sig', sig);
+    d.className = 'det-grid';
+    d.style.cssText = 'display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:56px;align-items:stretch;animation:ztReveal .8s both;font-family:inherit;';
+    var col = document.createElement('div');
+    col.className = 'det-imgcol';
+    var box = document.createElement('div');
+    box.style.cssText = 'position:relative;height:100%;min-height:420px;border-radius:28px;overflow:hidden;background:linear-gradient(160deg,#F1ECE5,#E6DFD5);box-shadow:0 24px 70px -32px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;flex:1;';
+    if (ov.photo) { var im = document.createElement('img'); im.src = ov.photo; im.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;position:absolute;inset:0;transform:' + frameCss(ov) + ';'; box.appendChild(im); }
+    else { var ph = document.createElement('span'); ph.textContent = (ov.name || '?').charAt(0).toUpperCase(); ph.style.cssText = 'font-size:80px;font-weight:700;color:#C9BFB2;'; box.appendChild(ph); }
+    if (ov.sinStock) { var ch = document.createElement('span'); ch.textContent = 'SIN STOCK'; ch.style.cssText = 'position:absolute;top:16px;left:16px;background:rgba(201,80,42,.95);color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;padding:7px 14px;border-radius:980px;z-index:2;'; box.appendChild(ch); }
+    col.appendChild(box); d.appendChild(col);
+    makePhotoEditable(box, pid);
+    var info = document.createElement('div');
+    info.className = 'det-info';
+    info.style.cssText = 'display:flex;flex-direction:column;gap:11px;';
+    var eyeTxt = ov.sinStock ? 'SIN STOCK' : 'DISPONIBLE';
+    var eyeCol = ov.sinStock ? '#C9502A' : '#1F8A5B';
+    info.innerHTML = '<div style="font-size:12px;font-weight:700;letter-spacing:.24em;color:' + eyeCol + ';">' + eyeTxt + '</div>'
+      + '<h1 style="margin:0;font-size:clamp(28px,3.4vw,42px);font-weight:700;letter-spacing:-.04em;line-height:.98;color:#1D1D1F;"></h1>'
+      + '<div data-zd="bat" style="display:none;align-items:center;gap:16px;margin-top:2px;"><span style="position:relative;width:52px;height:19px;border:1.5px solid rgba(0,0,0,.32);border-radius:5px;display:inline-block;"><span data-zd="batfill" style="position:absolute;inset:2px;width:0;background:#1D1D1F;border-radius:3px;transition:width 1.1s cubic-bezier(.22,1,.36,1);"></span></span><span data-zd="battxt" style="font-size:16px;color:#6E6E73;"></span></div>'
+      + '<div style="display:flex;flex-direction:column;gap:2px;margin-top:2px;border-top:1px solid rgba(0,0,0,.08);">'
+        + '<div data-zd="specrow" style="display:none;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.08);font-size:14px;"><span style="color:#86868B;">Detalle</span><span data-zd="spec" style="font-weight:500;color:#1D1D1F;"></span></div>'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.08);font-size:14px;"><span style="color:#86868B;">Checking ICLUB</span><span style="font-weight:600;color:#1F8A5B;display:inline-flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F8A5B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>Pasado</span></div>'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.08);font-size:14px;"><span style="color:#86868B;">Garantía</span><span style="font-weight:500;color:#1D1D1F;">30 días</span></div>'
+      + '</div>'
+      + '<div style="display:flex;align-items:baseline;gap:12px;margin-top:8px;"><span style="font-size:30px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;color:#1D1D1F;">USD ' + fmtInt(ov.usd || 0) + '</span><span style="font-size:15px;color:#A1A1A6;">ARS ' + fmtInt((ov.usd || 0) * rate) + ' · precio final</span></div>'
+      + '<div style="display:flex;flex-direction:column;gap:9px;margin-top:8px;max-width:430px;">'
+        + '<a href="' + wa + '" target="_blank" rel="noopener" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:10px;height:50px;background:#1D1D1F;color:#fff;font-size:16.5px;font-weight:600;border-radius:16px;font-family:inherit;">Comprar ahora<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>'
+        + '<a href="Portal Clientes ZonaTech.dc.html#financiar" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:2px;color:#C9502A;font-size:14.5px;font-weight:600;font-family:inherit;">Consultar financiamiento en cuotas →</a>'
+        + '<div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;padding-top:14px;border-top:1px solid rgba(0,0,0,.08);">'
+          + '<div style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:#1D1D1F;"><span style="width:8px;height:8px;border-radius:50%;background:' + eyeCol + ';box-shadow:0 0 0 3px ' + (ov.sinStock ? 'rgba(201,80,42,.15)' : 'rgba(31,138,91,.15)') + ';flex-shrink:0;"></span><span><strong style="font-weight:600;">' + (ov.sinStock ? 'Sin stock' : 'En stock') + '</strong> <span style="color:#86868B;">· ' + (ov.sinStock ? 'consultanos por WhatsApp' : 'entrega inmediata') + '</span></span></div>'
+          + '<div style="font-size:13.5px;color:#6E6E73;">Envío a todo el país — despacho en el día, el envío se paga al recibir.</div>'
+        + '</div>'
+      + '</div>';
+    info.querySelector('h1').textContent = ov.name || '';
+    if (ov.spec) { var sr = info.querySelector('[data-zd="specrow"]'); sr.style.display = 'flex'; info.querySelector('[data-zd="spec"]').textContent = ov.spec; }
+    if (ov.bat) {
+      var br = info.querySelector('[data-zd="bat"]'); br.style.display = 'flex';
+      info.querySelector('[data-zd="battxt"]').textContent = 'Batería ' + ov.bat + '%';
+      var bf = info.querySelector('[data-zd="batfill"]');
+      setTimeout(function () { bf.style.width = Math.max(8, Math.min(100, ov.bat)) + '%'; }, 80);
+    }
+    d.appendChild(info);
+    sec.appendChild(d);
+  }
+
+
+  /* Productos del catálogo agregados también aparecen en "También te puede interesar" */
+  function injectRecCards(db, rate) {
+    var grids = document.querySelectorAll('.rec-grid');
+    if (!grids.length) return;
+    var path = decodeURIComponent(location.pathname);
+    var cats = path.indexOf('Producto Android') >= 0 ? ['Celulares'] : path.indexOf('Producto Smart TV') >= 0 ? ['Smart TV'] : ['Apple', 'Accesorios'];
+    var pid = productIdFromUrl();
+    var cat = db.catalog || {};
+    Array.prototype.forEach.call(grids, function (grid) {
+      Array.prototype.forEach.call(grid.querySelectorAll('[data-zt-reccustom]'), function (el) { el.remove(); });
+      Object.keys(cat).forEach(function (id) {
+        var o = cat[id] || {};
+        if (!o.custom || o.deleted || o.hidden) return;
+        if (cats.indexOf(o.cat) < 0 || id === pid) return;
+        var href = detailHrefFor(o.cat, id);
+        var d = document.createElement('div');
+        d.setAttribute('data-zt-reccustom', id);
+        d.style.cssText = 'position:relative;flex:0 0 232px;scroll-snap-align:start;background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;';
+        var imA = document.createElement('a'); imA.href = href; imA.style.cssText = 'display:block;text-decoration:none;';
+        var imB = document.createElement('div'); imB.style.cssText = 'height:210px;background:linear-gradient(160deg,#F3EEE8,#EDE7DF);display:flex;align-items:center;justify-content:center;';
+        if (o.photo) { imB.style.backgroundImage = 'url("' + o.photo + '")'; imB.style.backgroundSize = 'cover'; imB.style.backgroundPosition = 'center top'; }
+        else { var ph = document.createElement('span'); ph.textContent = (o.name || '?').charAt(0).toUpperCase(); ph.style.cssText = 'font-size:44px;font-weight:700;color:#C9BFB2;'; imB.appendChild(ph); }
+        if (o.sinStock) { var sk = document.createElement('span'); sk.textContent = 'SIN STOCK'; sk.style.cssText = 'position:absolute;top:12px;left:12px;background:rgba(201,80,42,.95);color:#fff;font-size:10px;font-weight:700;letter-spacing:.08em;padding:5px 10px;border-radius:980px;z-index:2;'; d.appendChild(sk); }
+        imA.appendChild(imB); d.appendChild(imA);
+        var body = document.createElement('div');
+        body.style.cssText = 'padding:14px 16px 16px;display:flex;flex-direction:column;gap:2px;flex:1;font-family:inherit;';
+        var wa = 'https://wa.me/5493814680653?text=' + encodeURIComponent('Hola! Quiero comprar el ' + (o.name || '') + ' (USD ' + fmtInt(o.usd || 0) + ').');
+        body.innerHTML = '<a style="text-decoration:none;color:inherit;font-size:15px;font-weight:600;letter-spacing:-.01em;"></a>'
+          + '<span style="font-size:12.5px;color:#86868B;">' + (o.bat ? 'Batería ' + o.bat + '%' : '&nbsp;') + '</span>'
+          + '<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:auto;padding-top:12px;">'
+            + '<div style="display:flex;flex-direction:column;"><span style="font-size:18px;font-weight:700;letter-spacing:-.02em;color:#1D1D1F;">USD ' + fmtInt(o.usd || 0) + '</span><span style="font-size:12px;color:#A1A1A6;font-weight:500;">ARS ' + fmtInt((o.usd || 0) * rate) + '</span></div>'
+            + '<a href="' + wa + '" target="_blank" rel="noopener" aria-label="Comprar por WhatsApp" style="flex:0 0 auto;width:40px;height:40px;border-radius:980px;border:1.5px solid rgba(0,0,0,.12);background:#fff;display:inline-flex;align-items:center;justify-content:center;color:#1D1D1F;text-decoration:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>'
+          + '</div>';
+        var nm = body.querySelector('a'); nm.href = href; nm.textContent = o.name || '';
+        d.appendChild(body);
+        grid.appendChild(d);
+      });
+    });
+  }
+
+  /* Flechas de carrusel para "También te puede interesar" */
+  function enhanceRecCarousels() {
+    Array.prototype.forEach.call(document.querySelectorAll('.rec-grid'), function (grid) {
+      var block = (grid.closest && grid.closest('.rec-block')) || grid.parentNode;
+      if (!block) return;
+      var upd = function () {
+        var can = grid.scrollWidth > grid.clientWidth + 4;
+        var L = block.querySelector('[data-zt-arr="l"]'), R = block.querySelector('[data-zt-arr="r"]');
+        if (L) L.style.display = (can && grid.scrollLeft > 4) ? 'inline-flex' : 'none';
+        if (R) R.style.display = (can && grid.scrollLeft < grid.scrollWidth - grid.clientWidth - 4) ? 'inline-flex' : 'none';
+      };
+      if (!grid.getAttribute('data-zt-carousel')) {
+        grid.setAttribute('data-zt-carousel', '1');
+        block.style.position = 'relative';
+        ['l', 'r'].forEach(function (dir) {
+          var b = document.createElement('button');
+          b.setAttribute('data-zt-arr', dir);
+          b.setAttribute('aria-label', dir === 'l' ? 'Anterior' : 'Siguiente');
+          b.style.cssText = 'position:absolute;top:calc(50% + 30px);' + (dir === 'l' ? 'left:-16px;' : 'right:-16px;') + 'transform:translateY(-50%);width:46px;height:46px;border-radius:980px;border:1px solid rgba(0,0,0,.08);background:#fff;box-shadow:0 12px 30px -12px rgba(0,0,0,.35);cursor:pointer;display:none;align-items:center;justify-content:center;color:#1D1D1F;z-index:5;';
+          b.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="' + (dir === 'l' ? 'M15 18l-6-6 6-6' : 'M9 6l6 6-6 6') + '"></path></svg>';
+          b.addEventListener('click', function () { grid.scrollBy({ left: (dir === 'l' ? -1 : 1) * Math.max(246, grid.clientWidth - 80), behavior: 'smooth' }); });
+          block.appendChild(b);
+        });
+        grid.addEventListener('scroll', upd, { passive: true });
+        window.addEventListener('resize', upd);
+      }
+      setTimeout(upd, 60);
+    });
+  }
+
+  function updateNav(db) {
+    var panels = {
+      Apple: document.querySelector('[data-zt-dd="apple"]'),
+      Accesorios: document.querySelector('[data-zt-dd="acc"]'),
+      Celulares: document.querySelector('[data-zt-dd="cel"]'),
+      'Smart TV': document.querySelector('[data-zt-dd="tv"]')
+    };
+    if (!panels.Apple && !panels.Celulares) return;
+    var pages = { Apple: 'Apple ZonaTech.dc.html', Accesorios: 'Apple ZonaTech.dc.html', Celulares: 'Android ZonaTech.dc.html', 'Smart TV': 'Smart TV ZonaTech.dc.html' };
+    var cat = db.catalog || {};
+    Object.keys(cat).forEach(function (id) {
+      var ov = cat[id] || {};
+      if (ov.custom) {
+        var panel = panels[ov.cat] || panels.Celulares;
+        if (!panel) return;
+        var ex = panel.querySelector('[data-zt-navc="' + id + '"]');
+        if (ov.hidden || ov.deleted) { if (ex) ex.remove(); return; }
+        var a = ex || document.createElement('a');
+        a.setAttribute('data-zt-navc', id);
+        a.setAttribute('href', detailHrefFor(ov.cat, id));
+        a.textContent = '';
+        a.appendChild(document.createTextNode(ov.name || ''));
+        var all = panel.querySelector('.zt-dd-all');
+        a.setAttribute('data-zt-pos', ov.pos != null ? ov.pos : 9999);
+        if (!a.parentNode) { if (all) panel.insertBefore(a, all); else panel.appendChild(a); }
+        var customLinks = Array.prototype.filter.call(panel.querySelectorAll('a[data-zt-navc]'), function (el) { return true; });
+        customLinks.sort(function (x, y) { return (+x.getAttribute('data-zt-pos') || 0) - (+y.getAttribute('data-zt-pos') || 0); });
+        customLinks.forEach(function (el) { el.remove(); });
+        customLinks.forEach(function (el) {
+          var pos = parseInt(el.getAttribute('data-zt-pos'), 10);
+          var links = Array.prototype.filter.call(panel.querySelectorAll('a'), function (l) { return !l.classList.contains('zt-dd-all') && l.style.display !== 'none'; });
+          if (!isNaN(pos) && pos < links.length) panel.insertBefore(el, links[pos]);
+          else if (all) panel.insertBefore(el, all);
+          else panel.appendChild(el);
+        });
+        return;
+      }
+      // producto base: ocultar / renombrar el link existente
+      var link = null;
+      document.querySelectorAll('.zt-dd-panel a').forEach(function (el) {
+        var h = el.getAttribute('href') || '';
+        if (h.indexOf('?m=' + id) !== -1 || h.indexOf('?id=' + id) !== -1 || h.indexOf('#card-' + id) !== -1) link = el;
+      });
+      if (!link) return;
+      if (ov.hidden || ov.deleted) { link.style.display = 'none'; return; }
+      link.style.display = '';
+      if (ov.name && link.firstChild && link.firstChild.nodeType === 3) link.firstChild.nodeValue = ov.name + ' ';
+    });
+  }
+
+  function apply(db) {
+    if (!db) return;
+    updateNav(db);
+    var cat = db.catalog || {};
+    var st = db.settings || {};
+    var rate = st.rate || 1520;
+    Object.keys(cat).forEach(function (id) {
+      var ov = cat[id] || {};
+      if (ov.custom) { injectCustomCard(id, ov, rate); return; }
+      var slot = null;
+      ['apple-' + id, 'and-' + id, 'acc-' + id, id].some(function (sid) {
+        var el = document.getElementById(sid);
+        if (el && el.tagName && el.tagName.toLowerCase() === 'image-slot') { slot = el; return true; }
+        return false;
+      });
+      if (!slot) return;
+      var card = findCard(slot);
+      if (!card) return;
+      if (ov.hidden) {
+        if (card.style.display !== 'none') card.setAttribute('data-zt-disp', card.style.display || '');
+        card.style.display = 'none';
+        return;
+      }
+      if (card.style.display === 'none') card.style.display = card.getAttribute('data-zt-disp') || '';
+      if (ov.usd) setPrices(card, ov.usd, rate);
+      if (ov.sinStock) markSinStock(card);
+      else {
+        var chip = card.querySelector('[data-zt-nostock]');
+        if (chip) { chip.remove(); card.style.opacity = ''; }
+      }
+      if (ov.photo) setPhoto(slot, ov.photo);
+    });
+    injectCustomDetail(db, rate);
+    injectRecCards(db, rate);
+    enhanceRecCarousels();
+    scheduleOrphans();
+    // portada (carrusel)
+    var track = document.getElementById('ztc-track');
+    if (track && st.hero) {
+      var hrefs = { apple: 'Apple ZonaTech.dc.html', celulares: 'Android ZonaTech.dc.html', tv: 'Smart TV ZonaTech.dc.html' };
+      var slides = track.querySelectorAll('.ztc-slide');
+      st.hero.forEach(function (h, i) {
+        var sl = slides[i];
+        if (!sl || !h) return;
+        var h2 = sl.querySelector('h2');
+        if (h2 && h.t) h2.textContent = h.t;
+        var ps = sl.querySelectorAll('.ztc-text > p');
+        if (ps.length && h.s) {
+          ps[ps.length - 1].textContent = h.s;
+          for (var pi = 0; pi < ps.length - 1; pi++) {
+            if ((ps[pi].textContent || '').trim() === String(h.s).trim()) ps[pi].style.setProperty('display', 'none', 'important');
+          }
+        }
+        var href = null;
+        if (h.dest && String(h.dest).indexOf('prod:') === 0) {
+          var dp = String(h.dest).split(':');
+          var did = dp[1];
+          while (did.indexOf('tv-tv-') === 0) did = did.slice(3);
+          while (did.indexOf('and-and-') === 0) did = did.slice(4);
+          href = detailHrefFor(dp.slice(2).join(':'), did);
+        } else if (h.dest && hrefs[h.dest]) href = hrefs[h.dest];
+        if (href) sl.querySelectorAll('a').forEach(function (a) { a.setAttribute('href', href); });
+      });
+    }
+    // si el título de una diapositiva coincide con un producto del catálogo, Comprar/Más info van directo a su tarjeta
+    if (track) {
+      var pagesH = { Apple: 'Apple ZonaTech.dc.html', Accesorios: 'Apple ZonaTech.dc.html', Celulares: 'Android ZonaTech.dc.html', 'Smart TV': 'Smart TV ZonaTech.dc.html' };
+      Array.prototype.forEach.call(track.querySelectorAll('.ztc-slide'), function (sl, si) {
+        if (st.hero && st.hero[si] && String(st.hero[si].dest || '').indexOf('prod:') === 0) return;
+        var h2b = sl.querySelector('h2');
+        var t = h2b ? (h2b.textContent || '').trim().toLowerCase() : '';
+        if (!t) return;
+        var hit = null;
+        Object.keys(cat).forEach(function (id) {
+          var o = cat[id] || {};
+          if (o.custom && !o.hidden && !o.deleted && String(o.name || '').trim().toLowerCase() === t) hit = { id: id, cat: o.cat };
+        });
+        if (!hit) return;
+        var hrefP = detailHrefFor(hit.cat, hit.id);
+        sl.querySelectorAll('a').forEach(function (a) { a.setAttribute('href', hrefP); });
+      });
+    }
+    scrollToHash();
+  }
+
+  var hashScrolled = false;
+  function scrollToHash() {
+    if (hashScrolled) return;
+    var h = location.hash;
+    if (!h || h.indexOf('#zt-custom-') !== 0) return;
+    var el = document.getElementById(h.slice(1));
+    if (!el) return;
+    hashScrolled = true;
+    var y = el.getBoundingClientRect().top + window.pageYOffset - 90;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+  }
+
+  /* Si una grilla deja 1 sola tarjeta en la última fila, pasa a fila
+     deslizable con flecha para que no quede suelta. */
+  function fixOrphanRows() {
+    var cards = document.querySelectorAll('a.cat-card, [data-appl-card], [data-zt-custom]');
+    var grids = [];
+    Array.prototype.forEach.call(cards, function (c) {
+      var g = c.parentElement;
+      if (g && grids.indexOf(g) === -1 && g.getAttribute('data-zt-carousel') !== 'wrap') grids.push(g);
+    });
+    grids.forEach(function (grid) {
+      if (!grid.getAttribute('data-zt-orig')) grid.setAttribute('data-zt-orig', grid.style.cssText);
+      var wrapEl = grid.parentElement && grid.parentElement.getAttribute('data-zt-carousel') === 'wrap' ? grid.parentElement : null;
+      // restore to measure
+      grid.style.cssText = grid.getAttribute('data-zt-orig');
+      Array.prototype.forEach.call(grid.children, function (ch) { ch.style.flex = ''; ch.style.minWidth = ''; ch.style.maxWidth = ''; });
+      if (wrapEl) { var arr = wrapEl.querySelector('[data-zt-car-arrow]'); if (arr) arr.style.display = 'none'; }
+      var cs = getComputedStyle(grid);
+      if (cs.display !== 'grid') return;
+      var cols = cs.gridTemplateColumns.split(' ').filter(Boolean).length;
+      var n = Array.prototype.filter.call(grid.children, function (ch) { return ch.offsetParent !== null || ch.style.display !== 'none'; }).length;
+      if (!(cols > 1 && n > cols && n % cols === 1)) return;
+      // carousel mode
+      var gap = parseFloat(cs.columnGap) || 20;
+      grid.style.display = 'flex';
+      grid.style.gap = gap + 'px';
+      grid.style.overflowX = 'auto';
+      grid.style.scrollSnapType = 'x mandatory';
+      grid.style.scrollbarWidth = 'none';
+      grid.style.paddingBottom = '6px';
+      Array.prototype.forEach.call(grid.children, function (ch) {
+        ch.style.flex = '0 0 calc((100% - ' + (gap * (cols - 1)) + 'px)/' + cols + ')';
+        ch.style.scrollSnapAlign = 'start';
+      });
+      if (!wrapEl) {
+        wrapEl = document.createElement('div');
+        wrapEl.setAttribute('data-zt-carousel', 'wrap');
+        wrapEl.style.cssText = 'position:relative;';
+        grid.parentElement.insertBefore(wrapEl, grid);
+        wrapEl.appendChild(grid);
+      }
+      var arrow = wrapEl.querySelector('[data-zt-car-arrow]');
+      if (!arrow) {
+        arrow = document.createElement('button');
+        arrow.setAttribute('data-zt-car-arrow', '');
+        arrow.setAttribute('aria-label', 'Ver más');
+        arrow.style.cssText = 'position:absolute;top:50%;right:-8px;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;border:none;background:rgba(255,255,255,.92);box-shadow:0 10px 30px -8px rgba(0,0,0,.25),0 2px 6px rgba(0,0,0,.08);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:4;transition:transform .25s, box-shadow .25s;';
+        arrow.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>';
+        arrow.addEventListener('mouseenter', function () { arrow.style.transform = 'translateY(-50%) scale(1.08)'; });
+        arrow.addEventListener('mouseleave', function () { arrow.style.transform = 'translateY(-50%)'; });
+        arrow.addEventListener('click', function () {
+          var card = grid.children[0];
+          var step = card ? card.getBoundingClientRect().width + 20 : 260;
+          var max = grid.scrollWidth - grid.clientWidth;
+          grid.scrollTo({ left: grid.scrollLeft >= max - 10 ? 0 : grid.scrollLeft + step, behavior: 'smooth' });
+        });
+        wrapEl.appendChild(arrow);
+        var updDir = function () {
+          var max = grid.scrollWidth - grid.clientWidth;
+          arrow.firstChild.style.transform = grid.scrollLeft >= max - 10 ? 'rotate(180deg)' : '';
+        };
+        grid.addEventListener('scroll', updDir, { passive: true });
+      }
+      arrow.style.display = 'flex';
+    });
+  }
+  var orphT = null;
+  function scheduleOrphans() { clearTimeout(orphT); orphT = setTimeout(fixOrphanRows, 250); }
+  window.addEventListener('resize', scheduleOrphans);
+
+  function productIdFromUrl() {
+    try {
+      var q = new URLSearchParams(location.search);
+      return q.get('m') || q.get('id') || null;
+    } catch (e) { return null; }
+  }
+
+  var counted = false;
+  function countVisit(db, remoteOk) {
+    var pid = productIdFromUrl();
+    if (!pid || counted || !db) return;
+    counted = true;
+    db.stats = db.stats || {};
+    db.stats[pid] = (db.stats[pid] || 0) + 1;
+    try { localStorage.setItem(LS, JSON.stringify(db)); } catch (e) {}
+    if (remoteOk) pushRemote(db);
+  }
+
+  var local = getLocal();
+  var tries = 0;
+  var iv = setInterval(function () {
+    tries++;
+    apply(local);
+    scheduleOrphans();
+    if (tries > 25) clearInterval(iv);
+  }, 800);
+  fetchRemote(function (db, ok) {
+    if (db) { local = db; apply(db); }
+    countVisit(db || local, ok);
+  });
+})();
