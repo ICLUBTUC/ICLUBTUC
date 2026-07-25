@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script type="application/json" data-image-slots-preload>{"nav-thumb-16promax":{"u":"data:image/webp;base64,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","s":1,"x":0,"y":0}}</script>
+<script src="./image-slot.js"></script>
+<link rel="preload" href="./imageslots.state.json" as="fetch" crossorigin="anonymous">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  @view-transition{navigation:auto}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:#FAFAF9;color:#1D1D1F;font-family:'Plus Jakarta Sans',-apple-system,system-ui,'Helvetica Neue',sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(760px circle at 88% 8%, rgba(120,120,120,.07), transparent 62%),radial-gradient(820px circle at 8% 92%, rgba(120,120,120,.06), transparent 62%),radial-gradient(600px circle at 50% 45%, rgba(120,120,120,.035), transparent 65%);}
+  @keyframes ztReveal{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  @keyframes ztFade{from{opacity:0}to{opacity:1}}
+  #zt-chat{transform-origin:bottom right; opacity:0; transform:translateY(12px) scale(.94); pointer-events:none; transition:opacity .32s cubic-bezier(.22,1,.36,1), transform .32s cubic-bezier(.22,1,.36,1);}
+  #zt-wsp-wrap.zt-chat-open #zt-chat{opacity:1; transform:none; pointer-events:auto;}
+  #zt-wsp-wrap{opacity:0; transform:translateY(22px) scale(.9); pointer-events:none; transition:opacity .55s cubic-bezier(.22,1,.36,1), transform .55s cubic-bezier(.22,1,.36,1);}
+  #zt-wsp-wrap.zt-wsp-ready{opacity:1; transform:none; pointer-events:auto;}
+  #zt-chat.zt-dragging{transition:none !important;}
+  #zt-scroll-hint{position:fixed; left:50%; bottom:56px; transform:translateX(-50%); z-index:55; display:flex; flex-direction:column; align-items:center; gap:5px; padding:8px 15px; border-radius:980px; background:rgba(29,29,31,.82); color:#fff; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); box-shadow:0 10px 30px -12px rgba(0,0,0,.4); font-size:11.5px; font-weight:600; letter-spacing:.02em; pointer-events:none; opacity:0; transition:opacity .5s ease; animation:ztHintBob 1.7s ease-in-out infinite;}
+  #zt-scroll-hint.zt-hint-show{opacity:1;}
+  @keyframes ztHintBob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,5px)}}
+  .zt-topnav a{position:relative; color:rgba(255,255,255,.72); text-decoration:none; font-size:15px; font-weight:600; letter-spacing:-.01em; padding:10px 16px; border-radius:10px; transition:background .25s, color .25s; white-space:nowrap;}
+  .zt-topnav a:hover{background:rgba(255,255,255,.08); color:#fff;}
+  .zt-nav-item{position:relative;}
+  .zt-nav-item > a{display:inline-flex; align-items:center; gap:6px;}
+  .zt-caret{opacity:.5; transition:transform .28s cubic-bezier(.22,1,.36,1), opacity .2s;}
+  .zt-nav-item:hover .zt-caret{transform:rotate(180deg); opacity:1;}
+  .zt-dd{position:absolute; top:100%; left:50%; transform:translate(-50%,10px); padding-top:12px; opacity:0; pointer-events:none; transition:opacity .22s ease, transform .26s cubic-bezier(.22,1,.36,1); z-index:60;}
+  .zt-nav-item:hover .zt-dd, .zt-nav-item:focus-within .zt-dd{opacity:1; pointer-events:auto; transform:translate(-50%,0);}
+  .zt-dd-panel{min-width:236px; background:rgba(21,21,23,.97); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:10px; box-shadow:0 30px 70px -20px rgba(0,0,0,.7), 0 2px 0 rgba(255,255,255,.05) inset; display:flex; flex-direction:column;}
+  .zt-dd-label{font-size:10.5px; font-weight:700; letter-spacing:.18em; color:rgba(255,255,255,.38); padding:8px 12px 7px;}
+  .zt-dd-panel a{display:flex; align-items:center; justify-content:space-between; gap:16px; padding:10px 12px; border-radius:10px; text-decoration:none; color:rgba(255,255,255,.85); font-size:14.5px; font-weight:600; letter-spacing:-.01em; transition:background .2s, color .2s; white-space:nowrap;}
+  .zt-dd-panel a em{font-style:normal; font-size:11.5px; font-weight:600; color:rgba(255,255,255,.35);}
+  .zt-dd-panel a:hover{background:rgba(255,255,255,.09); color:#fff;}
+  .zt-dd-panel a.zt-dd-all{margin-top:6px; border-top:1px solid rgba(255,255,255,.09); border-radius:0 0 12px 12px; color:#7CC7FF;}
+  .zt-dd-panel a.zt-dd-all:hover{background:rgba(90,200,250,.15); color:#A5D8FF;}
+  .zt-topnav a.zt-nav-active{color:#fff;}
+  .zt-topnav a.zt-nav-active::after{content:'';position:absolute; left:16px; right:16px; bottom:4px; height:2px; border-radius:2px; background:linear-gradient(90deg,#5AC8FA,#0A84FF);}
+  .zt-acct{display:inline-flex; align-items:center; gap:9px; text-decoration:none; color:#fff; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); border-radius:980px; padding:7px 16px 7px 8px; transition:background .25s, border-color .25s;}
+  .zt-acct:hover{background:rgba(255,255,255,.18); border-color:rgba(255,255,255,.28); color:#fff;}
+  .zt-burger{display:none; background:none; border:none; cursor:pointer; padding:9px; color:#fff; border-radius:9px;}
+  .zt-burger:hover{background:rgba(255,255,255,.11);}
+  .zt-mobile-menu{display:none; flex-direction:column; background:#111112; border-top:1px solid rgba(255,255,255,.08); padding:6px 20px 16px;}
+  .zt-mobile-menu.open{display:flex; animation:ztFade .25s ease both;}
+  .zt-mobile-menu a{color:rgba(255,255,255,.9); text-decoration:none; font-size:16px; font-weight:600; padding:15px 4px; border-bottom:1px solid rgba(255,255,255,.07); display:flex; align-items:center; justify-content:space-between;}
+  .zt-mobile-menu a:last-child{border-bottom:none;}
+  @media (max-width:880px){
+    .zt-topnav{display:none !important;}
+    .zt-burger{display:inline-flex !important;}
+    .zt-acct-text{display:none !important;}
+    .zt-acct{padding:8px !important; gap:0 !important;}
+  }
+  @media (max-width:680px){
+    .det-nav{padding:16px 18px !important;}
+  }
+  @media (max-width:840px){
+    .nav-promo{display:none !important;}
+  }
+  @media (max-width:480px){
+    .nav-account{padding:8px 13px 8px 9px !important;}
+  }
+  @media (max-width:480px){
+    .nav-promo-thumb{width:48px !important; height:60px !important;}
+    .nav-promo-text{font-size:11px !important;}
+    .nav-promo-text b{font-size:12.5px !important;}
+  }
+  @media (max-width:700px){
+    /* Mobile keeps the SAME animated hero as desktop — these overrides only
+       compact the layout so the floating phone has a clean band to live in. */
+    #zt-hero{height:74vh !important; min-height:600px !important;}
+    h1.zt-title{font-size:15vw !important;}
+    #zt-hero-title{top:4vh !important;}
+    #zt-cards{display:grid !important; grid-template-columns:1fr 1fr !important; grid-template-rows:auto 1fr !important; align-content:end !important; gap:10px !important; padding:0 14px !important; bottom:2vh !important;}
+    #zt-cards [data-zt-intro]{grid-column:1 / -1 !important; margin-bottom:2px !important;}
+    #zt-cards a{width:auto !important; height:100% !important; align-self:stretch !important; padding:16px 15px !important; gap:9px !important; border-radius:18px !important;}
+    #zt-cards a span:first-child{width:36px !important; height:36px !important; border-radius:11px !important;}
+    #zt-cards a span:first-child svg{width:20px; height:20px;}
+    #zt-cards a span:nth-child(2){font-size:15px !important;}
+    #zt-cards a span:nth-child(3){font-size:11.5px !important;}
+    #zt-phone{max-width:74vw !important;}
+  }
+  @media (max-width:700px){
+    #novedades{padding-top:80px !important;}
+    [data-nv-head] h3{font-size:20px !important;}
+    [data-nv-viewall]{font-size:13px !important; padding:7px 13px !important;}
+    [data-nv-card]{display:grid !important; grid-template-columns:96px 1fr !important; align-items:center !important; gap:5px 15px !important; padding:13px !important; border-radius:20px !important;}
+    [data-nv-card] [data-nv-img]{grid-row:1 / span 3; width:96px !important; height:96px !important; aspect-ratio:auto !important; border-radius:15px !important;}
+    [data-nv-card] [data-nv-eyebrow]{font-size:10px !important; letter-spacing:.13em !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    [data-nv-card] h4{font-size:16.5px !important;}
+    [data-nv-case]{padding:30px 22px !important; gap:28px !important;}
+    [data-nv-stats]{gap:10px !important;}
+    [data-nv-stats] > div{padding:16px 14px !important;}
+    [data-nv-stats] [data-nv-statval]{font-size:23px !important;}
+  }
+  .ztc-viewport{overflow:hidden;}
+  .ztc-track{display:flex; transition:transform .6s cubic-bezier(.22,1,.36,1); will-change:transform;}
+  .ztc-slide{min-width:100%; box-sizing:border-box;}
+  .ztc-slide-inner{display:grid; grid-template-columns:1.02fr 1fr; align-items:center; gap:clamp(24px,4vw,56px); max-width:1240px; margin:0 auto; padding:44px 78px; min-height:calc(100vh - 72px); box-sizing:border-box;}
+  .ztc-img{height:min(52vh,520px);}
+  .ztc-img img{height:100%; width:100%; object-fit:contain; filter:drop-shadow(0 24px 34px rgba(20,20,22,.16)) drop-shadow(0 4px 8px rgba(20,20,22,.07));}
+  .ztc-text{display:flex; flex-direction:column; align-items:flex-start; gap:16px;}
+  .ztc-dot{width:9px; height:9px; border-radius:50%; background:rgba(0,0,0,.2); border:none; padding:0; cursor:pointer; transition:background .3s, transform .3s;}
+  .ztc-dot.active{background:#1D1D1F; transform:scale(1.3);}
+  .ztc-arrow{position:absolute; top:50%; z-index:20; transform:translateY(-50%); width:46px; height:46px; border-radius:50%; background:rgba(255,255,255,.72); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border:1px solid rgba(0,0,0,.06); display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:4; box-shadow:0 6px 18px -8px rgba(0,0,0,.25); transition:background .25s, transform .25s;}
+  .ztc-arrow:hover{background:#fff; transform:translateY(-50%) scale(1.06);}
+  @media (max-width:760px){
+    .ztc-slide-inner{grid-template-columns:1fr !important; text-align:center; padding:26px 22px 30px !important; gap:20px !important; min-height:calc(100vh - 64px) !important; align-content:center;}
+    .ztc-text{align-items:center !important;}
+    .ztc-arrow{display:none !important;}
+    .ztc-img{height:min(42vh,360px) !important; order:-1;}
+  }
+  #zt-carousel{background:#fff;}
+  [data-nv-card] [data-nv-img]{position:relative !important;}
+  [data-nv-card] [data-nv-img] image-slot{position:absolute !important; inset:0 !important; top:0 !important; left:0 !important; width:100% !important; height:100% !important;}
+</style>
+<script src="./zt-live.js"></script>
+</helmet>
+
+<header class="zt-topbar" style="position:sticky; top:0; z-index:40; background:linear-gradient(180deg,#151517,#0D0D0E); box-shadow:0 1px 0 rgba(255,255,255,.07), 0 12px 30px -18px rgba(0,0,0,.6); animation:ztFade .6s both;">
+  <div style="display:flex; align-items:center; gap:22px; max-width:1420px; margin:0 auto; padding:0 30px; height:76px;">
+    <a href="Hero ZonaTech.dc.html" style="display:inline-flex; align-items:center; gap:10px; text-decoration:none; flex-shrink:0;">
+      <span style="width:34px; height:34px; border-radius:10px; background:linear-gradient(145deg,#5AC8FA,#0A84FF); box-shadow:0 6px 16px -6px rgba(10,132,255,.55); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:18px;">I</span>
+      <span style="font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:700; letter-spacing:.14em; color:#fff;">ICLUB</span>
+    </a>
+    <div style="width:1px; height:26px; background:rgba(255,255,255,.12); margin:0 2px 0 4px;"></div>
+    <nav class="zt-topnav" style="display:flex; align-items:center; gap:2px;">
+      <div class="zt-nav-item">
+        <a href="Apple ZonaTech.dc.html">iPhone <svg class="zt-caret" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></a>
+        <div class="zt-dd"><div class="zt-dd-panel" data-zt-dd="apple">
+          <div class="zt-dd-label">MODELOS</div>
+          <a href="Producto ZonaTech.dc.html?m=iphone13">iPhone 13</a>
+          <a href="Producto ZonaTech.dc.html?m=iphone15">iPhone 15</a>
+          <a href="Producto ZonaTech.dc.html?m=iphone16pro">iPhone 16 Pro</a>
+          <a class="zt-dd-all" href="Apple ZonaTech.dc.html">Ver todos los iPhone</a>
+        </div></div>
+      </div>
+      <div class="zt-nav-item">
+        <a href="Apple ZonaTech.dc.html#card-airpodsmax">Accesorios <svg class="zt-caret" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></a>
+        <div class="zt-dd"><div class="zt-dd-panel" data-zt-dd="acc">
+          <div class="zt-dd-label">ACCESORIOS</div>
+          <a href="Apple ZonaTech.dc.html#card-airpodsmax">AirPods Max <em>Nuevo</em></a>
+          <a href="Apple ZonaTech.dc.html#card-ipad11">iPad 11ª gen <em>Nuevo</em></a>
+          <a class="zt-dd-all" href="Apple ZonaTech.dc.html#card-airpodsmax">Ver todos</a>
+        </div></div>
+      </div>
+      <div class="zt-nav-item">
+        <a href="Android ZonaTech.dc.html">Celulares <svg class="zt-caret" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></a>
+        <div class="zt-dd"><div class="zt-dd-panel" data-zt-dd="cel">
+          <div class="zt-dd-label">MARCAS</div>
+          <a href="Android ZonaTech.dc.html#and-sec-samsung">Samsung</a>
+          <a href="Android ZonaTech.dc.html#and-sec-xiaomi">Xiaomi</a>
+          <a href="Android ZonaTech.dc.html#and-sec-poco">Poco</a>
+          <a href="Android ZonaTech.dc.html#and-sec-motorola">Motorola</a>
+          <a href="Android ZonaTech.dc.html#and-sec-infinix">Infinix</a>
+          <a class="zt-dd-all" href="Android ZonaTech.dc.html">Ver todos los celulares</a>
+        </div></div>
+      </div>
+      <div class="zt-nav-item">
+        <a href="Smart TV ZonaTech.dc.html">Smart TV <svg class="zt-caret" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></a>
+        <div class="zt-dd"><div class="zt-dd-panel" data-zt-dd="tv">
+          <div class="zt-dd-label">TELEVISORES</div>
+          <a href="Producto Smart TV.dc.html?id=tv-ecopower">EcoPower <em>Smart</em></a>
+          <a href="Producto Smart TV.dc.html?id=tv-rca-40">RCA 40&quot; <em>Smart</em></a>
+          <a href="Producto Smart TV.dc.html?id=tv-philco-58">Philco 58&quot; <em>Smart 4K</em></a>
+          <a class="zt-dd-all" href="Smart TV ZonaTech.dc.html">Ver todos los Smart TV</a>
+        </div></div>
+      </div>
+      <a href="Portal Clientes ZonaTech.dc.html#financiar">Cotizador</a>
+    </nav>
+    <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+      <button class="zt-search-btn" aria-label="Buscar" style="width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.1); border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg></button>
+      <a class="zt-acct" href="Portal Clientes ZonaTech.dc.html">
+        <span style="width:32px; height:32px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#1D1D1F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.2" r="3.4"></circle><path d="M4.8 19.5c1.35-3.2 4-4.7 7.2-4.7s5.85 1.5 7.2 4.7"></path></svg>
+        </span>
+        <span class="zt-acct-text" style="font-size:15.5px; font-weight:600; letter-spacing:-.01em; color:#fff; white-space:nowrap;">Mi cuenta</span>
+      </a>
+      <button class="zt-burger" id="zt-burger" aria-label="Menú">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+    </div>
+  </div>
+  <div class="zt-mobile-menu" id="zt-mobile-menu">
+    <a href="Apple ZonaTech.dc.html">iPhone <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></a>
+    <a href="Apple ZonaTech.dc.html#card-airpodsmax">Accesorios <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></a>
+    <a href="Android ZonaTech.dc.html">Celulares <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></a>
+    <a href="Smart TV ZonaTech.dc.html">Smart TV <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></a>
+    <a href="Portal Clientes ZonaTech.dc.html#financiar">Cotizador <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></a>
+    <a href="Portal Clientes ZonaTech.dc.html">Mi cuenta <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></a>
+  </div>
+</header>
+
+<section id="zt-carousel" style="position:relative; z-index:3; background:#fff;">
+  <div class="ztc-viewport">
+    <div class="ztc-track" id="ztc-track">
+
+      <div class="ztc-slide" style="background:#fff;">
+        <div class="ztc-slide-inner">
+          <div class="ztc-text">
+            <span style="font-size:15px; font-weight:700; letter-spacing:.34em; color:#C9502A;">NUEVO INGRESO</span>
+            <h2 style="margin:0; font-size:clamp(36px,4.5vw,56px); font-weight:700; letter-spacing:-.035em; line-height:1.04; color:#1D1D1F;">iPhone 17 Pro</h2>
+            <p style="margin:0; font-size:22px; font-weight:700; color:#1D1D1F; letter-spacing:-.01em;">El Pro de los Pro.</p>
+            <p style="margin:0; font-size:21px; color:#6E6E73; line-height:1.45; max-width:430px;">Potencia y diseño. Poder de alto vuelo.</p>
+            <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin-top:6px;">
+              <a href="Apple ZonaTech.dc.html" style="display:inline-flex; align-items:center; text-decoration:none; background:#0A84FF; color:#fff; border-radius:980px; padding:14px 34px; font-size:16px; font-weight:600; box-shadow:0 12px 30px -12px rgba(10,132,255,.55); transition:transform .35s cubic-bezier(.22,1,.36,1);" style-hover="transform:translateY(-2px);">Comprar</a>
+              <a href="Apple ZonaTech.dc.html" style="display:inline-flex; align-items:center; gap:7px; text-decoration:none; color:#1D1D1F; font-size:16px; font-weight:600;">Más info <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></a>
+            </div>
+          </div>
+          <div class="ztc-img" style="height:min(52vh,520px); display:flex; align-items:center; justify-content:center;">
+            <img src="iphone17pro-cutout.png" alt="iPhone 17 Pro" style="max-width:100%; max-height:100%; width:auto; object-fit:contain; display:block;">
+          </div>
+        </div>
+      </div>
+
+      <div class="ztc-slide" style="background:#fff;">
+        <div class="ztc-slide-inner">
+          <div class="ztc-text">
+            <span style="font-size:14px; font-weight:700; letter-spacing:.34em; color:#C9502A;">DESTACADO</span>
+            <h2 style="margin:0; font-size:clamp(32px,4vw,50px); font-weight:700; letter-spacing:-.035em; line-height:1.04; color:#1D1D1F;">Smart TV 4K</h2>
+            <p style="margin:0; font-size:19px; color:#6E6E73; line-height:1.45; max-width:400px;">Viví el cine en casa. Imagen ultra nítida en cada pulgada.</p>
+            <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin-top:6px;">
+              <a href="Smart TV ZonaTech.dc.html" style="display:inline-flex; align-items:center; text-decoration:none; background:#0A84FF; color:#fff; border-radius:980px; padding:14px 34px; font-size:16px; font-weight:600; box-shadow:0 12px 30px -12px rgba(10,132,255,.55); transition:transform .35s cubic-bezier(.22,1,.36,1);" style-hover="transform:translateY(-2px);">Comprar</a>
+              <a href="Smart TV ZonaTech.dc.html" style="display:inline-flex; align-items:center; gap:7px; text-decoration:none; color:#1D1D1F; font-size:16px; font-weight:600;">Más info <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></a>
+            </div>
+          </div>
+          <div class="ztc-img" style="height:min(52vh,520px); display:flex; align-items:center; justify-content:center;">
+            <img src="smarttv-cutout.png" alt="Smart TV" style="max-width:100%; max-height:100%; width:auto; object-fit:contain; display:block;">
+          </div>
+        </div>
+      </div>
+
+      <div class="ztc-slide" style="background:#fff;">
+        <div class="ztc-slide-inner">
+          <div class="ztc-text">
+            <span style="font-size:14px; font-weight:700; letter-spacing:.34em; color:#C9502A;">DESTACADO</span>
+            <h2 style="margin:0; font-size:clamp(32px,4vw,50px); font-weight:700; letter-spacing:-.035em; line-height:1.04; color:#1D1D1F;">Celulares para todos</h2>
+            <p style="margin:0; font-size:19px; color:#6E6E73; line-height:1.45; max-width:400px;">Samsung, Xiaomi, Motorola y más.</p>
+            <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin-top:6px;">
+              <a href="Android ZonaTech.dc.html" style="display:inline-flex; align-items:center; text-decoration:none; background:#0A84FF; color:#fff; border-radius:980px; padding:14px 34px; font-size:16px; font-weight:600; box-shadow:0 12px 30px -12px rgba(10,132,255,.55); transition:transform .35s cubic-bezier(.22,1,.36,1);" style-hover="transform:translateY(-2px);">Comprar</a>
+              <a href="Android ZonaTech.dc.html" style="display:inline-flex; align-items:center; gap:7px; text-decoration:none; color:#1D1D1F; font-size:16px; font-weight:600;">Más info <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></a>
+            </div>
+          </div>
+          <div class="ztc-img" style="height:min(52vh,520px); display:flex; align-items:center; justify-content:center;">
+            <img src="galaxys25ultra-cutout.png" alt="Celular" style="max-width:100%; max-height:100%; width:auto; object-fit:contain; display:block;">
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <button class="ztc-arrow" id="ztc-prev" aria-label="Anterior" style="left:16px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg></button>
+  <button class="ztc-arrow" id="ztc-next" aria-label="Siguiente" style="right:16px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></button>
+  <div id="ztc-dots" style="position:absolute; left:0; right:0; bottom:26px; display:flex; justify-content:center; gap:10px;">
+    <button class="ztc-dot active" data-i="0" aria-label="Ir al 1"></button>
+    <button class="ztc-dot" data-i="1" aria-label="Ir al 2"></button>
+    <button class="ztc-dot" data-i="2" aria-label="Ir al 3"></button>
+  </div>
+</section>
+
+<section id="novedades" style="position:relative; z-index:3; background:#F8F8F6; max-width:none; margin:0; padding:80px 24px 30px;">
+
+  <div style="max-width:1120px; margin:0 auto 72px; text-align:center;">
+    <h2 style="margin:0; font-size:clamp(52px,8.5vw,110px); font-weight:700; letter-spacing:-.045em; line-height:.98;">Novedades</h2>
+    <p style="max-width:560px; margin:24px auto 0; font-size:19px; color:#6E6E73; line-height:1.5;">Esto es solo una muestra. Entrá a cada categoría y encontrá el tuyo.</p>
+  </div>
+
+  <div style="max-width:1120px; margin:0 auto;">
+
+  <div style="display:flex; flex-direction:column; gap:72px;">
+
+    <div style="display:flex; flex-direction:column; gap:24px;">
+      <div data-nv-head style="display:flex; align-items:center; gap:14px;">
+        <span style="width:34px; height:34px; border-radius:11px; background:#F0EBE4; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="#1D1D1F"><path d="M16.365 1.43c0 1.14-.42 2.2-1.24 3.02-.99.99-2.18 1.56-3.35 1.47-.14-1.13.44-2.28 1.2-3.04.86-.86 2.28-1.5 3.39-1.45zM20.5 17.02c-.55 1.27-.82 1.84-1.53 2.96-.99 1.57-2.39 3.52-4.12 3.53-1.54.01-1.93-.99-4.02-.98-2.09.01-2.52.99-4.06.98-1.73-.02-3.06-1.78-4.05-3.35C-.02 16.4-.2 11.7 1.6 9.19c1.02-1.43 2.63-2.34 4.09-2.34 1.49 0 2.42 1 3.65 1 1.19 0 1.92-1 3.65-1 1.3 0 2.68.71 3.66 1.93-3.22 1.76-2.7 6.36.85 8.24z"/></svg>
+        </span>
+        <h3 style="margin:0; font-size:24px; font-weight:700; letter-spacing:-.02em; white-space:nowrap;">Apple</h3>
+        <span style="height:1px; flex:1; background:rgba(0,0,0,.08);"></span>
+        <a data-nv-viewall href="Apple ZonaTech.dc.html" style="display:inline-flex; align-items:center; gap:7px; text-decoration:none; color:#1D1D1F; font-size:14px; font-weight:500; padding:8px 16px; border:1px solid rgba(0,0,0,.14); border-radius:980px; white-space:nowrap; transition:background .3s, border-color .3s;" style-hover="background:rgba(0,0,0,.04); border-color:rgba(0,0,0,.28);">Ver todo <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div data-nv-grid style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:20px;">
+
+        <a data-nv-card href="Producto ZonaTech.dc.html?m=iphone16pro" style="text-decoration:none; color:#1D1D1F; display:flex; flex-direction:column; gap:13px; padding:20px; background:#fff; border-radius:24px; border:1px solid rgba(0,0,0,.05); box-shadow:0 12px 40px -18px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.03); transition:transform .5s cubic-bezier(.22,1,.36,1), box-shadow .5s cubic-bezier(.22,1,.36,1);" style-hover="transform:translateY(-6px); box-shadow:0 26px 60px -20px rgba(0,0,0,.2), 0 4px 10px rgba(0,0,0,.04);">
+          <div data-nv-img style="width:100%; aspect-ratio:1/1; border-radius:18px; overflow:hidden; background:linear-gradient(160deg,#EAE7E2,#DED9D1);"><image-slot id="apple-iphone16pro" style="width:100%; height:100%; display:block;" shape="rect" fit="cover" placeholder="iPhone 16 Pro — foto"></image-slot></div>
+          <div data-nv-eyebrow style="font-size:11px; font-weight:700; letter-spacing:.16em; color:#C9502A;">SEMINUEVO CERTIFICADO</div>
+          <div style="display:flex; flex-direction:column; gap:3px;"><h4 style="margin:0; font-size:17px; font-weight:600; letter-spacing:-.01em;">iPhone 16 Pro</h4><div style="font-size:13px; color:#6E6E73;">128 GB · Batería 99%</div></div>
+          <div data-nv-foot style="display:flex; align-items:center; justify-content:space-between; margin-top:2px;">
+            <div style="font-size:20px; font-weight:600; letter-spacing:-.01em;">USD 820</div>
+            <div style="display:inline-flex; align-items:center; gap:6px; padding:9px 16px; border-radius:980px; background:#F5F1EC; font-size:13px; font-weight:600; color:#1D1D1F; white-space:nowrap;">Más info <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+          </div>
+        </a>
+
+        <a data-nv-card href="Apple ZonaTech.dc.html#card-ipad11" style="text-decoration:none; color:#1D1D1F; display:flex; flex-direction:column; gap:13px; padding:20px; background:#fff; border-radius:24px; border:1px solid rgba(0,0,0,.05); box-shadow:0 12px 40px -18px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.03); transition:transform .5s cubic-bezier(.22,1,.36,1), box-shadow .5s cubic-bezier(.22,1,.36,1);" style-hover="transform:translateY(-6px); box-shadow:0 26px 60px -20px rgba(0,0,0,.2), 0 4px 10px rgba(0,0,0,.04);">
+          <div data-nv-img style="width:100%; aspect-ratio:1/1; border-radius:18px; overflow:hidden; background:linear-gradient(160deg,#EEF0F2,#E6E9EC);"><image-slot id="acc-ipad11" style="width:100%; height:100%; display:block;" shape="rect" fit="cover" placeholder="iPad 11va — foto"></image-slot></div>
+          <div data-nv-eyebrow style="font-size:11px; font-weight:700; letter-spacing:.16em; color:#C9502A;">DISPONIBLE</div>
+          <div style="display:flex; flex-direction:column; gap:3px;"><h4 style="margin:0; font-size:17px; font-weight:600; letter-spacing:-.01em;">iPad 11.ª generación</h4><div style="font-size:13px; color:#6E6E73;">128 GB</div></div>
+          <div data-nv-foot style="display:flex; align-items:center; justify-content:space-between; margin-top:2px;">
+            <div style="font-size:20px; font-weight:600; letter-spacing:-.01em;">USD 519</div>
+            <div style="display:inline-flex; align-items:center; gap:6px; padding:9px 16px; border-radius:980px; background:#F5F1EC; font-size:13px; font-weight:600; color:#1D1D1F; white-space:nowrap;">Más info <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+          </div>
+        </a>
+
+        <a data-nv-card href="Apple ZonaTech.dc.html#card-airpodsmax" style="text-decoration:none; color:#1D1D1F; display:flex; flex-direction:column; gap:13px; padding:20px; background:#fff; border-radius:24px; border:1px solid rgba(0,0,0,.05); box-shadow:0 12px 40px -18px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.03); transition:transform .5s cubic-bezier(.22,1,.36,1), box-shadow .5s cubic-bezier(.22,1,.36,1);" style-hover="transform:translateY(-6px); box-shadow:0 26px 60px -20px rgba(0,0,0,.2), 0 4px 10px rgba(0,0,0,.04);">
+          <div data-nv-img style="width:100%; aspect-ratio:1/1; border-radius:18px; overflow:hidden; background:linear-gradient(160deg,#F1EFEC,#E7E3DC);"><image-slot id="acc-airpodsmax" style="width:100%; height:100%; display:block;" shape="rect" fit="cover" placeholder="AirPods Max — foto"></image-slot></div>
+          <div data-nv-eyebrow style="font-size:11px; font-weight:700; letter-spacing:.16em; color:#C9502A;">DISPONIBLE</div>
+          <div style="display:flex; flex-direction:column; gap:3px;"><h4 style="margin:0; font-size:17px; font-weight:600; letter-spacing:-.01em;">AirPods Max</h4><div style="font-size:13px; color:#6E6E73;">Cancelación activa de ruido</div></div>
+          <div data-nv-foot style="display:flex; align-items:center; justify-content:space-between; margin-top:2px;">
+            <div style="font-size:20px; font-weight:600; letter-spacing:-.01em;">USD 350</div>
+            <div style="display:inline-flex; align-items:center; gap:6px; padding:9px 16px; border-radius:980px; background:#F5F1EC; font-size:13px; font-weight:600; color:#1D1D1F; white-space:nowrap;">Más info <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+          </div>
+        </a>
+
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:24px;">
+      <div data-nv-head style="display:flex; align-items:center; gap:14px;">
+        <span style="width:34px; height:34px; border-radius:11px; background:#F0EBE4; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1D1D1F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 11a6 6 0 0 1 12 0"/><path d="M6 11v6.2a.8.8 0 0 0 .8.8h10.4a.8.8 0 0 0 .8-.8V11z"/><path d="M8.4 6.2 7.4 4.7M15.6 6.2l1-1.5"/><circle cx="9.6" cy="8.4" r=".55" fill="#1D1D1F" stroke="none"/><circle cx="14.4" cy="8.4" r=".55" fill="#1D1D1F" stroke="none"/></svg>
+        </span>
+        <h3 style="margin:0; font-size:24px; font-weight:700; letter-spacing:-.02em; white-space:nowrap;">Celulares</h3>
+        <span style="height:1px; flex:1; background:rgba(0,0,0,.08);"></span>
+        <a data-nv-viewall href="Android ZonaTech.dc.html" style="display:inline-flex; align-items:center; gap:7px; text-decoration:none; color:#1D1D1F; font-size:14px; font-weight:500; padding:8px 16px; border:1px solid rgba(0,0,0,.14); border-radius:980px; white-space:nowrap; transition:background .3s, border-color .3s;" style-hover="background:rgba(0,0,0,.04); border-color:rgba(0,0,0,.28);">Ver todo <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div data-nv-grid style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:20px;">
+
+        <a data-nv-card href="Producto Android.dc.html?id=and-xiaomi-note15proplus" style="text-decoration:none; color:#1D1D1F; display:flex; flex-direction:column; gap:13px; padding:20px; background:#fff; border-radius:24px; border:1px solid rgba(0,0,0,.05); box-shadow:0 12px 40px -18px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.03); transition:transform .5s cubic-bezier(.22,1,.36,1), box-shadow .5s cubic-bezier(.22,1,.36,1);" style-hover="transform:translateY(-6px); box-shadow:0 26px 60px -20px rgba(0,0,0,.2), 0 4px 10px rgba(0,0,0,.04);">
+          <div data-nv-img style="width:100%; aspect-ratio:1/1; border-radius:18px; overflow:hidden; background:linear-gradient(160deg,#EEEDF2,#E5E3EC);"><image-slot id="and-xiaomi-note15proplus" style="width:100%; height:100%; display:block;" shape="rect" fit="cover" placeholder="Xiaomi Note 15 Pro Plus 5G — foto"></image-slot></div>
+          <div data-nv-eyebrow style="font-size:11px; font-weight:700; letter-spacing:.16em; color:#1F8A5B;">NUEVO · SELLADO</div>
+          <div style="display:flex; flex-direction:column; gap:3px;"><h4 style="margin:0; font-size:17px; font-weight:600; letter-spacing:-.01em;">Xiaomi Note 15 Pro Plus 5G</h4><div style="font-size:13px; color:#6E6E73;">512GB · 12GB RAM</div></div>
+          <div data-nv-foot style="display:flex; align-items:flex-end; justify-content:space-between; margin-top:2px;">
+            <div style="display:flex; flex-direction:column; gap:2px;"><div style="font-size:20px; font-weight:600; letter-spacing:-.01em;">USD 573</div><div style="font-size:12px; color:#A1A1A6;">ARS 870.960</div></div>
+            <div style="display:inline-flex; align-items:center; gap:6px; padding:9px 16px; border-radius:980px; background:#F5F1EC; font-size:13px; font-weight:600; color:#1D1D1F; white-space:nowrap;">Más info <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+          </div>
+        </a>
+
+        <a data-nv-card href="Producto Android.dc.html?id=and-poco-x7pro-512" style="text-decoration:none; color:#1D1D1F; display:flex; flex-direction:column; gap:13px; padding:20px; background:#fff; border-radius:24px; border:1px solid rgba(0,0,0,.05); box-shadow:0 12px 40px -18px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.03); transition:transform .5s cubic-bezier(.22,1,.36,1), box-shadow .5s cubic-bezier(.22,1,.36,1);" style-hover="transform:translateY(-6px); box-shadow:0 26px 60px -20px rgba(0,0,0,.2), 0 4px 10px rgba(0,0,0,.04);">
+          <div data-nv-img style="width:100%; aspect-ratio:1/1; border-radius:18px; overflow:hidden; background:linear-gradient(160deg,#F0EDE8,#E7E1D6);"><image-slot id="and-poco-x7pro-512" style="width:100%; height:100%; display:block;" shape="rect" fit="cover" placeholder="Poco X7 Pro 5G — foto"></image-slot></div>
+          <div data-nv-eyebrow style="font-size:11px; font-weight:700; letter-spacing:.16em; color:#1F8A5B;">NUEVO · SELLADO</div>
+          <div style="display:flex; flex-direction:column; gap:3px;"><h4 style="margin:0; font-size:17px; font-weight:600; letter-spacing:-.01em;">Poco X7 Pro 5G</h4><div style="font-size:13px; color:#6E6E73;">512GB · 12GB RAM</div></div>
+          <div data-nv-foot style="display:flex; align-items:flex-end; justify-content:space-between; margin-top:2px;">
+            <div style="display:flex; flex-direction:column; gap:2px;"><div style="font-size:20px; font-weight:600; letter-spacing:-.01em;">USD 507</div><div style="font-size:12px; color:#A1A1A6;">ARS 770.640</div></div>
+            <div style="display:inline-flex; align-items:center; gap:6px; padding:9px 16px; border-radius:980px; background:#F5F1EC; font-size:13px; font-weight:600; color:#1D1D1F; white-space:nowrap;">Más info <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+          </div>
+        </a>
+
+        <a data-nv-card href="Producto Android.dc.html?id=and-xiaomi-note15pro" style="text-decoration:none; color:#1D1D1F; display:flex; flex-direction:column; gap:13px; padding:20px; background:#fff; border-radius:24px; border:1px solid rgba(0,0,0,.05); box-shadow:0 12px 40px -18px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.03); transition:transform .5s cubic-bezier(.22,1,.36,1), box-shadow .5s cubic-bezier(.22,1,.36,1);" style-hover="transform:translateY(-6px); box-shadow:0 26px 60px -20px rgba(0,0,0,.2), 0 4px 10px rgba(0,0,0,.04);">
+          <div data-nv-img style="width:100%; aspect-ratio:1/1; border-radius:18px; overflow:hidden; background:linear-gradient(160deg,#EEEDF2,#E5E3EC);"><image-slot id="and-xiaomi-note15pro" style="width:100%; height:100%; display:block;" shape="rect" fit="cover" placeholder="Xiaomi Note 15 Pro — foto"></image-slot></div>
+          <div data-nv-eyebrow style="font-size:11px; font-weight:700; letter-spacing:.16em; color:#1F8A5B;">NUEVO · SELLADO</div>
+          <div style="display:flex; flex-direction:column; gap:3px;"><h4 style="margin:0; font-size:17px; font-weight:600; letter-spacing:-.01em;">Xiaomi Note 15 Pro</h4><div style="font-size:13px; color:#6E6E73;">512GB · 12GB RAM</div></div>
+          <div data-nv-foot style="display:flex; align-items:flex-end; justify-content:space-between; margin-top:2px;">
+            <div style="display:flex; flex-direction:column; gap:2px;"><div style="font-size:20px; font-weight:600; letter-spacing:-.01em;">USD 435</div><div style="font-size:12px; color:#A1A1A6;">ARS 661.200</div></div>
+            <div style="display:inline-flex; align-items:center; gap:6px; padding:9px 16px; border-radius:980px; background:#F5F1EC; font-size:13px; font-weight:600; color:#1D1D1F; white-space:nowrap;">Más info <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+          </div>
+        </a>
+
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:24px;">
+      <div data-nv-head style="display:flex; align-items:center; gap:14px;">
+        <span style="width:34px; height:34px; border-radius:11px; background:#F0EBE4; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1D1D1F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="12" rx="2.2"/><path d="M9 21h6M12 17v4"/></svg>
+        </span>
+        <h3 style="margin:0; font-size:24px; font-weight:700; letter-spacing:-.02em; white-space:nowrap;">Smart TV</h3>
+        <span style="height:1px; flex:1; background:rgba(0,0,0,.08);"></span>
+        <a data-nv-viewall href="Smart TV ZonaTech.dc.html" style="display:inline-flex; align-items:center; gap:7px; text-decoration:none; color:#1D1D1F; font-size:14px; font-weight:500; padding:8px 16px; border:1px solid rgba(0,0,0,.14); border-radius:980px; white-space:nowrap; transition:background .3s, border-color .3s;" style-hover="background:rgba(0,0,0,.04); border-color:rgba(0,0,0,.28);">Ver todo <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div data-nv-grid style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:20px;">
+
+        <a data-nv-card href="Producto Smart TV.dc.html?id=tv-philco-58" style="text-decoration:none; color:#1D1D1F; display:flex; flex-direction:column; gap:13px; padding:20px; background:#fff; border-radius:24px; border:1px solid rgba(0,0,0,.05); box-shadow:0 12px 40px -18px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.03); transition:transform .5s cubic-bezier(.22,1,.36,1), box-shadow .5s cubic-bezier(.22,1,.36,1);" style-hover="transform:translateY(-6px); box-shadow:0 26px 60px -20px rgba(0,0,0,.2), 0 4px 10px rgba(0,0,0,.04);">
+          <div data-nv-img style="width:100%; aspect-ratio:1/1; border-radius:18px; overflow:hidden; background:linear-gradient(160deg,#ECEAE7,#E1DDD7);"><image-slot id="tv-philco-58" style="width:100%; height:100%; display:block;" shape="rect" fit="cover" placeholder="Smart TV Philco 58 — foto"></image-slot></div>
+          <div data-nv-eyebrow style="font-size:11px; font-weight:700; letter-spacing:.16em; color:#C9502A;">DISPONIBLE</div>
+          <div style="display:flex; flex-direction:column; gap:3px;"><h4 style="margin:0; font-size:17px; font-weight:600; letter-spacing:-.01em;">Smart TV Philco 58"</h4><div style="font-size:13px; color:#6E6E73;">58" · Ultra HD (4K)</div></div>
+          <div data-nv-foot style="display:flex; align-items:flex-end; justify-content:space-between; margin-top:2px;">
+            <div style="display:flex; flex-direction:column; gap:2px;"><div style="font-size:20px; font-weight:600; letter-spacing:-.01em;">USD 490</div><div style="font-size:12px; color:#A1A1A6;">ARS 747.250</div></div>
+            <div style="display:inline-flex; align-items:center; gap:6px; padding:9px 16px; border-radius:980px; background:#F5F1EC; font-size:13px; font-weight:600; color:#1D1D1F; white-space:nowrap;">Más info <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+          </div>
+        </a>
+
+        <a data-nv-card href="Producto Smart TV.dc.html?id=tv-rca-40" style="text-decoration:none; color:#1D1D1F; display:flex; flex-direction:column; gap:13px; padding:20px; background:#fff; border-radius:24px; border:1px solid rgba(0,0,0,.05); box-shadow:0 12px 40px -18px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.03); transition:transform .5s cubic-bezier(.22,1,.36,1), box-shadow .5s cubic-bezier(.22,1,.36,1);" style-hover="transform:translateY(-6px); box-shadow:0 26px 60px -20px rgba(0,0,0,.2), 0 4px 10px rgba(0,0,0,.04);">
+          <div data-nv-img style="width:100%; aspect-ratio:1/1; border-radius:18px; overflow:hidden; background:linear-gradient(160deg,#E8E9EC,#DBDDE2);"><image-slot id="tv-rca-40" style="width:100%; height:100%; display:block;" shape="rect" fit="cover" placeholder="Smart TV RCA 40 — foto"></image-slot></div>
+          <div data-nv-eyebrow style="font-size:11px; font-weight:700; letter-spacing:.16em; color:#C9502A;">DISPONIBLE</div>
+          <div style="display:flex; flex-direction:column; gap:3px;"><h4 style="margin:0; font-size:17px; font-weight:600; letter-spacing:-.01em;">Smart TV RCA 40"</h4><div style="font-size:13px; color:#6E6E73;">40" · Full HD</div></div>
+          <div data-nv-foot style="display:flex; align-items:flex-end; justify-content:space-between; margin-top:2px;">
+            <div style="display:flex; flex-direction:column; gap:2px;"><div style="font-size:20px; font-weight:600; letter-spacing:-.01em;">USD 300</div><div style="font-size:12px; color:#A1A1A6;">ARS 457.500</div></div>
+            <div style="display:inline-flex; align-items:center; gap:6px; padding:9px 16px; border-radius:980px; background:#F5F1EC; font-size:13px; font-weight:600; color:#1D1D1F; white-space:nowrap;">Más info <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+          </div>
+        </a>
+
+        <a data-nv-card href="Producto Smart TV.dc.html?id=tv-ecopower" style="text-decoration:none; color:#1D1D1F; display:flex; flex-direction:column; gap:13px; padding:20px; background:#fff; border-radius:24px; border:1px solid rgba(0,0,0,.05); box-shadow:0 12px 40px -18px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.03); transition:transform .5s cubic-bezier(.22,1,.36,1), box-shadow .5s cubic-bezier(.22,1,.36,1);" style-hover="transform:translateY(-6px); box-shadow:0 26px 60px -20px rgba(0,0,0,.2), 0 4px 10px rgba(0,0,0,.04);">
+          <div data-nv-img style="width:100%; aspect-ratio:1/1; border-radius:18px; overflow:hidden; background:linear-gradient(160deg,#E9ECEE,#DDE2E5);"><image-slot id="tv-ecopower" style="width:100%; height:100%; display:block;" shape="rect" fit="cover" placeholder="Smart TV EcoPower — foto"></image-slot></div>
+          <div data-nv-eyebrow style="font-size:11px; font-weight:700; letter-spacing:.16em; color:#C9502A;">DISPONIBLE</div>
+          <div style="display:flex; flex-direction:column; gap:3px;"><h4 style="margin:0; font-size:17px; font-weight:600; letter-spacing:-.01em;">Smart TV EcoPower</h4><div style="font-size:13px; color:#6E6E73;">32" · Full HD</div></div>
+          <div data-nv-foot style="display:flex; align-items:flex-end; justify-content:space-between; margin-top:2px;">
+            <div style="display:flex; flex-direction:column; gap:2px;"><div style="font-size:20px; font-weight:600; letter-spacing:-.01em;">USD 182</div><div style="font-size:12px; color:#A1A1A6;">ARS 277.550</div></div>
+            <div style="display:inline-flex; align-items:center; gap:6px; padding:9px 16px; border-radius:980px; background:#F5F1EC; font-size:13px; font-weight:600; color:#1D1D1F; white-space:nowrap;">Más info <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+          </div>
+        </a>
+
+      </div>
+    </div>
+
+  </div>
+  </div>
+</section>
+
+<footer style="background:#16181C; color:#fff; padding:66px 32px 30px;">
+  <div style="max-width:1160px; margin:0 auto; display:flex; flex-wrap:wrap; gap:44px 60px;">
+
+    <div style="flex:1 1 300px; min-width:260px; display:flex; flex-direction:column; gap:20px;">
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:26px; font-weight:700; letter-spacing:.14em; color:#fff;">I<span style="color:#0A84FF;">CLUB</span></div>
+      <p style="margin:0; font-size:14.5px; line-height:1.6; color:rgba(255,255,255,.55); max-width:300px;">Tecnología premium en San Miguel de Tucumán. Equipos Apple y Android seminuevos certificados, Smart TVs y desarrollo a medida.</p>
+      <div style="display:flex; gap:12px; margin-top:4px;">
+        <a href="https://instagram.com/zonatechtuc" target="_blank" rel="noopener" aria-label="Instagram" style="width:42px; height:42px; border-radius:12px; border:1px solid rgba(255,255,255,.14); display:inline-flex; align-items:center; justify-content:center; color:rgba(255,255,255,.7); transition:background .3s, color .3s, border-color .3s;" style-hover="background:#C9502A; color:#fff; border-color:#C9502A;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"></circle></svg>
+        </a>
+        <a href="https://wa.me/5493814680653?text=Hola%20ICLUB!%20Vengo%20de%20la%20web%20y%20me%20gustar%C3%ADa%20conocer%20sus%20equipos%20y%20opciones%20de%20financiaci%C3%B3n.%20%C2%BFMe%20asesoran%3F" target="_blank" rel="noopener" aria-label="WhatsApp" style="width:42px; height:42px; border-radius:12px; border:1px solid rgba(255,255,255,.14); display:inline-flex; align-items:center; justify-content:center; color:rgba(255,255,255,.7); transition:background .3s, color .3s, border-color .3s;" style-hover="background:#C9502A; color:#fff; border-color:#C9502A;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21 5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm5.83 14.12c-.25.7-1.44 1.34-2.01 1.42-.54.08-1.21.11-1.95-.12-.45-.14-1.03-.33-1.77-.65-3.12-1.35-5.15-4.5-5.31-4.71-.15-.21-1.26-1.68-1.26-3.2 0-1.52.8-2.27 1.08-2.58.28-.31.61-.39.82-.39l.59.01c.19.01.44-.07.69.53.25.61.86 2.1.94 2.25.08.15.13.33.02.54-.1.21-.15.33-.31.51-.15.18-.32.4-.46.54-.15.15-.31.32-.13.62.18.31.79 1.31 1.7 2.12 1.17 1.04 2.16 1.37 2.46 1.52.31.15.49.13.67-.08.18-.2.77-.9.97-1.2.21-.31.41-.26.69-.15.28.1 1.79.84 2.1.99.31.15.51.23.59.36.07.13.07.75-.18 1.45z"></path></svg>
+        </a>
+      </div>
+    </div>
+
+    <div style="flex:0 1 auto; min-width:170px; display:flex; flex-direction:column; gap:15px;">
+      <div style="font-size:12px; font-weight:700; letter-spacing:.18em; color:rgba(255,255,255,.5);">ATENCIÓN AL CLIENTE</div>
+      <a href="Ayuda ZonaTech.dc.html#faq" style="text-decoration:none; font-size:14.5px; color:rgba(255,255,255,.65); transition:color .25s;" style-hover="color:#fff;">Preguntas Frecuentes</a>
+      <a href="Ayuda ZonaTech.dc.html#comprar" style="text-decoration:none; font-size:14.5px; color:rgba(255,255,255,.65); transition:color .25s;" style-hover="color:#fff;">Cómo Comprar</a>
+      <a href="Ayuda ZonaTech.dc.html#envios" style="text-decoration:none; font-size:14.5px; color:rgba(255,255,255,.65); transition:color .25s;" style-hover="color:#fff;">Información de Envíos</a>
+      <a href="Ayuda ZonaTech.dc.html#cambios" style="text-decoration:none; font-size:14.5px; color:rgba(255,255,255,.65); transition:color .25s;" style-hover="color:#fff;">Cambios y Devoluciones</a>
+      <a href="Ayuda ZonaTech.dc.html#cambios" style="text-decoration:none; font-size:14.5px; color:rgba(255,255,255,.65); transition:color .25s;" style-hover="color:#fff;">Garantía</a>
+    </div>
+
+    <div style="flex:0 1 auto; min-width:170px; display:flex; flex-direction:column; gap:15px;">
+      <div style="font-size:12px; font-weight:700; letter-spacing:.18em; color:rgba(255,255,255,.5);">LEGAL</div>
+      <a href="Ayuda ZonaTech.dc.html#legal" style="text-decoration:none; font-size:14.5px; color:rgba(255,255,255,.65); transition:color .25s;" style-hover="color:#fff;">Términos y Condiciones</a>
+      <a href="Ayuda ZonaTech.dc.html#legal" style="text-decoration:none; font-size:14.5px; color:rgba(255,255,255,.65); transition:color .25s;" style-hover="color:#fff;">Política de Privacidad</a>
+      <a href="Ayuda ZonaTech.dc.html#legal" style="text-decoration:none; font-size:14.5px; color:rgba(255,255,255,.65); transition:color .25s;" style-hover="color:#fff;">Política de Cookies</a>
+      <a href="Ayuda ZonaTech.dc.html#legal" style="text-decoration:none; font-size:14.5px; color:rgba(255,255,255,.65); transition:color .25s;" style-hover="color:#fff;">Defensa del Consumidor</a>
+      <a href="Ayuda ZonaTech.dc.html#legal" style="text-decoration:none; font-size:14.5px; color:rgba(255,255,255,.65); transition:color .25s;" style-hover="color:#fff;">Botón de Arrepentimiento</a>
+    </div>
+
+    <div style="flex:0 1 auto; min-width:210px; display:flex; flex-direction:column; gap:15px;">
+      <div style="font-size:12px; font-weight:700; letter-spacing:.18em; color:rgba(255,255,255,.5);">CONTACTO</div>
+      <a href="https://wa.me/5493814680653?text=Hola%20ICLUB!%20Vengo%20de%20la%20web%20y%20me%20gustar%C3%ADa%20conocer%20sus%20equipos%20y%20opciones%20de%20financiaci%C3%B3n.%20%C2%BFMe%20asesoran%3F" target="_blank" rel="noopener" style="text-decoration:none; display:inline-flex; align-items:center; gap:10px; font-size:14.5px; color:rgba(255,255,255,.65); transition:color .25s;" style-hover="color:#fff;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9502A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8 9.6a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2z"></path></svg>+54 381 468 0653</a>
+      <a href="mailto:leonemp3@gmail.com" style="text-decoration:none; display:inline-flex; align-items:center; gap:10px; font-size:14.5px; color:rgba(255,255,255,.65); transition:color .25s;" style-hover="color:#fff;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9502A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-10 6L2 7"></path></svg>leonemp3@gmail.com</a>
+      <span style="display:inline-flex; align-items:center; gap:10px; font-size:14.5px; color:rgba(255,255,255,.65);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9502A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>San Miguel de Tucumán</span>
+    </div>
+
+  </div>
+
+  <div style="max-width:1160px; margin:48px auto 0; padding-top:34px; border-top:1px solid rgba(255,255,255,.1); display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:24px;">
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <span style="font-size:12px; font-weight:700; letter-spacing:.16em; color:rgba(255,255,255,.5);">MEDIOS DE PAGO</span>
+      <div style="background:#fff; border-radius:14px; padding:12px 16px; display:inline-flex;">
+        <img src="medios-pago.png" alt="Tarjetas aceptadas: Visa, Mastercard, American Express, Naranja, Nativa, Tarjeta Shopping, Cencosud, Cabal, Argencard, Diners Club, Cordobesa, CMR Falabella, Tarjeta Walmart, Sucrédito, Prex Viaje" style="display:block; height:56px; width:auto;">
+      </div>
+    </div>
+    <span style="font-size:13px; color:rgba(255,255,255,.42); letter-spacing:.02em;">© 2026 ICLUB</span>
+  </div>
+</footer>
+
+<div id="zt-wsp-wrap" style="position:fixed; right:22px; bottom:22px; z-index:60; display:flex; flex-direction:column; align-items:flex-end; gap:14px;">
+  <div id="zt-chat" style="width:300px; max-width:calc(100vw - 44px); background:#fff; border-radius:22px; overflow:hidden; box-shadow:0 24px 60px -18px rgba(0,0,0,.32), 0 4px 12px rgba(0,0,0,.06); border:1px solid rgba(0,0,0,.06);">
+    <div style="display:flex; align-items:center; gap:11px; padding:15px 17px; background:#1D1D1F; color:#fff;">
+      <span style="position:relative; width:40px; height:40px; border-radius:50%; background:linear-gradient(145deg,#5AC8FA,#0A84FF); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; flex-shrink:0;">Z<span style="position:absolute; right:-1px; bottom:-1px; width:12px; height:12px; border-radius:50%; background:#25D366; border:2px solid #1D1D1F;"></span></span>
+      <div style="line-height:1.3;"><div style="font-size:15px; font-weight:600;">ICLUB</div><div style="font-size:12px; color:rgba(255,255,255,.6);">Normalmente responde en minutos</div></div>
+    </div>
+    <div style="padding:18px 16px 8px; background:#F3F2EF;">
+      <div style="max-width:82%; background:#fff; border-radius:4px 16px 16px 16px; padding:11px 14px; font-size:14px; line-height:1.5; color:#1D1D1F; box-shadow:0 1px 2px rgba(0,0,0,.06);">¡Hola! ¿En qué podemos ayudarte?</div>
+    </div>
+    <div style="display:flex; align-items:flex-end; gap:8px; padding:12px 14px 14px; background:#F3F2EF;">
+      <textarea id="zt-chat-input" rows="1" placeholder="Escribí tu consulta…" style="flex:1; resize:none; max-height:96px; border:1px solid rgba(0,0,0,.12); border-radius:18px; padding:10px 14px; font-family:inherit; font-size:14px; line-height:1.4; color:#1D1D1F; background:#fff; outline:none; box-sizing:border-box;"></textarea>
+      <button id="zt-chat-send" aria-label="Enviar por WhatsApp" style="flex-shrink:0; width:42px; height:42px; border-radius:50%; border:none; background:#25D366; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:transform .25s, background .25s;" style-hover="transform:scale(1.06); background:#1FB457;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+      </button>
+    </div>
+  </div>
+
+  <button id="zt-wsp" aria-label="Escribinos por WhatsApp" style="display:flex; align-items:center; justify-content:center; width:54px; height:54px; background:rgba(255,255,255,.82); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid rgba(0,0,0,.08); border-radius:50%; cursor:pointer; box-shadow:0 12px 32px -10px rgba(0,0,0,.22); animation:ztReveal .8s 1.2s both; transition:transform .4s cubic-bezier(.22,1,.36,1), box-shadow .4s cubic-bezier(.22,1,.36,1);" style-hover="transform:translateY(-4px); box-shadow:0 18px 44px -12px rgba(0,0,0,.3);">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="#1D1D1F"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21 5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm5.83 14.12c-.25.7-1.44 1.34-2.01 1.42-.54.08-1.21.11-1.95-.12-.45-.14-1.03-.33-1.77-.65-3.12-1.35-5.15-4.5-5.31-4.71-.15-.21-1.26-1.68-1.26-3.2 0-1.52.8-2.27 1.08-2.58.28-.31.61-.39.82-.39l.59.01c.19.01.44-.07.69.53.25.61.86 2.1.94 2.25.08.15.13.33.02.54-.1.21-.15.33-.31.51-.15.18-.32.4-.46.54-.15.15-.31.32-.13.62.18.31.79 1.31 1.7 2.12 1.17 1.04 2.16 1.37 2.46 1.52.31.15.49.13.67-.08.18-.2.77-.9.97-1.2.21-.31.41-.26.69-.15.28.1 1.79.84 2.1.99.31.15.51.23.59.36.07.13.07.75-.18 1.45z"/></svg>
+  </button>
+</div>
+
+<div id="zt-scroll-hint">
+  <span>Deslizá para abajo</span>
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount(){
+    this._disposed=false; this._fired=false;
+    this._onResize=this._onResize.bind(this);
+    window.addEventListener('resize', this._onResize);
+    this._initChat();
+    this._initTopbar();
+    this._initCarousel();
+    this._init();
+  }
+  componentWillUnmount(){
+    this._disposed=true;
+    window.removeEventListener('resize', this._onResize);
+    if(this._floatTween) try{ this._floatTween.kill(); }catch(e){}
+    if(this._st) try{ this._st.kill(); }catch(e){}
+  }
+  renderVals(){ return {}; }
+
+  _waitFor(cond, tries=120){
+    return new Promise((res)=>{ let n=0; const t=()=>{ if(cond()) return res(true); if(n++>tries) return res(false); setTimeout(t,50); }; t(); });
+  }
+
+  _positionPhone(){
+    const hero=document.getElementById('zt-hero');
+    const phone=document.getElementById('zt-phone');
+    const h1=hero && hero.querySelector('h1');
+    const cards=document.getElementById('zt-cta');
+    if(!hero||!phone||!h1||!cards) return;
+    const heroR=hero.getBoundingClientRect();
+    const h1R=h1.getBoundingClientRect();
+    const cardsR=cards.getBoundingClientRect();
+    // Premium scale: the phone IS the hero — big enough to overlap the giant
+    // wordmark (it sits in front of it, z-index above the title). Anchored to
+    // the bottom so the final drop lands just above the cards, never on them.
+    const bottomBound=(cardsR.top-heroR.top)-10;
+    const topBound=(h1R.top-heroR.top)+h1R.height*0.35; // can cover lower 65% of title
+    const bandH=Math.max(160, bottomBound-topBound);
+    const A=Math.max(24, Math.min(56, bandH*0.16));
+    this._dropAmp=A;
+    const minH=window.innerWidth<=680?150:220;
+    const maxH=Math.max(minH, Math.min(520, bandH-A*1.25));
+    let centerY=bottomBound-A*1.25-maxH/2;
+    // The phone rises during its entrance + idle float (up to ~66px above its
+    // rest spot). Keep that whole travel inside the hero so the top never gets
+    // clipped behind the nav on short viewports; shrink it a touch if needed.
+    const headroom=66;
+    const minCenter=headroom+maxH/2+8;
+    let finalH=maxH;
+    if(centerY<minCenter){
+      finalH=Math.max(minH, maxH-2*(minCenter-centerY));
+      centerY=Math.max(headroom+finalH/2+8, bottomBound-A*1.25-finalH/2);
+    }
+    phone.style.top=centerY+'px';
+    phone.style.height=finalH+'px';
+    const sh=document.getElementById('zt-shadow');
+    if(sh){ sh.style.top=(bottomBound+14)+'px'; sh.style.width=Math.round(finalH*0.62)+'px'; sh.style.height=Math.round(finalH*0.11)+'px'; }
+  }
+
+  async _init(){
+    const phone=document.getElementById('zt-phone');
+    if(!phone) return;
+    this.phone=phone;
+    // Same animated experience on every screen size — _positionPhone adapts
+    // the float band and drop distance to whatever space the layout gives it.
+    this._positionPhone();
+    if(document.fonts && document.fonts.ready){
+      document.fonts.ready.then(()=>{ if(!this._disposed) this._positionPhone(); }).catch(()=>{});
+    }
+    setTimeout(()=>{ if(!this._disposed) this._positionPhone(); }, 350);
+    setTimeout(()=>{ if(!this._disposed) this._positionPhone(); }, 900);
+    // Rest/float position sits noticeably higher in its band, so the drop
+    // has real distance to cover down toward the cards.
+    this._restY=0; this._floatY=-46;
+
+    // Safety net: the entrance is driven by GSAP + requestAnimationFrame, which
+    // the browser throttles while the tab/iframe is backgrounded — that could
+    // leave the phone stuck at opacity:0. If it hasn't appeared shortly after
+    // load, snap it to its resting, visible position so it ALWAYS shows.
+    setTimeout(()=>{
+      if(this._disposed) return;
+      const ph=document.getElementById('zt-phone');
+      if(ph && parseFloat(getComputedStyle(ph).opacity)===0){
+        if(window.gsap){ window.gsap.set(ph,{opacity:1,x:0,y:this._floatY,scale:1,rotate:-3}); }
+        else { ph.style.opacity='1'; ph.style.transform='translate(-50%,-50%)'; }
+        this._revealCards();
+      }
+    }, 2400);
+
+    const ok=await this._waitFor(()=>window.gsap);
+    if(this._disposed) return;
+    const gsap=window.gsap;
+
+    const hero=document.getElementById('zt-hero');
+    if(hero) hero.style.perspective='1400px';
+
+    if(gsap){
+      // Entrance: the phone launches from the "Disponible ahora" badge in the
+      // nav and falls in a smooth arc down to its floating spot — the arc is
+      // built from two independent tweens (x eases in-out, y accelerates like
+      // gravity), which reads as a natural curved fall.
+      const onTick=()=>this._updateShadow(phone);
+      gsap.set(phone,{xPercent:-50,yPercent:-50,x:0,y:0,scale:1,rotate:0,opacity:0,transformPerspective:900});
+      // Wait for the phone image to load so its rect is measurable (width:auto
+      // means pr.width is 0 until the bitmap arrives).
+      await this._waitFor(()=>phone.complete && phone.naturalWidth>0, 60);
+      if(this._disposed) return;
+      this._positionPhone();
+      let startX=0, startY=-160, startScale=0.3;
+      const thumb=document.getElementById('zt-nav-phone');
+      if(thumb){
+        const tr=thumb.getBoundingClientRect();
+        const pr=phone.getBoundingClientRect();
+        if(pr.width>0 && tr.width>0){
+          startX=(tr.left+tr.width/2)-(pr.left+pr.width/2);
+          startY=(tr.top+tr.height/2)-(pr.top+pr.height/2);
+          startScale=Math.max(0.18, Math.min(0.6, tr.height/pr.height));
+        }
+      }
+      gsap.set(phone,{x:startX,y:startY,scale:startScale,rotate:-16});
+      const D=1.15, T0=0.45; // flight duration, start delay (title reveals first)
+      const tl=gsap.timeline({onComplete:()=>{ this._entranceDone=true; if(this._pendingDrop){ this._pendingDrop=false; this._playDrop(); } }});
+      // Instant swap at launch: the badge phone vanishes exactly when the
+      // flying phone appears in its place — reads as ONE phone taking off.
+      tl.set(phone,{opacity:1},T0);
+      if(thumb) tl.set(thumb,{autoAlpha:0},T0);
+      // Horizontal glide toward center
+      tl.to(phone,{x:0,duration:D,ease:'power1.inOut',onUpdate:onTick},T0);
+      // Vertical fall — accelerates, overshoots slightly past the rest spot
+      tl.to(phone,{y:this._floatY+26,duration:D,ease:'power2.in'},T0);
+      // Grows to full size and swings through the fall
+      tl.to(phone,{scale:1.02,rotate:9,duration:D,ease:'power2.in'},T0);
+      // Impact: quick squash, then a soft elastic settle up into the float spot
+      tl.to(phone,{scale:0.96,rotate:4,duration:0.12,ease:'power1.out',onUpdate:onTick},T0+D);
+      tl.to(phone,{y:this._floatY,scale:1,rotate:-3,duration:0.9,ease:'elastic.out(1,0.45)',onUpdate:onTick},T0+D+0.12);
+      // Menus appear immediately at touchdown — no waiting for scroll.
+      tl.call(()=>this._revealCards(),null,T0+D);
+      this._floatTween=gsap.to(phone,{y:this._floatY-10,rotate:-5,duration:1.7,ease:'sine.inOut',yoyo:true,repeat:-1,delay:T0+D+1.05,onUpdate:onTick});
+
+    } else {
+      phone.style.opacity='1';
+      phone.style.transform='translate(-50%,-50%)';
+    }
+
+    // Fire on the very first sign of activity — wheel, touch, scroll (any
+    // scroller, including dragging the scrollbar), pointer press or the
+    // first real mouse move. Registered with capture on document so scroll
+    // containers other than window are caught too.
+    const armInstant=()=>{
+      if(this._fired || this._disposed) return;
+      this._fired=true;
+      instantEvents.forEach(([t,fn,opts])=>{ try{ window.removeEventListener(t,fn,opts); document.removeEventListener(t,fn,opts); }catch(e){} });
+      // If the entrance is still playing, let it finish first (sub-second),
+      // then drop — otherwise the two tweens fight over the same element.
+      if(!this._entranceDone){ this._pendingDrop=true; return; }
+      this._playDrop();
+    };
+    const opts={capture:true,passive:true};
+    const instantEvents=[
+      ['wheel',armInstant,opts],
+      ['touchstart',armInstant,opts],
+      ['touchmove',armInstant,opts],
+      ['scroll',armInstant,opts],
+      ['pointerdown',armInstant,opts],
+      ['mousemove',armInstant,opts],
+      ['keydown',(e)=>{ if(['ArrowDown','PageDown',' '].includes(e.key)) armInstant(); },opts]
+    ];
+    instantEvents.forEach(([t,fn,o])=>{ window.addEventListener(t,fn,o); document.addEventListener(t,fn,o); });
+
+    // No ScrollTrigger pin anymore: pinning held the page in place while
+    // scrolling, which read as a stutter ("no baja fluido"). The drop now
+    // fires from the activity listeners above, and the page scrolls freely.
+  }
+
+  _updateShadow(phone){
+    const sh=document.getElementById('zt-shadow'); if(!sh) return;
+    const y=gsap.getProperty(phone,'y');
+    let f=(y-this._restY)/(this._floatY-this._restY);
+    f=Math.max(-0.2,Math.min(1.3,f));
+    const scale=0.82+0.4*f;
+    const op=(0.28-0.14*f);
+    sh.style.transform='translate(-50%,-50%) scale('+scale.toFixed(3)+')';
+    sh.style.opacity=Math.max(0,op).toFixed(3);
+  }
+
+  _playDrop(){
+    // Fires immediately (no wind-up delay) and falls fast from its higher
+    // resting spot — but keeps a premium, multi-layered feel: a crisp drop,
+    // a real impact squash, a soft elastic settle, and then it resumes
+    // gently levitating at its new spot instead of freezing in place.
+    const gsap=window.gsap; const phone=this.phone; if(!gsap||!phone) return;
+    if(this._floatTween) this._floatTween.kill();
+    const A=this._dropAmp||24;
+    const onTick=()=>this._updateShadow(phone);
+    const settleY=A*0.85;
+    const tl=gsap.timeline({onComplete:()=>this._resumeFloat(settleY)});
+    tl.to(phone,{y:A*1.25,scale:0.9,rotate:7,rotationX:14,duration:0.5,ease:'power3.in',onUpdate:onTick});
+    tl.to(phone,{scale:1.16,duration:0.1,ease:'power1.out',onUpdate:onTick});
+    tl.to(phone,{y:settleY*0.94,scale:0.98,rotate:-2,rotationX:0,duration:0.28,ease:'power2.out',onUpdate:onTick});
+    tl.to(phone,{y:settleY,scale:1,rotate:0,duration:0.55,ease:'elastic.out(1,0.42)',onUpdate:onTick});
+    // Kick off the menu reveal right as the impact reads.
+    tl.call(()=>this._revealCards(),null,0.5);
+  }
+
+  _resumeFloat(baseY){
+    const gsap=window.gsap; const phone=this.phone; if(!gsap||!phone||this._disposed) return;
+    const onTick=()=>this._updateShadow(phone);
+    this._restY=baseY;
+    this._floatTween=gsap.to(phone,{y:baseY-14,rotate:-2.5,duration:1.8,ease:'sine.inOut',yoyo:true,repeat:-1,onUpdate:onTick});
+  }
+
+  _revealCards(){
+    if(this._cardsShown) return; this._cardsShown=true;
+    const gsap=window.gsap; const wrap=document.getElementById('zt-cta');
+    if(!wrap) return;
+    wrap.style.pointerEvents='auto';
+    if(!gsap){ wrap.style.opacity='1'; return; }
+    gsap.fromTo(wrap,{y:20,opacity:0},{y:0,opacity:1,duration:0.7,ease:'power2.out'});
+  }
+
+  _initCarousel(){
+    const track=document.getElementById('ztc-track');
+    const dots=Array.prototype.slice.call(document.querySelectorAll('#ztc-dots .ztc-dot'));
+    const prev=document.getElementById('ztc-prev');
+    const next=document.getElementById('ztc-next');
+    if(!track) return;
+    const slides=track.children.length;
+    let i=0, timer=null;
+    const render=()=>{
+      track.style.transition='transform .6s cubic-bezier(.22,1,.36,1)';
+      track.style.transform='translateX(-'+(i*100)+'%)';
+      dots.forEach((d,k)=>d.classList.toggle('active',k===i));
+    };
+    const go=(n)=>{ i=(n+slides)%slides; render(); };
+    const auto=()=>{ stop(); timer=setInterval(()=>go(i+1),5500); };
+    const stop=()=>{ if(timer){ clearInterval(timer); timer=null; } };
+    if(prev) prev.addEventListener('click',()=>{ go(i-1); auto(); });
+    if(next) next.addEventListener('click',()=>{ go(i+1); auto(); });
+    dots.forEach(d=>d.addEventListener('click',()=>{ go(parseInt(d.dataset.i,10)); auto(); }));
+    const vp=track.parentElement;
+    vp.addEventListener('mouseenter',stop);
+    vp.addEventListener('mouseleave',auto);
+    // swipe — el track sigue el dedo en vivo y hace snap al soltar
+    let sx=0, dx=0, dy=0, sy=0, sw=false, drag=false;
+    const vpW=()=>vp.offsetWidth||1;
+    vp.addEventListener('touchstart',(e)=>{ sx=e.touches[0].clientX; sy=e.touches[0].clientY; dx=0; dy=0; sw=true; drag=false; stop(); },{passive:true});
+    vp.addEventListener('touchmove',(e)=>{
+      if(!sw) return;
+      dx=e.touches[0].clientX-sx; dy=e.touches[0].clientY-sy;
+      // Una vez que el gesto es claramente horizontal, arrastramos el track con el dedo.
+      if(!drag && Math.abs(dx)>8 && Math.abs(dx)>Math.abs(dy)){ drag=true; }
+      if(drag){
+        let off=-(i*100)+(dx/vpW()*100);
+        // resistencia en los bordes
+        if((i===0&&dx>0)||(i===slides-1&&dx<0)) off=-(i*100)+(dx/vpW()*40);
+        track.style.transition='none';
+        track.style.transform='translateX('+off+'%)';
+      }
+    },{passive:true});
+    vp.addEventListener('touchend',()=>{
+      if(drag){
+        // Con recorrer ~15% del ancho ya cambia de slide.
+        if(dx<-vpW()*0.15) go(i+1);
+        else if(dx>vpW()*0.15) go(i-1);
+        else render();
+      }
+      sw=false; drag=false; auto();
+    });
+    render(); auto();
+  }
+
+  _initTopbar(){
+    const burger=document.getElementById('zt-burger');
+    const menu=document.getElementById('zt-mobile-menu');
+    if(!burger||!menu) return;
+    burger.addEventListener('click',(e)=>{ e.stopPropagation(); menu.classList.toggle('open'); });
+    menu.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>menu.classList.remove('open')));
+    document.addEventListener('click',(e)=>{ if(!menu.contains(e.target) && e.target!==burger && !burger.contains(e.target)) menu.classList.remove('open'); });
+  }
+
+  _initChat(){
+    const wrap=document.getElementById('zt-wsp-wrap');
+    const btn=document.getElementById('zt-wsp');
+    const input=document.getElementById('zt-chat-input');
+    const send=document.getElementById('zt-chat-send');
+    if(!wrap||!btn||!input||!send) return;
+    const NUM='5493814680653';
+    const submit=()=>{
+      const msg=(input.value||'').trim();
+      const text=msg?('Hola ICLUB! '+msg):"Hola ICLUB! Vengo de la web y me gustaría conocer sus equipos y opciones de financiación. ¿Me asesoran?";
+      window.open('https://wa.me/'+NUM+'?text='+encodeURIComponent(text),'_blank','noopener');
+    };
+    const autoGrow=()=>{ input.style.height='auto'; input.style.height=Math.min(input.scrollHeight,96)+'px'; };
+    input.addEventListener('input', autoGrow);
+    input.addEventListener('keydown',(e)=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); submit(); } });
+    send.addEventListener('click', submit);
+    // Mobile / tap: toggle the panel open since there is no hover
+    btn.addEventListener('click',()=>{
+      const open=wrap.classList.toggle('zt-chat-open');
+      if(open) setTimeout(()=>input.focus(),320);
+    });
+    document.addEventListener('click',(e)=>{ if(!wrap.contains(e.target)) wrap.classList.remove('zt-chat-open'); });
+
+    // Visible right away on the home page, from the very first paint.
+    wrap.classList.add('zt-wsp-ready');
+
+    // Swipe the open chat sideways (or down) to dismiss it — intuitive on mobile.
+    const chat=document.getElementById('zt-chat');
+    if(chat){
+      let sx=0, sy=0, dx=0, dy=0, dragging=false, fromInput=false;
+      chat.addEventListener('touchstart',(e)=>{
+        if(!wrap.classList.contains('zt-chat-open')) return;
+        fromInput = e.target.closest('#zt-chat-input');
+        if(fromInput) return;
+        const t=e.touches[0]; sx=t.clientX; sy=t.clientY; dx=0; dy=0; dragging=true;
+        chat.classList.add('zt-dragging');
+      },{passive:true});
+      chat.addEventListener('touchmove',(e)=>{
+        if(!dragging) return;
+        const t=e.touches[0]; dx=t.clientX-sx; dy=t.clientY-sy;
+        const move=Math.abs(dx)>Math.abs(dy)?dx:Math.max(0,dy);
+        chat.style.transform='translate('+(Math.abs(dx)>Math.abs(dy)?dx:0)+'px,'+(Math.abs(dy)>=Math.abs(dx)?Math.max(0,dy):0)+'px)';
+        chat.style.opacity=String(Math.max(0.25, 1-Math.abs(move)/260));
+      },{passive:true});
+      const endDrag=()=>{
+        if(!dragging) return; dragging=false;
+        chat.classList.remove('zt-dragging');
+        const far=Math.abs(dx)>90 || dy>90;
+        chat.style.transform=''; chat.style.opacity='';
+        if(far) wrap.classList.remove('zt-chat-open');
+      };
+      chat.addEventListener('touchend', endDrag);
+      chat.addEventListener('touchcancel', endDrag);
+    }
+  }
+
+  _onResize(){
+    this._positionPhone();
+    if(this._st){ try{ window.ScrollTrigger.refresh(); }catch(e){} }
+  }
+}
+
+</script>
+</body>
+</html>

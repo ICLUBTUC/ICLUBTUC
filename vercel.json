@@ -1,0 +1,96 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/Hero%20ZonaTech.dc.html"
+    },
+    {
+      "source": "/iphone",
+      "destination": "/Apple%20ZonaTech.dc.html"
+    },
+    {
+      "source": "/celulares",
+      "destination": "/Android%20ZonaTech.dc.html"
+    },
+    {
+      "source": "/smart-tv",
+      "destination": "/Smart%20TV%20ZonaTech.dc.html"
+    },
+    {
+      "source": "/producto",
+      "destination": "/Producto%20ZonaTech.dc.html"
+    },
+    {
+      "source": "/producto-celular",
+      "destination": "/Producto%20Android.dc.html"
+    },
+    {
+      "source": "/producto-tv",
+      "destination": "/Producto%20Smart%20TV.dc.html"
+    },
+    {
+      "source": "/portal",
+      "destination": "/Portal%20Clientes%20ZonaTech.dc.html"
+    },
+    {
+      "source": "/comprar",
+      "destination": "/Finalizar%20Compra.dc.html"
+    },
+    {
+      "source": "/ayuda",
+      "destination": "/Ayuda%20ZonaTech.dc.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/Hero%20ZonaTech.dc.html",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/Apple%20ZonaTech.dc.html",
+      "destination": "/iphone",
+      "permanent": false
+    },
+    {
+      "source": "/Android%20ZonaTech.dc.html",
+      "destination": "/celulares",
+      "permanent": false
+    },
+    {
+      "source": "/Smart%20TV%20ZonaTech.dc.html",
+      "destination": "/smart-tv",
+      "permanent": false
+    },
+    {
+      "source": "/Producto%20ZonaTech.dc.html",
+      "destination": "/producto",
+      "permanent": false
+    },
+    {
+      "source": "/Producto%20Android.dc.html",
+      "destination": "/producto-celular",
+      "permanent": false
+    },
+    {
+      "source": "/Producto%20Smart%20TV.dc.html",
+      "destination": "/producto-tv",
+      "permanent": false
+    },
+    {
+      "source": "/Portal%20Clientes%20ZonaTech.dc.html",
+      "destination": "/portal",
+      "permanent": false
+    },
+    {
+      "source": "/Finalizar%20Compra.dc.html",
+      "destination": "/comprar",
+      "permanent": false
+    },
+    {
+      "source": "/Ayuda%20ZonaTech.dc.html",
+      "destination": "/ayuda",
+      "permanent": false
+    }
+  ]
+}
