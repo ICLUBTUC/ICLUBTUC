@@ -206,7 +206,7 @@
       row.style.cssText = 'display:flex;flex-direction:column;gap:16px;padding:22px;background:#fff;border-radius:24px;text-decoration:none;color:#1D1D1F;box-shadow:0 12px 40px -18px rgba(0,0,0,.14), 0 2px 6px rgba(0,0,0,.03);transition:box-shadow .4s, transform .4s;will-change:transform;' + (ov.sinStock ? 'opacity:.62;' : '');
       var rw = document.createElement('div');
       rw.setAttribute('data-appl-imgwrap', '');
-      rw.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#F2F3F4,#E7EAEC);position:relative;display:flex;align-items:center;justify-content:center;';
+      rw.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:#fff;position:relative;display:flex;align-items:center;justify-content:center;';
       if (ov.photo) { var ri = document.createElement('img'); ri.src = ov.photo; ri.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;transform:' + frameCss(ov) + ';'; rw.appendChild(ri); }
       else { var rp = document.createElement('span'); rp.textContent = (ov.name || '?').charAt(0).toUpperCase(); rp.style.cssText = 'font-size:44px;font-weight:700;color:#C9BFB2;'; rw.appendChild(rp); }
       if (ov.sinStock) { var rc = document.createElement('span'); rc.textContent = 'SIN STOCK'; rc.setAttribute('data-zt-nostock', ''); rc.style.cssText = 'position:absolute;top:12px;left:12px;background:rgba(201,80,42,.95);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:6px 12px;border-radius:980px;'; rw.appendChild(rc); }
@@ -242,7 +242,7 @@
     card.setAttribute('data-zt-sig', sig);
     card.style.cssText = 'display:flex;flex-direction:column;gap:14px;padding:24px;background:#fff;border-radius:24px;box-shadow:0 18px 50px -28px rgba(0,0,0,.18);font-family:inherit;' + (ov.sinStock ? 'opacity:.62;' : '');
     var wrap = document.createElement('div');
-    wrap.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#F1EFEC,#E7E3DC);position:relative;display:flex;align-items:center;justify-content:center;';
+    wrap.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:#fff;position:relative;display:flex;align-items:center;justify-content:center;';
     if (ov.photo) {
       var im = document.createElement('img');
       im.src = ov.photo;
@@ -343,7 +343,7 @@
     var col = document.createElement('div');
     col.className = 'det-imgcol';
     var box = document.createElement('div');
-    box.style.cssText = 'position:relative;height:100%;min-height:420px;border-radius:28px;overflow:hidden;background:linear-gradient(160deg,#F1ECE5,#E6DFD5);box-shadow:0 24px 70px -32px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;flex:1;';
+    box.style.cssText = 'position:relative;height:100%;min-height:420px;border-radius:28px;overflow:hidden;background:#fff;box-shadow:0 24px 70px -32px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;flex:1;';
     if (ov.photo) { var im = document.createElement('img'); im.src = ov.photo; im.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;position:absolute;inset:0;transform:' + frameCss(ov) + ';'; box.appendChild(im); }
     else { var ph = document.createElement('span'); ph.textContent = (ov.name || '?').charAt(0).toUpperCase(); ph.style.cssText = 'font-size:80px;font-weight:700;color:#C9BFB2;'; box.appendChild(ph); }
     if (ov.sinStock) { var ch = document.createElement('span'); ch.textContent = 'SIN STOCK'; ch.style.cssText = 'position:absolute;top:16px;left:16px;background:rgba(201,80,42,.95);color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;padding:7px 14px;border-radius:980px;z-index:2;'; box.appendChild(ch); }
@@ -407,7 +407,7 @@
         d.setAttribute('data-zt-reccustom', id);
         d.style.cssText = 'position:relative;flex:0 0 232px;scroll-snap-align:start;background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;';
         var imA = document.createElement('a'); imA.href = href; imA.style.cssText = 'display:block;text-decoration:none;';
-        var imB = document.createElement('div'); imB.style.cssText = 'height:210px;background:linear-gradient(160deg,#F3EEE8,#EDE7DF);display:flex;align-items:center;justify-content:center;';
+        var imB = document.createElement('div'); imB.style.cssText = 'height:210px;background:#fff;display:flex;align-items:center;justify-content:center;';
         if (o.photo) { imB.style.backgroundImage = 'url("' + o.photo + '")'; imB.style.backgroundSize = 'cover'; imB.style.backgroundPosition = 'center top'; }
         else { var ph = document.createElement('span'); ph.textContent = (o.name || '?').charAt(0).toUpperCase(); ph.style.cssText = 'font-size:44px;font-weight:700;color:#C9BFB2;'; imB.appendChild(ph); }
         if (o.sinStock) { var sk = document.createElement('span'); sk.textContent = 'SIN STOCK'; sk.style.cssText = 'position:absolute;top:12px;left:12px;background:rgba(201,80,42,.95);color:#fff;font-size:10px;font-weight:700;letter-spacing:.08em;padding:5px 10px;border-radius:980px;z-index:2;'; d.appendChild(sk); }
@@ -713,6 +713,28 @@
   }
 
   var local = getLocal();
+
+  /* Anti-parpadeo: si hay catálogo en caché, la página queda oculta hasta el
+     primer apply() para que nunca se vea el catálogo viejo del HTML. */
+  if (local) {
+    var bootHide = document.createElement('style');
+    bootHide.id = 'zt-boot-hide';
+    bootHide.textContent = 'body{visibility:hidden !important}';
+    (document.head || document.documentElement).appendChild(bootHide);
+  }
+  function revealPage() {
+    var b = document.getElementById('zt-boot-hide');
+    if (b) b.remove();
+  }
+  function firstApply() {
+    try { apply(local); scheduleOrphans(); } catch (e) {}
+    revealPage();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', firstApply);
+  else firstApply();
+  // Red de seguridad: pase lo que pase, la página se muestra como máximo a los 2.5s.
+  setTimeout(revealPage, 2500);
+
   var tries = 0;
   var iv = setInterval(function () {
     tries++;
