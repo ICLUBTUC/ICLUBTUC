@@ -349,6 +349,7 @@
     if (ov.sinStock) { var ch = document.createElement('span'); ch.textContent = 'SIN STOCK'; ch.style.cssText = 'position:absolute;top:16px;left:16px;background:rgba(201,80,42,.95);color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;padding:7px 14px;border-radius:980px;z-index:2;'; box.appendChild(ch); }
     col.appendChild(box); d.appendChild(col);
     makePhotoEditable(box, pid);
+    var cmpBtn = (ov.cat === 'Accesorios') ? '' : '<button data-compare="' + pid + '" aria-pressed="false" aria-label="Comparar" title="Comparar equipos" style="width:50px;height:50px;flex-shrink:0;border:1.5px solid rgba(0,0,0,.16);background:#fff;border-radius:16px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#1D1D1F;font-family:inherit;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8h14M5 8l-3 6a3 3 0 0 0 6 0zM19 8l-3 6a3 3 0 0 0 6 0z"></path></svg></button>';
     var info = document.createElement('div');
     info.className = 'det-info';
     info.style.cssText = 'display:flex;flex-direction:column;gap:11px;';
@@ -356,7 +357,7 @@
     var eyeCol = ov.sinStock ? '#C9502A' : '#1F8A5B';
     info.innerHTML = '<div style="font-size:12px;font-weight:700;letter-spacing:.24em;color:' + eyeCol + ';">' + eyeTxt + '</div>'
       + '<h1 style="margin:0;font-size:clamp(28px,3.4vw,42px);font-weight:700;letter-spacing:-.04em;line-height:.98;color:#1D1D1F;"></h1>'
-      + '<div data-zd="bat" style="display:none;align-items:center;gap:16px;margin-top:2px;"><span style="position:relative;width:52px;height:19px;border:1.5px solid rgba(0,0,0,.32);border-radius:5px;display:inline-block;"><span data-zd="batfill" style="position:absolute;inset:2px;width:0;background:#1D1D1F;border-radius:3px;transition:width 1.1s cubic-bezier(.22,1,.36,1);"></span></span><span data-zd="battxt" style="font-size:16px;color:#6E6E73;"></span></div>'
+      + '<div data-zd="bat" style="display:none;align-items:center;gap:16px;margin-top:2px;"><span style="width:52px;height:19px;border:1.5px solid rgba(0,0,0,.32);border-radius:5px;display:inline-flex;align-items:center;padding:2px;box-sizing:border-box;"><span data-zd="batfill" style="height:100%;width:0;background:#1D1D1F;border-radius:2.5px;transition:width 1.1s cubic-bezier(.22,1,.36,1);"></span></span><span data-zd="battxt" style="font-size:16px;color:#6E6E73;"></span></div>'
       + '<div style="display:flex;flex-direction:column;gap:2px;margin-top:2px;border-top:1px solid rgba(0,0,0,.08);">'
         + '<div data-zd="specrow" style="display:none;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.08);font-size:14px;"><span style="color:#86868B;">Detalle</span><span data-zd="spec" style="font-weight:500;color:#1D1D1F;"></span></div>'
         + '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.08);font-size:14px;"><span style="color:#86868B;">Checking ICLUB</span><span style="font-weight:600;color:#1F8A5B;display:inline-flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F8A5B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>Pasado</span></div>'
@@ -364,7 +365,10 @@
       + '</div>'
       + '<div style="display:flex;align-items:baseline;gap:12px;margin-top:8px;"><span style="font-size:30px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;color:#1D1D1F;">USD ' + fmtInt(ov.usd || 0) + '</span><span style="font-size:15px;color:#A1A1A6;">ARS ' + fmtInt((ov.usd || 0) * rate) + ' · precio final</span></div>'
       + '<div style="display:flex;flex-direction:column;gap:9px;margin-top:8px;max-width:430px;">'
-        + '<a href="' + wa + '" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:10px;height:50px;background:#1D1D1F;color:#fff;font-size:16.5px;font-weight:600;border-radius:16px;font-family:inherit;">Comprar ahora<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>'
+        + '<div style="display:flex;gap:10px;align-items:stretch;">'
+        + '<a href="' + wa + '" style="flex:1;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:10px;height:50px;background:#1D1D1F;color:#fff;font-size:16.5px;font-weight:600;border-radius:16px;font-family:inherit;">Comprar ahora<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>'
+        + cmpBtn
+        + '</div>'
         + '<a href="Portal Clientes ZonaTech.dc.html#financiar" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:2px;color:#C9502A;font-size:14.5px;font-weight:600;font-family:inherit;">Consultar financiamiento en cuotas →</a>'
         + '<div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;padding-top:14px;border-top:1px solid rgba(0,0,0,.08);">'
           + '<div style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:#1D1D1F;"><span style="width:8px;height:8px;border-radius:50%;background:' + eyeCol + ';box-shadow:0 0 0 3px ' + (ov.sinStock ? 'rgba(201,80,42,.15)' : 'rgba(31,138,91,.15)') + ';flex-shrink:0;"></span><span><strong style="font-weight:600;">' + (ov.sinStock ? 'Sin stock' : 'En stock') + '</strong> <span style="color:#86868B;">· ' + (ov.sinStock ? 'consultanos por WhatsApp' : 'entrega inmediata') + '</span></span></div>'
@@ -504,12 +508,32 @@
     });
   }
 
+  function registerCompareCustoms(db) {
+    var C = window.ZT_CATALOG;
+    if (!C) return;
+    var cat = db.catalog || {};
+    Object.keys(cat).forEach(function (id) {
+      var o = cat[id] || {};
+      if (!o.custom || o.deleted || o.cat === 'Accesorios') return;
+      var isTv = o.cat === 'Smart TV';
+      var storage = parseInt(String(o.spec || '').replace(/[^0-9]/g, ''), 10);
+      C[id] = {
+        cat: isTv ? 'tv' : 'phone',
+        name: o.name || 'Producto', usd: o.usd || 0,
+        screen: null, panel: null, chip: null, ram: null,
+        storage: (!isTv && storage) ? storage : null,
+        resolution: null, camera: null, battery: null
+      };
+    });
+  }
+
   function apply(db) {
     if (!db) return;
     updateNav(db);
     var cat = db.catalog || {};
     var st = db.settings || {};
     var rate = st.rate || 1520;
+    registerCompareCustoms(db);
     Object.keys(cat).forEach(function (id) {
       var ov = cat[id] || {};
       if (ov.custom) { injectCustomCard(id, ov, rate); return; }

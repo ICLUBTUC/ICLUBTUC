@@ -199,7 +199,7 @@ class Component extends DCLogic {
     }));
     let checkoutHref='#';
     if(cart.length){
-      const lines=['Hola ZonaTech! Quiero comprar:'];
+      const lines=['Hola ICLUB! Quiero comprar:'];
       cart.forEach(x=>lines.push('• '+x.qty+' x '+x.name+' ('+fmt(x.usd)+' c/u)'));
       lines.push('Total: '+fmt(subtotal));
       checkoutHref='https://wa.me/5493814680653?text='+encodeURIComponent(lines.join('\n'));
