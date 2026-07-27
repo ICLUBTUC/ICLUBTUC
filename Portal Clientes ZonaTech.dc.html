@@ -316,6 +316,9 @@
                     <div style="display:flex; align-items:center; gap:12px;">
                       <span style="font-size:14.5px; font-weight:700;">{{ q.impStr }}</span>
                       <span style="font-size:11.5px; font-weight:700; letter-spacing:.05em; color:{{ q.ec }}; background:{{ q.eb }}; padding:6px 12px; border-radius:980px;">{{ q.estado }}</span>
+                      <sc-if value="{{ q.admShow }}" hint-placeholder-val="{{ false }}">
+                        <button onClick="{{ q.editDate }}" title="Cambiar el día de pago" style="font-family:inherit; font-size:12px; font-weight:600; color:#6E6E73; background:#F5F4F1; border:1px solid rgba(0,0,0,.07); border-radius:980px; padding:6px 13px; cursor:pointer; white-space:nowrap;">Fecha</button>
+                      </sc-if>
                     </div>
                   </div>
                 </sc-for>
@@ -1056,6 +1059,24 @@
             </select>
           </div>
         </div>
+        <div style="display:flex; flex-direction:column; gap:7px;">
+          <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">DESCRIPCIÓN (debajo del título en la ficha)</label>
+          <input value="{{ catDesc }}" onChange="{{ setCatDesc }}" type="text" placeholder="Cancelación activa de ruido y audio espacial." style="width:100%; box-sizing:border-box; font-family:inherit; font-size:15px; font-weight:500; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:13px; padding:13px 16px; outline:none;" style-focus="border-color:#1D1D1F; background:#fff;">
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px; background:#F8F7F5; border-radius:16px; padding:16px 18px;">
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">FICHA TÉCNICA</label>
+            <button onClick="{{ catRowAdd }}" style="margin-left:auto; font-family:inherit; font-size:13px; font-weight:700; color:#1D1D1F; background:#fff; border:1.5px solid rgba(0,0,0,.12); border-radius:10px; padding:7px 14px; cursor:pointer;" style-hover="border-color:#1D1D1F;">+ Agregar fila</button>
+          </div>
+          <sc-for list="{{ catRows }}" as="r" hint-placeholder-count="3">
+            <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:8px; align-items:center;">
+              <input value="{{ r.k }}" onChange="{{ r.setK }}" type="text" placeholder="Almacenamiento" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:14px; font-weight:500; color:#6E6E73; background:#fff; border:1.5px solid rgba(0,0,0,.06); border-radius:11px; padding:10px 13px; outline:none;" style-focus="border-color:#1D1D1F;">
+              <input value="{{ r.v }}" onChange="{{ r.setV }}" type="text" placeholder="128 GB" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:14px; font-weight:600; color:#1D1D1F; background:#fff; border:1.5px solid rgba(0,0,0,.06); border-radius:11px; padding:10px 13px; outline:none;" style-focus="border-color:#1D1D1F;">
+              <button onClick="{{ r.del }}" aria-label="Quitar fila" style="font-family:inherit; font-size:15px; font-weight:700; color:#C9502A; background:rgba(201,80,42,.1); border:none; border-radius:11px; padding:10px 14px; cursor:pointer;">×</button>
+            </div>
+          </sc-for>
+          <span style="font-size:12px; color:#A1A1A6;">Estas filas son las que ve el cliente en la ficha del producto. Si no cargás ninguna, se usan las de la categoría.</span>
+        </div>
         <sc-if value="{{ catShowPos }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex; flex-direction:column; gap:10px; background:#F8F7F5; border-radius:16px; padding:16px 18px;">
             <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
@@ -1529,6 +1550,27 @@
 </div>
 </sc-if>
 
+<sc-if value="{{ cuotaEditOpen }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ cuotaEditClose }}" style="position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; padding:20px;">
+  <div onClick="{{ stop }}" style="width:100%; max-width:400px; background:#fff; border-radius:24px; padding:28px 30px; display:flex; flex-direction:column; gap:15px; animation:ztReveal .4s both;">
+    <h2 style="margin:0; font-size:20px; font-weight:700; letter-spacing:-.02em;">Día de pago</h2>
+    <span style="font-size:13.5px; color:#6E6E73; line-height:1.5;">{{ ceLabel }}</span>
+    <div style="display:flex; flex-direction:column; gap:7px;">
+      <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">VENCE EL (dd/mm/aaaa)</label>
+      <input value="{{ ceF }}" onChange="{{ setCeF }}" type="text" placeholder="22/08/2026" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:15px; font-weight:500; color:#1D1D1F; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:14px; padding:12px 15px;">
+    </div>
+    <label style="display:flex; align-items:flex-start; gap:10px; font-size:13.5px; color:#1D1D1F; cursor:pointer;">
+      <input type="checkbox" checked="{{ ceAll }}" onChange="{{ setCeAll }}" style="margin-top:3px; width:16px; height:16px; accent-color:#1D1D1F; cursor:pointer;">
+      <span>Correr también las cuotas siguientes, manteniendo la frecuencia</span>
+    </label>
+    <div style="display:flex; gap:10px;">
+      <button onClick="{{ cuotaEditSave }}" style="flex:1; font-family:inherit; font-size:15px; font-weight:600; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:13px; cursor:pointer;">Guardar</button>
+      <button onClick="{{ cuotaEditReset }}" title="Volver a la fecha calculada" style="font-family:inherit; font-size:15px; font-weight:600; color:#6E6E73; background:#F5F4F1; border:none; border-radius:980px; padding:13px 20px; cursor:pointer;">Restablecer</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
 <!-- ══════════════ COMPROBANTE ══════════════ -->
 <sc-if value="{{ showReceipt }}" hint-placeholder-val="{{ false }}">
 <div id="zt-receipt-wrap" onClick="{{ closeReceipt }}" style="position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.5); backdrop-filter:blur(6px); display:flex; align-items:flex-start; justify-content:center; padding:30px 20px; overflow:auto;">
@@ -1551,7 +1593,7 @@
         <span style="font-size:13px; font-weight:700; letter-spacing:.1em; color:#A1A1A6;">IMPORTE ABONADO</span>
         <span style="font-size:30px; font-weight:700; letter-spacing:-.02em; color:#1F8A5B;">{{ rAmount }}</span>
       </div>
-      <div style="background:#FAFAF9; border-radius:14px; padding:14px 18px; font-size:13px; color:#6E6E73; line-height:1.6; text-align:center;">Gracias por tu pago. ZonaTech valora tu confianza — este comprobante es válido como constancia de pago.</div>
+      <div class="np" style="background:#FAFAF9; border-radius:14px; padding:14px 18px; font-size:13px; color:#6E6E73; line-height:1.6; text-align:center;">Gracias por tu pago. ICLUB valora tu confianza — este comprobante es válido como constancia de pago.</div>
       <div class="np" style="display:flex; gap:10px;">
         <button onClick="{{ downloadPDF }}" style="flex:1; font-family:inherit; font-size:14px; font-weight:600; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:13px; cursor:pointer; transition:background .3s;" style-hover="background:#000;">Descargar PDF</button>
         <button onClick="{{ printPage }}" style="flex:1; font-family:inherit; font-size:14px; font-weight:600; color:#1D1D1F; background:#F5F4F1; border:none; border-radius:980px; padding:13px; cursor:pointer; transition:background .3s;" style-hover="background:#EDEBE6;">Imprimir</button>
@@ -1575,6 +1617,7 @@ class Component extends DCLogic {
     movAmount: '', movDet: '', movMet: 'Transferencia', movPlan: '', movFin: 'contado', movFreq: 'Mensual', movN: '',
     movProd: '', movAdel: 'no', movAdelMonto: '', movEfec: '', movTransf: '',
     pagoEdit: null, peF: '', peImp: '', peMet: 'Transferencia', peDet: '',
+    cuotaEdit: null, ceF: '', ceAll: true,
     sellOpen: false, sellIdx: null, sellClient: '', sellFin: 'contado', sellPrice: '', sellAdel: '', sellCuota: '', sellN: '', sellFreq: 'Mensual', sellError: '',
     ventaEdit: null, ventaEditPrice: '', ventaEditCost: '',
     quoteShow: false, quoteName: '', quoteCost: '', quotePrice: '', quoteClient: '',
@@ -1836,6 +1879,42 @@ class Component extends DCLogic {
     this.setState({ pagoEdit: null });
   }
   _movDeleteOld(clientKey, ref) {}
+  /* Cambia el día de pago de una cuota. Con "correr las siguientes" recalcula
+     las posteriores conservando la frecuencia del plan. */
+  _cuotaFechaSave(reset) {
+    const ce = this.state.cuotaEdit; if (!ce) return;
+    const db = this.state.db; const c = db.clients[ce.key];
+    if (!c) { this.setState({ cuotaEdit: null }); return; }
+    const nueva = (this.state.ceF || '').trim();
+    if (!reset && !this._parseDate(nueva)) { return; }
+    const next = Object.assign({}, db, { clients: Object.assign({}, db.clients) });
+    next.clients[ce.key] = Object.assign({}, c, {
+      movs: (c.movs || []).map((m) => {
+        if (m.doc !== ce.doc || !m.finan) return m;
+        const n = m.finan.n;
+        const freq = m.finan.freq || 'Mensual';
+        const vencs = Object.assign({}, m.finan.vencs || {});
+        if (reset) {
+          if (this.state.ceAll) { for (let k = ce.i; k < n; k++) delete vencs[k]; }
+          else { delete vencs[ce.i]; }
+        } else {
+          vencs[ce.i] = nueva;
+          if (this.state.ceAll) {
+            const base = this._parseDate(nueva);
+            for (let k = ce.i + 1; k < n; k++) {
+              const d = new Date(base);
+              if (freq === 'Semanal') d.setDate(d.getDate() + 7 * (k - ce.i));
+              else d.setMonth(d.getMonth() + (k - ce.i));
+              vencs[k] = this._fmtDate(d);
+            }
+          }
+        }
+        return Object.assign({}, m, { finan: Object.assign({}, m.finan, { vencs: vencs }) });
+      })
+    });
+    this._save(next);
+    this.setState({ cuotaEdit: null });
+  }
   _pdfNew(title, client) {
     const jspdfNs = window.jspdf; if (!jspdfNs) return null;
     const d = new jspdfNs.jsPDF({ unit: 'pt', format: 'a4' });
@@ -1871,7 +1950,7 @@ class Component extends DCLogic {
     d.setFillColor(29, 29, 31); d.rect(40, y, 515, 34, 'F');
     d.setFont('helvetica', 'bold'); d.setFontSize(8); d.setTextColor(190, 190, 190); d.text('SALDO ACTUAL', 54, y + 21);
     d.setFontSize(12); d.setTextColor(255, 255, 255); d.text(S(this._fmt(usado)), 541, y + 22, { align: 'right' });
-    d.save('ZonaTech-estado-de-cuenta.pdf');
+    d.save('ICLUB Estado de cuenta.pdf');
   }
   _pdfDocGroup(client, g) {
     const title = g.label.charAt(0) + g.label.slice(1).toLowerCase();
@@ -1885,7 +1964,7 @@ class Component extends DCLogic {
       d.setDrawColor(232, 232, 232); d.line(40, y + 24, 555, y + 24);
       y += 40;
     });
-    d.save('ZonaTech-' + g.label.toLowerCase().replace(/[^a-z]+/g, '-') + '.pdf');
+    d.save('ICLUB ' + g.label + '.pdf');
   }
   _undoCompra(clientKey, m) {
     if (!window.confirm('¿Deshacer esta compra? Se elimina de la cuenta del cliente, se borra su adelanto y se devuelve 1 al stock.')) return;
@@ -2102,12 +2181,14 @@ class Component extends DCLogic {
         const n = pm.finan.n;
         const freq = pm.finan.freq || 'Mensual';
         const cuotaImp = Math.round(total / n);
-        const dates = this._schedule(pm.f, n, freq);
+        const vencs = (pm.finan && pm.finan.vencs) || {};
+        const dates = this._schedule(pm.f, n, freq).map((d, i) => vencs[i] || d);
         const planPagos = (client.movs || []).filter((x) => x.tipo === 'Pago' && x.plan === pm.doc);
         const cuotas = dates.map((d, i) => {
           const nn = i + 1;
           const pp = planPagos[i] || null;
           const dt = this._parseDate(d);
+          const editable = isAdmin && !pp;
           const vencida = !pp && dt && dt < new Date();
           const proxima = !pp && !vencida && i === planPagos.length;
           return {
@@ -2120,6 +2201,11 @@ class Component extends DCLogic {
             nb: pp ? 'rgba(31,138,91,.12)' : '#F5F4F1',
             nc: pp ? '#1F8A5B' : '#86868B',
             cursor: pp ? 'pointer' : 'default',
+            admShow: editable,
+            editDate: (e) => {
+              if (e && e.stopPropagation) e.stopPropagation();
+              this.setState({ cuotaEdit: { key: clientKey, doc: pm.doc, i: i, label: 'Cuota ' + nn + ' de ' + n + ' · ' + this._planTitle(pm) }, ceF: d, ceAll: true });
+            },
             open: pp ? () => this._openReceipt(client, pp) : () => {}
           };
         });
@@ -2304,7 +2390,7 @@ class Component extends DCLogic {
             const blob = new Blob([data], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = 'zonatech-copia-' + this._today().replace(/\//g, '-') + '.json';
+            a.href = url; a.download = 'ICLUB copia de seguridad ' + this._today().replace(/\//g, '-') + '.json';
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
             setTimeout(() => URL.revokeObjectURL(url), 1500);
           } catch (e) { window.alert('No se pudo exportar la copia.'); }
@@ -2987,7 +3073,7 @@ class Component extends DCLogic {
           stkToggle: () => setOv(p.id, { sinStock: !p.sinStock }),
           setPhoto: (e) => this._readImg(e, (url) => setOv(p.id, { photo: url })),
           clearPhoto: () => setOv(p.id, { photo: null }),
-          edit: () => this.setState({ catMode: 'form', catEdit: p.id, catError: '', catForm: { name: p.name, spec: p.spec || '', cat: p.cat || 'Celulares', usd: String(p.usd || ''), photo: p.photo || null, bat: p.bat ? String(p.bat) : '', pos: p.pos != null ? p.pos : null } }),
+          edit: () => this.setState({ catMode: 'form', catEdit: p.id, catError: '', catForm: { desc: p.desc || '', rows: (p.rows || []).map((r) => ({ k: r.k, v: r.v })), name: p.name, spec: p.spec || '', cat: p.cat || 'Celulares', usd: String(p.usd || ''), photo: p.photo || null, bat: p.bat ? String(p.bat) : '', pos: p.pos != null ? p.pos : null } }),
           canDel: true,
           del: () => {
             if (!window.confirm('¿Eliminar "' + p.name + '" del catálogo? Se saca de la tienda y de esta lista.')) return;
@@ -2997,7 +3083,7 @@ class Component extends DCLogic {
             this._save(Object.assign({}, db, { catalog: cat }));
           }
         })),
-        catNew: () => this.setState({ catMode: 'form', catEdit: null, catError: '', catForm: { name: '', spec: '', cat: 'Celulares', usd: '', photo: null } }),
+        catNew: () => this.setState({ catMode: 'form', catEdit: null, catError: '', catForm: { name: '', spec: '', cat: 'Celulares', usd: '', photo: null, desc: '', rows: [] } }),
         catBack: () => this.setState({ catMode: 'list', catEdit: null, catForm: null, catError: '' }),
         catIsApple: cform.cat === 'Apple',
         catShowPos: !this.state.catEdit || !!((db.catalog || {})[this.state.catEdit] || {}).custom,
@@ -3011,6 +3097,14 @@ class Component extends DCLogic {
         catBat: cform.bat || '', setCatBat: setCf('bat'),
         catName: cform.name, setCatName: setCf('name'),
         catSpec: cform.spec, setCatSpec: setCf('spec'),
+        catDesc: cform.desc || '', setCatDesc: setCf('desc'),
+        catRows: (cform.rows || []).map((r, i) => ({
+          k: r.k || '', v: r.v || '',
+          setK: (e) => { const rr = (cform.rows || []).map((x) => ({ k: x.k, v: x.v })); rr[i].k = e.target.value; this.setState({ catForm: Object.assign({}, cform, { rows: rr }) }); },
+          setV: (e) => { const rr = (cform.rows || []).map((x) => ({ k: x.k, v: x.v })); rr[i].v = e.target.value; this.setState({ catForm: Object.assign({}, cform, { rows: rr }) }); },
+          del: () => { const rr = (cform.rows || []).filter((x, j) => j !== i).map((x) => ({ k: x.k, v: x.v })); this.setState({ catForm: Object.assign({}, cform, { rows: rr }) }); }
+        })),
+        catRowAdd: () => this.setState({ catForm: Object.assign({}, cform, { rows: (cform.rows || []).map((x) => ({ k: x.k, v: x.v })).concat([{ k: '', v: '' }]) }) }),
         catCat: cform.cat, setCatCat: setCf('cat'),
         catUsd: cform.usd, setCatUsd: setCf('usd'),
         catHasPhoto: !!cform.photo, catNoPhoto: !cform.photo, catPhoto: cform.photo || '', catPhotoCss: '"' + (cform.photo || '') + '"',
@@ -3026,6 +3120,8 @@ class Component extends DCLogic {
           const usd = this._numF(cform.usd);
           if (usd <= 0) { this.setState({ catError: 'Ingresá el precio en US$.' }); return; }
           const fields = { name: String(cform.name).trim(), spec: String(cform.spec || '').trim(), cat: cform.cat || 'Otro', usd: usd, photo: cform.photo || null, bat: cform.cat === 'Apple' ? this._num(cform.bat) : null, pos: catPosVal };
+          fields.desc = String(cform.desc || '').trim();
+          fields.rows = (cform.rows || []).map((r) => ({ k: String(r.k || '').trim(), v: String(r.v || '').trim() })).filter((r) => r.k || r.v);
           if (this.state.catEdit) setOv(this.state.catEdit, fields);
           else setOv('c' + Date.now().toString(36), Object.assign({ custom: true }, fields));
           this.setState({ catMode: 'list', catEdit: null, catForm: null, catError: '' });
@@ -3185,18 +3281,29 @@ class Component extends DCLogic {
       peDet: this.state.peDet, setPeDet: (e) => this.setState({ peDet: e.target.value }),
       pagoEditSave: () => this._movSave(),
       pagoEditClose: () => this.setState({ pagoEdit: null }),
+      cuotaEditOpen: !!this.state.cuotaEdit,
+      ceLabel: this.state.cuotaEdit ? this.state.cuotaEdit.label : '',
+      ceF: this.state.ceF, setCeF: (e) => this.setState({ ceF: e.target.value }),
+      ceAll: this.state.ceAll, setCeAll: (e) => this.setState({ ceAll: e.target.checked }),
+      cuotaEditSave: () => this._cuotaFechaSave(false),
+      cuotaEditReset: () => this._cuotaFechaSave(true),
+      cuotaEditClose: () => this.setState({ cuotaEdit: null }),
       downloadPDF: () => {
         const card = document.getElementById('zt-receipt-card');
         const h2c = window.html2canvas;
         const jspdfNs = window.jspdf;
         if (!card || !h2c || !jspdfNs) { window.print(); return; }
         const num = (this.state.receipt && this.state.receipt.num) ? this.state.receipt.num.replace(/[^0-9A-Za-z-]/g, '') : 'comprobante';
+        const hidden = Array.prototype.slice.call(card.querySelectorAll('.np'));
+        hidden.forEach((el) => { el.setAttribute('data-zt-prevdisp', el.style.display || ''); el.style.display = 'none'; });
+        const restore = () => hidden.forEach((el) => { el.style.display = el.getAttribute('data-zt-prevdisp') || ''; el.removeAttribute('data-zt-prevdisp'); });
         h2c(card, { scale: 2, backgroundColor: '#ffffff', useCORS: true }).then((canvas) => {
           const img = canvas.toDataURL('image/png');
           const pdf = new jspdfNs.jsPDF({ unit: 'pt', format: [canvas.width * 0.5, canvas.height * 0.5] });
           pdf.addImage(img, 'PNG', 0, 0, canvas.width * 0.5, canvas.height * 0.5);
-          pdf.save('ZonaTech-' + num + '.pdf');
-        }).catch(() => window.print());
+          pdf.save('ICLUB Comprobante de PAGO ' + num + '.pdf');
+          restore();
+        }).catch(() => { restore(); window.print(); });
       },
       stop: (e) => e.stopPropagation()
     }, out, adminOut, finOut, cOut);

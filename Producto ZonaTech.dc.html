@@ -83,24 +83,33 @@
     <div class="det-info" style="display:flex; flex-direction:column; gap:11px;">
       <div style="font-size:12px; font-weight:600; letter-spacing:.24em; color:#C9502A;">SEMINUEVO CERTIFICADO</div>
       <h1 style="margin:0; font-size:clamp(28px,3.4vw,42px); font-weight:700; letter-spacing:-.04em; line-height:.98;">iPhone 13</h1>
-      <div style="font-size:16.5px; color:#6E6E73;">El equilibrio perfecto entre potencia y diseño.</div>
+      <sc-if value="{{ ovDescOff }}" hint-placeholder-val="{{ true }}"><div style="font-size:16.5px; color:#6E6E73;">El equilibrio perfecto entre potencia y diseño.</div></sc-if>
+      <sc-if value="{{ ovDescOn }}" hint-placeholder-val="{{ false }}"><div style="font-size:16.5px; color:#6E6E73;">{{ ovDesc }}</div></sc-if>
       <div style="display:flex; align-items:center; gap:16px; margin-top:2px;">
         <span style="width:52px; height:19px; border:1.5px solid rgba(0,0,0,.32); border-radius:5px; display:inline-flex; align-items:center; padding:2px; box-sizing:border-box;"><span class="det-batt" data-batt="100" style="height:100%; width:0; background:#1D1D1F; border-radius:2.5px; transition:width 1.1s cubic-bezier(.22,1,.36,1);"></span></span>
         <span style="font-size:16px; color:#6E6E73;">Batería 100%</span>
       </div>
-      <div style="display:flex; flex-direction:column; gap:2px; margin-top:2px; border-top:1px solid rgba(0,0,0,.08);">
+      <sc-if value="{{ ovRowsOff }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px; margin-top:2px; border-top:1px solid rgba(0,0,0,.08);">
         
         <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">Almacenamiento</span><span style="font-weight:500;">128 GB</span></div><div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">Checking de mi iPhone</span><span style="font-weight:600; color:#1F8A5B; display:inline-flex; align-items:center; gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F8A5B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>Pasado</span></div>
         <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">Garantía</span><span style="font-weight:500;">30 días</span></div>
         <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">Color</span><span style="font-weight:500;">Verde</span></div>
-      </div>
+      </div></sc-if>
+      <sc-if value="{{ ovRowsOn }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; flex-direction:column; gap:2px; margin-top:2px; border-top:1px solid rgba(0,0,0,.08);">
+          <sc-for list="{{ ovRows }}" as="r" hint-placeholder-count="3">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:18px; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">{{ r.k }}</span><span style="font-weight:500; text-align:right;">{{ r.v }}</span></div>
+          </sc-for>
+        </div>
+      </sc-if>
+
       <div style="display:flex; flex-direction:row-reverse; align-items:center; justify-content:space-between; gap:16px; margin-top:6px;">
         <div style="display:inline-flex; align-self:flex-start; background:#F4F1EC; border-radius:12px; padding:3px;">
           <button data-cur="USD" style="padding:7px 16px; border:none; background:transparent; border-radius:9px; font-family:inherit; font-size:13.5px; font-weight:600; color:#86868B; cursor:pointer; transition:background .25s, color .25s, box-shadow .25s;">USD</button>
           <button data-cur="ARS" style="padding:7px 16px; border:none; background:transparent; border-radius:9px; font-family:inherit; font-size:13.5px; font-weight:600; color:#86868B; cursor:pointer; transition:background .25s, color .25s, box-shadow .25s;">ARS</button>
         </div>
         <div style="display:flex; align-items:baseline; gap:12px;">
-          <span data-usd="400" style="font-size:30px; font-weight:600; letter-spacing:-.02em; white-space:nowrap;">USD 400</span>
+          <span style="font-size:30px; font-weight:600; letter-spacing:-.02em; white-space:nowrap;">{{ priceMain }}</span>
           <span style="font-size:15px; color:#A1A1A6;">precio final</span>
         </div>
       </div>
@@ -113,7 +122,7 @@
           </div>
           <button data-add="iphone13" style="flex:1; display:inline-flex; align-items:center; justify-content:center; gap:9px; height:50px; border:1.5px solid rgba(0,0,0,.16); cursor:pointer; background:#fff; color:#1D1D1F; font-size:16px; font-weight:600; border-radius:16px; transition:border-color .3s, background .3s, color .3s; font-family:inherit;" style-hover="background:#1D1D1F; color:#fff; border-color:#1D1D1F;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.3"></circle><circle cx="18" cy="20" r="1.3"></circle><path d="M2.5 3h2.2l2.1 12.3a1.5 1.5 0 0 0 1.5 1.2h8.9a1.5 1.5 0 0 0 1.5-1.2L21.5 7H6"></path><path d="M19.5 8.2v4.6M21.8 10.5h-4.6"></path></svg>Agregar al carrito</button><button data-compare="iphone13" aria-pressed="false" aria-label="Comparar" title="Comparar equipos" style="width:50px; height:50px; flex-shrink:0; border:1.5px solid rgba(0,0,0,.16); background:#fff; border-radius:16px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:#1D1D1F; transition:background .3s, border-color .3s, color .3s; font-family:inherit;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8h14M5 8l-3 6a3 3 0 0 0 6 0zM19 8l-3 6a3 3 0 0 0 6 0z"></path></svg></button>
         </div>
-        <a href="Finalizar Compra.dc.html?id=iphone13&cat=&name=iPhone%2013&usd=400" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:10px; height:50px; border:none; cursor:pointer; background:#1D1D1F; color:#fff; font-size:16.5px; font-weight:600; border-radius:16px; transition:transform .4s cubic-bezier(.22,1,.36,1), background .4s; font-family:inherit;" style-hover="transform:translateY(-2px); background:#000;">Comprar ahora<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+        <a href="{{ buyHref }}" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:10px; height:50px; border:none; cursor:pointer; background:#1D1D1F; color:#fff; font-size:16.5px; font-weight:600; border-radius:16px; transition:transform .4s cubic-bezier(.22,1,.36,1), background .4s; font-family:inherit;" style-hover="transform:translateY(-2px); background:#000;">Comprar ahora<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
         <a href="Portal Clientes ZonaTech.dc.html#financiar" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:8px; margin-top:2px; color:#C9502A; font-size:14.5px; font-weight:600; transition:opacity .25s; font-family:inherit;" style-hover="opacity:.6;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5"></rect><path d="M2 10h20"></path></svg>Consultar financiamiento en cuotas<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
         <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px; padding-top:14px; border-top:1px solid rgba(0,0,0,.08); max-width:430px;"><div style="display:flex; align-items:center; gap:10px; font-size:13.5px; color:#1D1D1F;"><span style="width:8px; height:8px; border-radius:50%; background:#1F8A5B; box-shadow:0 0 0 3px rgba(31,138,91,.15); flex-shrink:0;"></span><span><strong style="font-weight:600;">En stock</strong> <span style="color:#86868B;">· entrega inmediata</span></span></div><div style="display:flex; align-items:flex-start; gap:10px; font-size:13.5px; color:#6E6E73;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#86868B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M1 3h13v10H1zM14 6h4l3 3v4h-7z"></path><circle cx="5.5" cy="16.5" r="1.8"></circle><circle cx="17.5" cy="16.5" r="1.8"></circle></svg><span>Envío a todo el país — despacho en el día, el envío se paga al recibir.</span></div><div style="display:flex; align-items:flex-start; gap:10px; font-size:13.5px; color:#6E6E73;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#86868B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M3 8l9-5 9 5-9 5-9-5z"></path><path d="M3 8v8l9 5 9-5V8"></path><path d="M12 13v8"></path></svg><span>Incluye funda, cargador y templado.</span></div></div>
       </div>
@@ -129,24 +138,33 @@
     <div class="det-info" style="display:flex; flex-direction:column; gap:11px;">
       <div style="font-size:12px; font-weight:600; letter-spacing:.24em; color:#C9502A;">SEMINUEVO CERTIFICADO</div>
       <h1 style="margin:0; font-size:clamp(28px,3.4vw,42px); font-weight:700; letter-spacing:-.04em; line-height:.98;">iPhone 15</h1>
-      <div style="font-size:16.5px; color:#6E6E73;">Dynamic Island y USB-C. Una nueva generación.</div>
+      <sc-if value="{{ ovDescOff }}" hint-placeholder-val="{{ true }}"><div style="font-size:16.5px; color:#6E6E73;">Dynamic Island y USB-C. Una nueva generación.</div></sc-if>
+      <sc-if value="{{ ovDescOn }}" hint-placeholder-val="{{ false }}"><div style="font-size:16.5px; color:#6E6E73;">{{ ovDesc }}</div></sc-if>
       <div style="display:flex; align-items:center; gap:16px; margin-top:2px;">
         <span style="width:52px; height:19px; border:1.5px solid rgba(0,0,0,.32); border-radius:5px; display:inline-flex; align-items:center; padding:2px; box-sizing:border-box;"><span class="det-batt" data-batt="85" style="height:100%; width:0; background:#1D1D1F; border-radius:2.5px; transition:width 1.1s cubic-bezier(.22,1,.36,1);"></span></span>
         <span style="font-size:16px; color:#6E6E73;">Batería 85%</span>
       </div>
-      <div style="display:flex; flex-direction:column; gap:2px; margin-top:2px; border-top:1px solid rgba(0,0,0,.08);">
+      <sc-if value="{{ ovRowsOff }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px; margin-top:2px; border-top:1px solid rgba(0,0,0,.08);">
         <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">Almacenamiento</span><span style="font-weight:500;">128 GB</span></div>
         <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">Checking de mi iPhone</span><span style="font-weight:600; color:#1F8A5B; display:inline-flex; align-items:center; gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F8A5B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>Pasado</span></div>
         <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">Garantía</span><span style="font-weight:500;">30 días</span></div>
         <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">Color</span><span style="font-weight:500;">Negro</span></div>
-      </div>
+      </div></sc-if>
+      <sc-if value="{{ ovRowsOn }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; flex-direction:column; gap:2px; margin-top:2px; border-top:1px solid rgba(0,0,0,.08);">
+          <sc-for list="{{ ovRows }}" as="r" hint-placeholder-count="3">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:18px; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">{{ r.k }}</span><span style="font-weight:500; text-align:right;">{{ r.v }}</span></div>
+          </sc-for>
+        </div>
+      </sc-if>
+
       <div style="display:flex; flex-direction:row-reverse; align-items:center; justify-content:space-between; gap:16px; margin-top:6px;">
         <div style="display:inline-flex; align-self:flex-start; background:#F4F1EC; border-radius:12px; padding:3px;">
           <button data-cur="USD" style="padding:7px 16px; border:none; background:transparent; border-radius:9px; font-family:inherit; font-size:13.5px; font-weight:600; color:#86868B; cursor:pointer; transition:background .25s, color .25s, box-shadow .25s;">USD</button>
           <button data-cur="ARS" style="padding:7px 16px; border:none; background:transparent; border-radius:9px; font-family:inherit; font-size:13.5px; font-weight:600; color:#86868B; cursor:pointer; transition:background .25s, color .25s, box-shadow .25s;">ARS</button>
         </div>
         <div style="display:flex; align-items:baseline; gap:12px;">
-          <span data-usd="500" style="font-size:30px; font-weight:600; letter-spacing:-.02em; white-space:nowrap;">USD 500</span>
+          <span style="font-size:30px; font-weight:600; letter-spacing:-.02em; white-space:nowrap;">{{ priceMain }}</span>
           <span style="font-size:15px; color:#A1A1A6;">precio final</span>
         </div>
       </div>
@@ -159,7 +177,7 @@
           </div>
           <button data-add="iphone15" style="flex:1; display:inline-flex; align-items:center; justify-content:center; gap:9px; height:50px; border:1.5px solid rgba(0,0,0,.16); cursor:pointer; background:#fff; color:#1D1D1F; font-size:16px; font-weight:600; border-radius:16px; transition:border-color .3s, background .3s, color .3s; font-family:inherit;" style-hover="background:#1D1D1F; color:#fff; border-color:#1D1D1F;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.3"></circle><circle cx="18" cy="20" r="1.3"></circle><path d="M2.5 3h2.2l2.1 12.3a1.5 1.5 0 0 0 1.5 1.2h8.9a1.5 1.5 0 0 0 1.5-1.2L21.5 7H6"></path><path d="M19.5 8.2v4.6M21.8 10.5h-4.6"></path></svg>Agregar al carrito</button><button data-compare="iphone15" aria-pressed="false" aria-label="Comparar" title="Comparar equipos" style="width:50px; height:50px; flex-shrink:0; border:1.5px solid rgba(0,0,0,.16); background:#fff; border-radius:16px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:#1D1D1F; transition:background .3s, border-color .3s, color .3s; font-family:inherit;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8h14M5 8l-3 6a3 3 0 0 0 6 0zM19 8l-3 6a3 3 0 0 0 6 0z"></path></svg></button>
         </div>
-        <a href="Finalizar Compra.dc.html?id=iphone15&cat=&name=iPhone%2015&usd=500" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:10px; height:50px; border:none; cursor:pointer; background:#1D1D1F; color:#fff; font-size:16.5px; font-weight:600; border-radius:16px; transition:transform .4s cubic-bezier(.22,1,.36,1), background .4s; font-family:inherit;" style-hover="transform:translateY(-2px); background:#000;">Comprar ahora<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+        <a href="{{ buyHref }}" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:10px; height:50px; border:none; cursor:pointer; background:#1D1D1F; color:#fff; font-size:16.5px; font-weight:600; border-radius:16px; transition:transform .4s cubic-bezier(.22,1,.36,1), background .4s; font-family:inherit;" style-hover="transform:translateY(-2px); background:#000;">Comprar ahora<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
         <a href="Portal Clientes ZonaTech.dc.html#financiar" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:8px; margin-top:2px; color:#C9502A; font-size:14.5px; font-weight:600; transition:opacity .25s; font-family:inherit;" style-hover="opacity:.6;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5"></rect><path d="M2 10h20"></path></svg>Consultar financiamiento en cuotas<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
         <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px; padding-top:14px; border-top:1px solid rgba(0,0,0,.08); max-width:430px;"><div style="display:flex; align-items:center; gap:10px; font-size:13.5px; color:#1D1D1F;"><span style="width:8px; height:8px; border-radius:50%; background:#1F8A5B; box-shadow:0 0 0 3px rgba(31,138,91,.15); flex-shrink:0;"></span><span><strong style="font-weight:600;">En stock</strong> <span style="color:#86868B;">· entrega inmediata</span></span></div><div style="display:flex; align-items:flex-start; gap:10px; font-size:13.5px; color:#6E6E73;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#86868B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M1 3h13v10H1zM14 6h4l3 3v4h-7z"></path><circle cx="5.5" cy="16.5" r="1.8"></circle><circle cx="17.5" cy="16.5" r="1.8"></circle></svg><span>Envío a todo el país — despacho en el día, el envío se paga al recibir.</span></div><div style="display:flex; align-items:flex-start; gap:10px; font-size:13.5px; color:#6E6E73;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#86868B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M3 8l9-5 9 5-9 5-9-5z"></path><path d="M3 8v8l9 5 9-5V8"></path><path d="M12 13v8"></path></svg><span>Incluye funda, cargador y templado.</span></div></div>
       </div>
@@ -175,24 +193,33 @@
     <div class="det-info" style="display:flex; flex-direction:column; gap:11px;">
       <div style="font-size:12px; font-weight:600; letter-spacing:.24em; color:#C9502A;">SEMINUEVO CERTIFICADO</div>
       <h1 style="margin:0; font-size:clamp(28px,3.4vw,42px); font-weight:700; letter-spacing:-.04em; line-height:.98;">iPhone 16 Pro</h1>
-      <div style="font-size:16.5px; color:#6E6E73;">Titanio. Cámara Pro. El máximo rendimiento.</div>
+      <sc-if value="{{ ovDescOff }}" hint-placeholder-val="{{ true }}"><div style="font-size:16.5px; color:#6E6E73;">Titanio. Cámara Pro. El máximo rendimiento.</div></sc-if>
+      <sc-if value="{{ ovDescOn }}" hint-placeholder-val="{{ false }}"><div style="font-size:16.5px; color:#6E6E73;">{{ ovDesc }}</div></sc-if>
       <div style="display:flex; align-items:center; gap:16px; margin-top:2px;">
         <span style="width:52px; height:19px; border:1.5px solid rgba(0,0,0,.32); border-radius:5px; display:inline-flex; align-items:center; padding:2px; box-sizing:border-box;"><span class="det-batt" data-batt="99" style="height:100%; width:0; background:#1D1D1F; border-radius:2.5px; transition:width 1.1s cubic-bezier(.22,1,.36,1);"></span></span>
         <span style="font-size:16px; color:#6E6E73;">Batería 99%</span>
       </div>
-      <div style="display:flex; flex-direction:column; gap:2px; margin-top:2px; border-top:1px solid rgba(0,0,0,.08);">
+      <sc-if value="{{ ovRowsOff }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px; margin-top:2px; border-top:1px solid rgba(0,0,0,.08);">
         <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">Almacenamiento</span><span style="font-weight:500;">128 GB</span></div>
         <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">Checking de mi iPhone</span><span style="font-weight:600; color:#1F8A5B; display:inline-flex; align-items:center; gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F8A5B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>Pasado</span></div>
         <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">Garantía</span><span style="font-weight:500;">30 días</span></div>
         <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">Color</span><span style="font-weight:500;">Titanio Negro</span></div>
-      </div>
+      </div></sc-if>
+      <sc-if value="{{ ovRowsOn }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; flex-direction:column; gap:2px; margin-top:2px; border-top:1px solid rgba(0,0,0,.08);">
+          <sc-for list="{{ ovRows }}" as="r" hint-placeholder-count="3">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:18px; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">{{ r.k }}</span><span style="font-weight:500; text-align:right;">{{ r.v }}</span></div>
+          </sc-for>
+        </div>
+      </sc-if>
+
       <div style="display:flex; flex-direction:row-reverse; align-items:center; justify-content:space-between; gap:16px; margin-top:6px;">
         <div style="display:inline-flex; align-self:flex-start; background:#F4F1EC; border-radius:12px; padding:3px;">
           <button data-cur="USD" style="padding:7px 16px; border:none; background:transparent; border-radius:9px; font-family:inherit; font-size:13.5px; font-weight:600; color:#86868B; cursor:pointer; transition:background .25s, color .25s, box-shadow .25s;">USD</button>
           <button data-cur="ARS" style="padding:7px 16px; border:none; background:transparent; border-radius:9px; font-family:inherit; font-size:13.5px; font-weight:600; color:#86868B; cursor:pointer; transition:background .25s, color .25s, box-shadow .25s;">ARS</button>
         </div>
         <div style="display:flex; align-items:baseline; gap:12px;">
-          <span data-usd="820" style="font-size:30px; font-weight:600; letter-spacing:-.02em; white-space:nowrap;">USD 820</span>
+          <span style="font-size:30px; font-weight:600; letter-spacing:-.02em; white-space:nowrap;">{{ priceMain }}</span>
           <span style="font-size:15px; color:#A1A1A6;">precio final</span>
         </div>
       </div>
@@ -205,7 +232,7 @@
           </div>
           <button data-add="iphone16pro" style="flex:1; display:inline-flex; align-items:center; justify-content:center; gap:9px; height:50px; border:1.5px solid rgba(0,0,0,.16); cursor:pointer; background:#fff; color:#1D1D1F; font-size:16px; font-weight:600; border-radius:16px; transition:border-color .3s, background .3s, color .3s; font-family:inherit;" style-hover="background:#1D1D1F; color:#fff; border-color:#1D1D1F;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.3"></circle><circle cx="18" cy="20" r="1.3"></circle><path d="M2.5 3h2.2l2.1 12.3a1.5 1.5 0 0 0 1.5 1.2h8.9a1.5 1.5 0 0 0 1.5-1.2L21.5 7H6"></path><path d="M19.5 8.2v4.6M21.8 10.5h-4.6"></path></svg>Agregar al carrito</button><button data-compare="iphone16pro" aria-pressed="false" aria-label="Comparar" title="Comparar equipos" style="width:50px; height:50px; flex-shrink:0; border:1.5px solid rgba(0,0,0,.16); background:#fff; border-radius:16px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:#1D1D1F; transition:background .3s, border-color .3s, color .3s; font-family:inherit;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8h14M5 8l-3 6a3 3 0 0 0 6 0zM19 8l-3 6a3 3 0 0 0 6 0z"></path></svg></button>
         </div>
-        <a href="Finalizar Compra.dc.html?id=iphone16pro&cat=&name=iPhone%2016%20Pro&usd=820" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:10px; height:50px; border:none; cursor:pointer; background:#1D1D1F; color:#fff; font-size:16.5px; font-weight:600; border-radius:16px; transition:transform .4s cubic-bezier(.22,1,.36,1), background .4s; font-family:inherit;" style-hover="transform:translateY(-2px); background:#000;">Comprar ahora<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+        <a href="{{ buyHref }}" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:10px; height:50px; border:none; cursor:pointer; background:#1D1D1F; color:#fff; font-size:16.5px; font-weight:600; border-radius:16px; transition:transform .4s cubic-bezier(.22,1,.36,1), background .4s; font-family:inherit;" style-hover="transform:translateY(-2px); background:#000;">Comprar ahora<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
         <a href="Portal Clientes ZonaTech.dc.html#financiar" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:8px; margin-top:2px; color:#C9502A; font-size:14.5px; font-weight:600; transition:opacity .25s; font-family:inherit;" style-hover="opacity:.6;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5"></rect><path d="M2 10h20"></path></svg>Consultar financiamiento en cuotas<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
         <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px; padding-top:14px; border-top:1px solid rgba(0,0,0,.08); max-width:430px;"><div style="display:flex; align-items:center; gap:10px; font-size:13.5px; color:#1D1D1F;"><span style="width:8px; height:8px; border-radius:50%; background:#1F8A5B; box-shadow:0 0 0 3px rgba(31,138,91,.15); flex-shrink:0;"></span><span><strong style="font-weight:600;">En stock</strong> <span style="color:#86868B;">· entrega inmediata</span></span></div><div style="display:flex; align-items:flex-start; gap:10px; font-size:13.5px; color:#6E6E73;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#86868B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M1 3h13v10H1zM14 6h4l3 3v4h-7z"></path><circle cx="5.5" cy="16.5" r="1.8"></circle><circle cx="17.5" cy="16.5" r="1.8"></circle></svg><span>Envío a todo el país — despacho en el día, el envío se paga al recibir.</span></div><div style="display:flex; align-items:flex-start; gap:10px; font-size:13.5px; color:#6E6E73;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#86868B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M3 8l9-5 9 5-9 5-9-5z"></path><path d="M3 8v8l9 5 9-5V8"></path><path d="M12 13v8"></path></svg><span>Incluye funda, cargador y templado.</span></div></div>
       </div>
@@ -221,19 +248,28 @@
     <div class="det-info" style="display:flex; flex-direction:column; gap:11px;">
       <div style="font-size:12px; font-weight:600; letter-spacing:.24em; color:#1F8A5B;">DISPONIBLE</div>
       <h1 style="margin:0; font-size:clamp(28px,3.4vw,42px); font-weight:700; letter-spacing:-.04em; line-height:.98;">AirPods Max</h1>
-      <div style="font-size:16.5px; color:#6E6E73;">Cancelación activa de ruido y audio espacial.</div>
-      <div style="display:flex; flex-direction:column; gap:2px; margin-top:2px; border-top:1px solid rgba(0,0,0,.08);">
+      <sc-if value="{{ ovDescOff }}" hint-placeholder-val="{{ true }}"><div style="font-size:16.5px; color:#6E6E73;">Cancelación activa de ruido y audio espacial.</div></sc-if>
+      <sc-if value="{{ ovDescOn }}" hint-placeholder-val="{{ false }}"><div style="font-size:16.5px; color:#6E6E73;">{{ ovDesc }}</div></sc-if>
+      <sc-if value="{{ ovRowsOff }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px; margin-top:2px; border-top:1px solid rgba(0,0,0,.08);">
         <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">Condición</span><span style="font-weight:500;">Nuevo · sellado</span></div>
         <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">Conexión</span><span style="font-weight:500;">Bluetooth</span></div>
         <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">Garantía</span><span style="font-weight:500;">30 días</span></div>
-      </div>
+      </div></sc-if>
+      <sc-if value="{{ ovRowsOn }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; flex-direction:column; gap:2px; margin-top:2px; border-top:1px solid rgba(0,0,0,.08);">
+          <sc-for list="{{ ovRows }}" as="r" hint-placeholder-count="3">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:18px; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">{{ r.k }}</span><span style="font-weight:500; text-align:right;">{{ r.v }}</span></div>
+          </sc-for>
+        </div>
+      </sc-if>
+
       <div style="display:flex; flex-direction:row-reverse; align-items:center; justify-content:space-between; gap:16px; margin-top:6px;">
         <div style="display:inline-flex; align-self:flex-start; background:#F4F1EC; border-radius:12px; padding:3px;">
           <button data-cur="USD" style="padding:7px 16px; border:none; background:transparent; border-radius:9px; font-family:inherit; font-size:13.5px; font-weight:600; color:#86868B; cursor:pointer; transition:background .25s, color .25s, box-shadow .25s;">USD</button>
           <button data-cur="ARS" style="padding:7px 16px; border:none; background:transparent; border-radius:9px; font-family:inherit; font-size:13.5px; font-weight:600; color:#86868B; cursor:pointer; transition:background .25s, color .25s, box-shadow .25s;">ARS</button>
         </div>
         <div style="display:flex; align-items:baseline; gap:12px;">
-          <span data-usd="350" style="font-size:30px; font-weight:600; letter-spacing:-.02em; white-space:nowrap;">USD 350</span>
+          <span style="font-size:30px; font-weight:600; letter-spacing:-.02em; white-space:nowrap;">{{ priceMain }}</span>
           <span style="font-size:15px; color:#A1A1A6;">precio final</span>
         </div>
       </div>
@@ -246,7 +282,7 @@
           </div>
           <button data-add="airpodsmax" style="flex:1; display:inline-flex; align-items:center; justify-content:center; gap:9px; height:50px; border:1.5px solid rgba(0,0,0,.16); cursor:pointer; background:#fff; color:#1D1D1F; font-size:16px; font-weight:600; border-radius:16px; transition:border-color .3s, background .3s, color .3s; font-family:inherit;" style-hover="background:#1D1D1F; color:#fff; border-color:#1D1D1F;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.3"></circle><circle cx="18" cy="20" r="1.3"></circle><path d="M2.5 3h2.2l2.1 12.3a1.5 1.5 0 0 0 1.5 1.2h8.9a1.5 1.5 0 0 0 1.5-1.2L21.5 7H6"></path><path d="M19.5 8.2v4.6M21.8 10.5h-4.6"></path></svg>Agregar al carrito</button>
         </div>
-        <a href="Finalizar Compra.dc.html?id=airpodsmax&cat=&name=AirPods%20Max&usd=350" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:10px; height:50px; border:none; cursor:pointer; background:#1D1D1F; color:#fff; font-size:16.5px; font-weight:600; border-radius:16px; transition:transform .4s cubic-bezier(.22,1,.36,1), background .4s; font-family:inherit;" style-hover="transform:translateY(-2px); background:#000;">Comprar ahora<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+        <a href="{{ buyHref }}" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:10px; height:50px; border:none; cursor:pointer; background:#1D1D1F; color:#fff; font-size:16.5px; font-weight:600; border-radius:16px; transition:transform .4s cubic-bezier(.22,1,.36,1), background .4s; font-family:inherit;" style-hover="transform:translateY(-2px); background:#000;">Comprar ahora<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
         <a href="Portal Clientes ZonaTech.dc.html#financiar" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:8px; margin-top:2px; color:#C9502A; font-size:14.5px; font-weight:600; transition:opacity .25s; font-family:inherit;" style-hover="opacity:.6;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5"></rect><path d="M2 10h20"></path></svg>Consultar financiamiento en cuotas<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
         <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px; padding-top:14px; border-top:1px solid rgba(0,0,0,.08); max-width:430px;"><div style="display:flex; align-items:center; gap:10px; font-size:13.5px; color:#1D1D1F;"><span style="width:8px; height:8px; border-radius:50%; background:#1F8A5B; box-shadow:0 0 0 3px rgba(31,138,91,.15); flex-shrink:0;"></span><span><strong style="font-weight:600;">En stock</strong> <span style="color:#86868B;">· entrega inmediata</span></span></div><div style="display:flex; align-items:flex-start; gap:10px; font-size:13.5px; color:#6E6E73;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#86868B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M1 3h13v10H1zM14 6h4l3 3v4h-7z"></path><circle cx="5.5" cy="16.5" r="1.8"></circle><circle cx="17.5" cy="16.5" r="1.8"></circle></svg><span>Envío a todo el país — despacho en el día, el envío se paga al recibir.</span></div><div style="display:flex; align-items:flex-start; gap:10px; font-size:13.5px; color:#6E6E73;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#86868B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M3 8l9-5 9 5-9 5-9-5z"></path><path d="M3 8v8l9 5 9-5V8"></path><path d="M12 13v8"></path></svg><span>Incluye cable de carga y estuche original.</span></div></div>
       </div>
@@ -262,19 +298,28 @@
     <div class="det-info" style="display:flex; flex-direction:column; gap:11px;">
       <div style="font-size:12px; font-weight:600; letter-spacing:.24em; color:#1F8A5B;">DISPONIBLE</div>
       <h1 style="margin:0; font-size:clamp(28px,3.4vw,42px); font-weight:700; letter-spacing:-.04em; line-height:.98;">iPad 11.ª generación</h1>
-      <div style="font-size:16.5px; color:#6E6E73;">Pantalla Liquid Retina de 11″ y chip A16.</div>
-      <div style="display:flex; flex-direction:column; gap:2px; margin-top:2px; border-top:1px solid rgba(0,0,0,.08);">
+      <sc-if value="{{ ovDescOff }}" hint-placeholder-val="{{ true }}"><div style="font-size:16.5px; color:#6E6E73;">Pantalla Liquid Retina de 11″ y chip A16.</div></sc-if>
+      <sc-if value="{{ ovDescOn }}" hint-placeholder-val="{{ false }}"><div style="font-size:16.5px; color:#6E6E73;">{{ ovDesc }}</div></sc-if>
+      <sc-if value="{{ ovRowsOff }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px; margin-top:2px; border-top:1px solid rgba(0,0,0,.08);">
         <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">Almacenamiento</span><span style="font-weight:500;">128 GB</span></div>
         <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">Condición</span><span style="font-weight:500;">Nuevo · sellado</span></div>
         <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">Garantía</span><span style="font-weight:500;">30 días</span></div>
-      </div>
+      </div></sc-if>
+      <sc-if value="{{ ovRowsOn }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; flex-direction:column; gap:2px; margin-top:2px; border-top:1px solid rgba(0,0,0,.08);">
+          <sc-for list="{{ ovRows }}" as="r" hint-placeholder-count="3">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:18px; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); font-size:14px;"><span style="color:#86868B;">{{ r.k }}</span><span style="font-weight:500; text-align:right;">{{ r.v }}</span></div>
+          </sc-for>
+        </div>
+      </sc-if>
+
       <div style="display:flex; flex-direction:row-reverse; align-items:center; justify-content:space-between; gap:16px; margin-top:6px;">
         <div style="display:inline-flex; align-self:flex-start; background:#F4F1EC; border-radius:12px; padding:3px;">
           <button data-cur="USD" style="padding:7px 16px; border:none; background:transparent; border-radius:9px; font-family:inherit; font-size:13.5px; font-weight:600; color:#86868B; cursor:pointer; transition:background .25s, color .25s, box-shadow .25s;">USD</button>
           <button data-cur="ARS" style="padding:7px 16px; border:none; background:transparent; border-radius:9px; font-family:inherit; font-size:13.5px; font-weight:600; color:#86868B; cursor:pointer; transition:background .25s, color .25s, box-shadow .25s;">ARS</button>
         </div>
         <div style="display:flex; align-items:baseline; gap:12px;">
-          <span data-usd="519" style="font-size:30px; font-weight:600; letter-spacing:-.02em; white-space:nowrap;">USD 519</span>
+          <span style="font-size:30px; font-weight:600; letter-spacing:-.02em; white-space:nowrap;">{{ priceMain }}</span>
           <span style="font-size:15px; color:#A1A1A6;">precio final</span>
         </div>
       </div>
@@ -287,7 +332,7 @@
           </div>
           <button data-add="ipad11" style="flex:1; display:inline-flex; align-items:center; justify-content:center; gap:9px; height:50px; border:1.5px solid rgba(0,0,0,.16); cursor:pointer; background:#fff; color:#1D1D1F; font-size:16px; font-weight:600; border-radius:16px; transition:border-color .3s, background .3s, color .3s; font-family:inherit;" style-hover="background:#1D1D1F; color:#fff; border-color:#1D1D1F;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.3"></circle><circle cx="18" cy="20" r="1.3"></circle><path d="M2.5 3h2.2l2.1 12.3a1.5 1.5 0 0 0 1.5 1.2h8.9a1.5 1.5 0 0 0 1.5-1.2L21.5 7H6"></path><path d="M19.5 8.2v4.6M21.8 10.5h-4.6"></path></svg>Agregar al carrito</button>
         </div>
-        <a href="Finalizar Compra.dc.html?id=ipad11&cat=&name=iPad%2011%C2%AA%20gen&usd=519" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:10px; height:50px; border:none; cursor:pointer; background:#1D1D1F; color:#fff; font-size:16.5px; font-weight:600; border-radius:16px; transition:transform .4s cubic-bezier(.22,1,.36,1), background .4s; font-family:inherit;" style-hover="transform:translateY(-2px); background:#000;">Comprar ahora<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+        <a href="{{ buyHref }}" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:10px; height:50px; border:none; cursor:pointer; background:#1D1D1F; color:#fff; font-size:16.5px; font-weight:600; border-radius:16px; transition:transform .4s cubic-bezier(.22,1,.36,1), background .4s; font-family:inherit;" style-hover="transform:translateY(-2px); background:#000;">Comprar ahora<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
         <a href="Portal Clientes ZonaTech.dc.html#financiar" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:8px; margin-top:2px; color:#C9502A; font-size:14.5px; font-weight:600; transition:opacity .25s; font-family:inherit;" style-hover="opacity:.6;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5"></rect><path d="M2 10h20"></path></svg>Consultar financiamiento en cuotas<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
         <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px; padding-top:14px; border-top:1px solid rgba(0,0,0,.08); max-width:430px;"><div style="display:flex; align-items:center; gap:10px; font-size:13.5px; color:#1D1D1F;"><span style="width:8px; height:8px; border-radius:50%; background:#1F8A5B; box-shadow:0 0 0 3px rgba(31,138,91,.15); flex-shrink:0;"></span><span><strong style="font-weight:600;">En stock</strong> <span style="color:#86868B;">· entrega inmediata</span></span></div><div style="display:flex; align-items:flex-start; gap:10px; font-size:13.5px; color:#6E6E73;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#86868B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M1 3h13v10H1zM14 6h4l3 3v4h-7z"></path><circle cx="5.5" cy="16.5" r="1.8"></circle><circle cx="17.5" cy="16.5" r="1.8"></circle></svg><span>Envío a todo el país — despacho en el día, el envío se paga al recibir.</span></div><div style="display:flex; align-items:flex-start; gap:10px; font-size:13.5px; color:#6E6E73;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#86868B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M3 8l9-5 9 5-9 5-9-5z"></path><path d="M3 8v8l9 5 9-5V8"></path><path d="M12 13v8"></path></svg><span>Incluye cargador y cable USB-C.</span></div></div>
       </div>
@@ -385,6 +430,26 @@ class Component extends DCLogic {
     if(valid.indexOf(m)<0) m='iphone13';
     return m;
   }
+  /* Datos del panel administrativo: precio, nombre, descripción y ficha técnica. */
+  _db(){
+    try{ const raw=localStorage.getItem('zt-portal-fin-db-v2'); return raw?JSON.parse(raw):null; }catch(e){ return null; }
+  }
+  _ovOf(id){
+    const db=this._db();
+    return ((db&&db.catalog)||{})[id]||{};
+  }
+  _ov(){ return this._ovOf(this._model()); }
+  _rate(){
+    const db=this._db();
+    const r=db&&db.settings&&db.settings.rate;
+    return (typeof r==='number'&&r>0)?r:ZT_RATE;
+  }
+  /* Precio y nombre efectivos de un producto. */
+  _prod(id){
+    const base=ZT_PRODUCTS[id]||{name:'',usd:0};
+    const ov=this._ovOf(id);
+    return { name: ov.name||base.name, usd: (ov.usd!=null?ov.usd:base.usd)||0 };
+  }
   _loadCart(){
     try{ const raw=localStorage.getItem(ZT_CART_KEY); return raw?JSON.parse(raw):[]; }catch(e){ return []; }
   }
@@ -397,10 +462,6 @@ class Component extends DCLogic {
   }
   _updateCurrencyUI(){
     const cur=this.state.cur||'USD';
-    document.querySelectorAll('[data-usd]').forEach(el=>{
-      const usd=parseFloat(el.getAttribute('data-usd'))||0;
-      el.textContent = cur==='ARS' ? ('ARS '+Math.round(usd*ZT_RATE).toLocaleString('es-AR')) : ('USD '+usd.toLocaleString('es-AR'));
-    });
     document.querySelectorAll('[data-cur]').forEach(btn=>{
       const active=btn.getAttribute('data-cur')===cur;
       btn.style.background=active?'#fff':'transparent';
@@ -416,7 +477,7 @@ class Component extends DCLogic {
     this.setState(s=>({ cart:cart, cartOpen: open===undefined ? s.cartOpen : open }));
   }
   addToCart(id, qty){
-    const p=ZT_PRODUCTS[id]; if(!p) return;
+    const p=ZT_PRODUCTS[id]?this._prod(id):null; if(!p) return;
     qty=Math.max(1, parseInt(qty,10)||1);
     const cart=this.state.cart.map(x=>({...x}));
     const ex=cart.find(x=>x.id===id);
@@ -430,11 +491,23 @@ class Component extends DCLogic {
     this._setCart(cart);
   }
   renderVals(){
+    const ov=this._ov();
+    const ovRows=(ov.rows||[]).filter(r=>r&&(r.k||r.v));
     const cart=this.state.cart||[];
     const count=cart.reduce((n,x)=>n+x.qty,0);
     const subtotal=cart.reduce((n,x)=>n+x.usd*x.qty,0);
     const cur=this.state.cur||'USD';
-    const fmt=n=> cur==='ARS' ? ('ARS '+Math.round(n*ZT_RATE).toLocaleString('es-AR')) : ('USD '+n.toLocaleString('es-AR'));
+    const rate=this._rate();
+    const fmt=n=> cur==='ARS' ? ('ARS '+Math.round(n*rate).toLocaleString('es-AR')) : ('USD '+n.toLocaleString('es-AR'));
+    const _id=this._model();
+    const _p=this._prod(_id);
+    const ovVals={
+      priceMain: cur==='ARS' ? ('ARS '+Math.round(_p.usd*rate).toLocaleString('es-AR')) : ('USD '+(_p.usd||0).toLocaleString('es-AR')),
+      buyHref: 'Finalizar Compra.dc.html?id='+encodeURIComponent(_id)+'&cat='+encodeURIComponent(ov.cat||'')+'&name='+encodeURIComponent(_p.name||'')+'&usd='+(_p.usd||0),
+      ovDescOn:!!ov.desc, ovDescOff:!ov.desc, ovDesc:ov.desc||'',
+      ovRowsOn:ovRows.length>0, ovRowsOff:ovRows.length===0,
+      ovRows:ovRows.map(r=>({ k:r.k||'', v:r.v||'' }))
+    };
     const items=cart.map(it=>({
       id:it.id, name:it.name, qty:it.qty,
       usdEach:fmt(it.usd), lineTotal:fmt(it.usd*it.qty),
@@ -449,7 +522,7 @@ class Component extends DCLogic {
       lines.push('Total: '+fmt(subtotal));
       checkoutHref='https://wa.me/5493814680653?text='+encodeURIComponent(lines.join('\n'));
     }
-    return {
+    return Object.assign(ovVals, {
       cartOpen:this.state.cartOpen,
       hasItems:count>0,
       cartEmpty:count===0,
@@ -459,10 +532,12 @@ class Component extends DCLogic {
       checkoutHref:checkoutHref,
       closeCart:()=>this.setState({cartOpen:false}),
       stop:(e)=>{ if(e&&e.stopPropagation) e.stopPropagation(); }
-    };
+    });
   }
   componentDidMount(){
     this._disposed=false;
+    this._onCat=(e)=>{ if(!e||!e.key||e.key==='zt-portal-fin-db-v2') this.forceUpdate(); };
+    window.addEventListener('storage', this._onCat);
     this.setState({ cart:this._loadCart(), cur:this._loadCur() });
     this._onStorage=(e)=>{ if(e.key===ZT_CART_KEY) this.setState({cart:this._loadCart()}); };
     window.addEventListener('storage', this._onStorage);

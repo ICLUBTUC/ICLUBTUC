@@ -32,6 +32,39 @@
     } catch (e) {}
   }
 
+  /* Editor de texto in-situ (sólo admin). */
+  function editableText(el, getVal, onSave) {
+    if (!el || !isAdmin() || el.getAttribute('data-zt-editable') === '1') return;
+    el.setAttribute('data-zt-editable', '1');
+    el.title = 'Doble clic para editar';
+    el.style.cursor = 'text';
+    el.addEventListener('dblclick', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      if (el.isContentEditable) return;
+      el.contentEditable = 'true';
+      el.style.outline = '2px solid #0A84FF'; el.style.outlineOffset = '3px'; el.style.borderRadius = '4px';
+      el.focus();
+      try { document.getSelection().selectAllChildren(el); } catch (err) {}
+      function done(save) {
+        el.removeEventListener('blur', onBlur); el.removeEventListener('keydown', onKey);
+        el.contentEditable = 'false'; el.style.outline = '';
+        var t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+        if (save) onSave(t); else el.textContent = getVal();
+      }
+      var onBlur = function () { done(true); };
+      var onKey = function (ev) {
+        if (ev.key === 'Enter') { ev.preventDefault(); el.blur(); }
+        else if (ev.key === 'Escape') { ev.preventDefault(); done(false); }
+      };
+      el.addEventListener('blur', onBlur); el.addEventListener('keydown', onKey);
+    });
+  }
+
+  /* La edición en la tienda pública es sólo para el administrador logueado. */
+  function isAdmin() {
+    try { return localStorage.getItem('zt-portal-fin-user') === 'admin'; } catch (e) { return false; }
+  }
+
   function saveOv(pid, fields) {
     var db = getLocal(); if (!db) return;
     db.catalog = db.catalog || {};
@@ -46,6 +79,7 @@
     return 'translate(' + (ov.px || 0) + '%,' + (ov.py || 0) + '%) scale(' + (ov.pz || 1) + ')';
   }
   function makePhotoEditable(wrap, pid) {
+    if (!isAdmin()) return;
     wrap.title = 'Doble clic para editar la foto';
     wrap.addEventListener('dblclick', function (e) {
       e.preventDefault(); e.stopPropagation();
@@ -432,7 +466,8 @@
     h1.textContent = ov.name || '';
     var descEl = info.querySelector('[data-zt-edit-desc]');
     if (ov.desc) { descEl.textContent = ov.desc; }
-    else { descEl.textContent = 'Doble clic para agregar una descripción'; descEl.style.color = '#C4C1BB'; descEl.style.fontStyle = 'italic'; }
+    else if (isAdmin()) { descEl.textContent = 'Doble clic para agregar una descripción'; descEl.style.color = '#C4C1BB'; descEl.style.fontStyle = 'italic'; }
+    else { descEl.style.display = 'none'; }
     rows.forEach(function (r, i) {
       info.querySelector('[data-zt-row-k="' + i + '"]').textContent = r.k || '';
       info.querySelector('[data-zt-row-v="' + i + '"]').textContent = r.v || '';
@@ -448,6 +483,7 @@
 
     /* ── edición en la página: doble clic sobre un texto ── */
     function makeEditable(el, getVal, onSave) {
+      if (!isAdmin()) return;
       el.title = 'Doble clic para editar';
       el.style.cursor = 'text';
       el.addEventListener('dblclick', function (e) {
@@ -539,7 +575,14 @@
     var pid = productIdFromUrl();
     var cat = db.catalog || {};
     Array.prototype.forEach.call(grids, function (grid) {
-      Array.prototype.forEach.call(grid.querySelectorAll('[data-zt-reccustom]'), function (el) { el.remove(); });
+      var wrap = grid.querySelector('[data-zt-recwrap]');
+      if (!wrap) {
+        wrap = document.createElement('div');
+        wrap.setAttribute('data-zt-recwrap', '');
+        wrap.style.display = 'contents';
+        grid.appendChild(wrap);
+      }
+      wrap.innerHTML = '';
       Object.keys(cat).forEach(function (id) {
         var o = cat[id] || {};
         if (!o.custom || o.deleted || o.hidden) return;
@@ -565,7 +608,7 @@
           + '</div>';
         var nm = body.querySelector('a'); nm.href = href; nm.textContent = o.name || '';
         d.appendChild(body);
-        grid.appendChild(d);
+        wrap.appendChild(d);
       });
     });
   }
@@ -669,16 +712,27 @@
     });
   }
 
+  /* Inicio: cada categoría muestra sus 3 productos más caros, de mayor a menor.
+     Sólo se tocan 'order' y un atributo (el CSS hace el resto) para no chocar
+     con el renderizado de la página. */
   function capNovedades() {
     if (!document.getElementById('novedades')) return;
     Array.prototype.forEach.call(document.querySelectorAll('[data-nv-grid]'), function (grid) {
-      var shown = 0;
-      Array.prototype.forEach.call(grid.children, function (k) {
-        if (k.nodeType !== 1) return;
-        if (k.getAttribute('data-zt-navcap') === '1') { k.style.display = ''; k.removeAttribute('data-zt-navcap'); }
-        if (k.style.display === 'none') return;
-        if (shown < 3) { shown++; }
-        else { k.style.display = 'none'; k.setAttribute('data-zt-navcap', '1'); }
+      var cards = Array.prototype.filter.call(grid.children, function (k) {
+        return k.nodeType === 1 && k.hasAttribute && k.hasAttribute('data-nv-card');
+      });
+      cards.forEach(function (k) {
+        var m = (k.textContent || '').match(/USD\s*([\d.,]+)/);
+        var n = m ? parseInt(m[1].replace(/[^0-9]/g, ''), 10) : 0;
+        k.setAttribute('data-zt-usd', isNaN(n) ? 0 : n);
+      });
+      cards.sort(function (a, b) {
+        return (+b.getAttribute('data-zt-usd') || 0) - (+a.getAttribute('data-zt-usd') || 0);
+      });
+      cards.forEach(function (k, i) {
+        k.style.order = i;
+        if (i < 3) k.removeAttribute('data-zt-navcap');
+        else k.setAttribute('data-zt-navcap', '1');
       });
     });
   }
