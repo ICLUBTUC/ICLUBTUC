@@ -1734,12 +1734,24 @@ class Component extends DCLogic {
     return {
       rate: s.rate || 1520,
       recargos: Object.assign({ 2: 25, 3: 45, 4: 65, 5: 80, 6: 90 }, s.recargos || {}),
-      hero: s.hero || [
-        { t: 'iPhone 17 Pro', s: 'El Pro de los Pro.', dest: 'apple' },
-        { t: 'Smart TV 4K', s: 'Viví el cine en casa.', dest: 'tv' },
-        { t: 'Celulares para todos', s: 'Samsung, Xiaomi, Motorola y más.', dest: 'celulares' }
-      ]
+      hero: this._heroList(s.hero)
     };
+  }
+  _heroDefaults() {
+    return [
+      { t: 'iPhone 17 Pro', s: 'El Pro de los Pro.', dest: 'apple' },
+      { t: 'Smart TV 4K', s: 'Viví el cine en casa.', dest: 'tv' },
+      { t: 'Celulares para todos', s: 'Samsung, Xiaomi, Motorola y más.', dest: 'celulares' },
+      { t: 'PlayStation 5', s: 'Consola nueva y sellada, con juegos incluidos.', dest: 'accesorios' }
+    ];
+  }
+  /* Siempre tantas diapositivas como tiene el carrusel: completa las que falten
+     con los valores por defecto para que el panel y la portada no se desfasen. */
+  _heroList(saved) {
+    const def = this._heroDefaults();
+    const arr = Array.isArray(saved) ? saved.slice() : [];
+    for (let i = 0; i < def.length; i++) if (!arr[i]) arr[i] = def[i];
+    return arr;
   }
   _setSettings(patch) {
     const db = this.state.db || {};
@@ -2701,10 +2713,20 @@ class Component extends DCLogic {
       { id: 'tv-rca-40', name: 'Smart TV RCA 40"', spec: '40" · Full HD', usd: 300, cat: 'Smart TV' },
       { id: 'tv-ecopower', name: 'Smart TV EcoPower', spec: '32" · Full HD', usd: 182, cat: 'Smart TV' }
     ];
+    /* El cotizador usa el catálogo real: precios editados en el panel y
+       productos nuevos aparecen acá sin tocar la lista base. */
+    const finOv = (db.catalog || {});
+    const finBaseIds = {};
+    finProductsAll.forEach((b) => { finBaseIds[b.id] = true; });
+    const finList = finProductsAll.map((b) => Object.assign({}, b, finOv[b.id] || {}))
+      .concat(Object.keys(finOv).filter((k) => !finBaseIds[k] && finOv[k] && finOv[k].custom).map((k) => Object.assign({ id: k }, finOv[k])))
+      .filter((b) => !b.deleted && !b.hidden && !b.sinStock)
+      .map((b) => ({ id: b.id, name: b.name || '', spec: b.spec || '', usd: this._numF(b.usd) || 0, cat: b.cat || 'Otros' }))
+      .filter((b) => b.name && b.usd > 0);
     const optBtn = (txt, active, onPick) => ({ txt: txt, pick: () => { onPick(); this._finScroll(); }, color: active ? '#fff' : '#1D1D1F', bg: active ? '#1D1D1F' : '#F5F4F1', border: active ? '#1D1D1F' : 'rgba(0,0,0,.07)' });
     const finProdChosen = fin.prodId === 'custom'
       ? { id: 'custom', name: fin.customName || 'Producto a financiar', spec: 'Cargado manualmente', usd: this._numF(fin.customPrice), cat: 'Personalizado' }
-      : (finProductsAll.find((p) => p.id === fin.prodId) || null);
+      : (finList.find((x) => x.id === fin.prodId) || null);
     const finPrice = finProdChosen ? finProdChosen.usd : 0;
     const finRate = this._settings(db).rate; // USD → ARS
     const finAdelCur = fin.adelCur || 'USD';
@@ -2816,7 +2838,7 @@ class Component extends DCLogic {
       setFinCustomPrice: (e) => setFin({ customPrice: e.target.value }),
       finCustomValid: !!(fin.customName || '').trim() && this._numF(fin.customPrice) > 0,
       finCustomUse: () => { if (!(fin.customName || '').trim() || this._numF(fin.customPrice) <= 0) return; setFin({ prodId: 'custom' }); },
-      finProducts: finProductsAll.filter((p) => { const s = String(fin.prodSearch || '').toLowerCase(); return !s || (p.name + ' ' + p.spec + ' ' + p.cat).toLowerCase().includes(s); }).map((p) => {
+      finProducts: finList.filter((p) => { const s = String(fin.prodSearch || '').toLowerCase(); return !s || (p.name + ' ' + p.spec + ' ' + p.cat).toLowerCase().includes(s); }).map((p) => {
         const active = fin.prodId === p.id;
         return {
           name: p.name, spec: p.cat + ' · ' + p.spec, priceStr: this._usd(p.usd) + ' · ' + this._ars(p.usd * finRate),
@@ -2932,7 +2954,7 @@ class Component extends DCLogic {
       const stats = db.stats || {};
       const nameOf = (id) => { const p = merged.find((x) => x.id === id); return p ? p.name : id; };
       const topStats = Object.keys(stats).map((id) => ({ id: id, n: stats[id] })).sort((a, b) => b.n - a.n).slice(0, 10);
-      const destOpts = [{ v: 'apple', t: 'Página iPhone / Apple' }, { v: 'celulares', t: 'Página Celulares' }, { v: 'tv', t: 'Página Smart TV' }].concat(merged.filter((p) => {
+      const destOpts = [{ v: 'apple', t: 'Página iPhone / Apple' }, { v: 'celulares', t: 'Página Celulares' }, { v: 'tv', t: 'Página Smart TV' }, { v: 'accesorios', t: 'Página Accesorios' }].concat(merged.filter((p) => {
         if (p.hidden || p.deleted) return false;
         if (p.custom) return true;
         if (p.cat === 'Celulares' || p.cat === 'Smart TV') return true;

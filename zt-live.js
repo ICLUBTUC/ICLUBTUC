@@ -186,7 +186,12 @@
     var ref = document.getElementById(refId);
     if (!ref) return null;
     var card = findCard(ref);
-    return card ? card.parentElement : null;
+    if (!card) return null;
+    /* Solo grillas de listado reales: nunca inyectar dentro de tarjetas de
+       recomendados ni fichas de producto (comparten ids de image-slot). */
+    var ok = card.hasAttribute && (card.hasAttribute('data-appl-card') || card.hasAttribute('data-cat-card') || card.hasAttribute('data-cc-card') || card.hasAttribute('data-nv-card') || (card.classList && card.classList.contains('cat-card')));
+    if (!ok) return null;
+    return card.parentElement;
   }
   function injectCustomCard(id, ov, rate) {
     var existing = document.querySelector('[data-zt-custom="' + id + '"]');
@@ -194,8 +199,42 @@
     var sig = [ov.name, ov.spec, ov.usd, ov.sinStock ? 1 : 0, (ov.photo || '').length, rate, ov.bat || '', ov.pos != null ? ov.pos : '', ov.cat || '', (ov.px || 0).toFixed ? (ov.px || 0).toFixed(1) : 0, (ov.py || 0).toFixed ? (ov.py || 0).toFixed(1) : 0, ov.pz || 1].join('|');
     if (existing && existing.getAttribute('data-zt-sig') === sig) return;
     var grid = gridFor(ov.cat || 'Celulares');
-    if (!grid) return;
+    if (!grid) { if (existing) existing.remove(); return; }
     if (existing) existing.remove();
+    /* Grilla de Novedades (inicio): la tarjeta debe ser un data-nv-card
+       idéntico a los nativos para que el CSS móvil la achique igual. */
+    if (grid.hasAttribute && grid.hasAttribute('data-nv-grid')) {
+      var nv = document.createElement('a');
+      nv.setAttribute('data-zt-custom', id);
+      nv.setAttribute('data-nv-card', '');
+      nv.id = 'zt-custom-' + id;
+      nv.setAttribute('data-zt-sig', sig);
+      nv.href = detailHrefFor(ov.cat, id);
+      nv.style.cssText = 'text-decoration:none;color:#1D1D1F;display:flex;flex-direction:column;gap:13px;padding:20px;background:#fff;border-radius:24px;border:1px solid rgba(0,0,0,.05);box-shadow:0 12px 40px -18px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.03);font-family:inherit;' + (ov.sinStock ? 'opacity:.62;' : '');
+      var nvi = document.createElement('div');
+      nvi.setAttribute('data-nv-img', '');
+      nvi.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:#fff;position:relative;display:flex;align-items:center;justify-content:center;';
+      if (ov.photo) { var nim = document.createElement('img'); nim.src = ov.photo; nim.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;transform:' + frameCss(ov) + ';'; nvi.appendChild(nim); }
+      else { var nph = document.createElement('span'); nph.textContent = (ov.name || '?').charAt(0).toUpperCase(); nph.style.cssText = 'font-size:40px;font-weight:700;color:#C9BFB2;'; nvi.appendChild(nph); }
+      nv.appendChild(nvi);
+      makePhotoEditable(nvi, id);
+      var nvEye = ov.sinStock ? 'SIN STOCK' : (ov.cat === 'Apple' ? 'SEMINUEVO CERTIFICADO' : 'DISPONIBLE');
+      var nvEyeCol = ov.sinStock ? '#C9502A' : (ov.cat === 'Apple' ? '#C9502A' : '#1F8A5B');
+      var nvb = document.createElement('div');
+      nvb.innerHTML = '<div data-nv-eyebrow style="font-size:11px;font-weight:700;letter-spacing:.16em;color:' + nvEyeCol + ';">' + nvEye + '</div>'
+        + '<div style="display:flex;flex-direction:column;gap:3px;margin-top:13px;"><h4 style="margin:0;font-size:17px;font-weight:600;letter-spacing:-.01em;color:#1D1D1F;"></h4><div data-zt-nvspec style="font-size:13px;color:#6E6E73;"></div></div>'
+        + '<div data-nv-foot style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:13px;"><div style="display:flex;flex-direction:column;gap:1px;"><div style="font-size:20px;font-weight:600;letter-spacing:-.01em;color:#1D1D1F;">USD ' + fmtInt(ov.usd || 0) + '</div><div style="font-size:12px;color:#A1A1A6;">ARS ' + fmtInt((ov.usd || 0) * rate) + '</div></div><div style="display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:980px;background:#F5F1EC;font-size:13px;font-weight:600;color:#1D1D1F;white-space:nowrap;">Más info <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></div></div>';
+      nvb.style.cssText = 'display:contents;';
+      nv.appendChild(nvb);
+      nv.querySelector('h4').textContent = ov.name || '';
+      var nvsp = nv.querySelector('[data-zt-nvspec]');
+      var nvspTxt = [ov.spec || '', ov.bat ? ('Batería ' + ov.bat + '%') : ''].filter(Boolean).join(' · ');
+      if (nvspTxt) nvsp.textContent = nvspTxt; else nvsp.style.display = 'none';
+      nv.setAttribute('data-zt-pos', ov.pos != null ? ov.pos : 9999);
+      grid.appendChild(nv);
+      reorderGrid(grid);
+      return;
+    }
     if ((ov.cat || '') === 'Apple') {
       var row = document.createElement('a');
       row.setAttribute('data-zt-custom', id);
@@ -236,13 +275,14 @@
       reorderGrid(grid);
       return;
     }
-    var card = document.createElement('div');
+    var card = document.createElement('a');
+    card.href = detailHrefFor(ov.cat, id);
     card.setAttribute('data-zt-custom', id);
     card.id = 'zt-custom-' + id;
     card.setAttribute('data-zt-sig', sig);
-    card.style.cssText = 'display:flex;flex-direction:column;gap:14px;padding:24px;background:#fff;border-radius:24px;box-shadow:0 18px 50px -28px rgba(0,0,0,.18);font-family:inherit;' + (ov.sinStock ? 'opacity:.62;' : '');
+    card.style.cssText = 'display:flex;flex-direction:column;gap:18px;padding:28px;background:#fff;border-radius:28px;text-decoration:none;color:#1D1D1F;box-shadow:0 18px 60px -24px rgba(0,0,0,.16), 0 3px 8px rgba(0,0,0,.03);font-family:inherit;' + (ov.sinStock ? 'opacity:.62;' : '');
     var wrap = document.createElement('div');
-    wrap.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:#fff;position:relative;display:flex;align-items:center;justify-content:center;';
+    wrap.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:20px;overflow:hidden;background:#fff;position:relative;display:flex;align-items:center;justify-content:center;';
     if (ov.photo) {
       var im = document.createElement('img');
       im.src = ov.photo;
@@ -261,28 +301,17 @@
       chip.style.cssText = 'position:absolute;top:12px;left:12px;background:rgba(201,80,42,.95);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:6px 12px;border-radius:980px;';
       wrap.appendChild(chip);
     }
-    var wrapLink = document.createElement('a');
-    wrapLink.href = detailHrefFor(ov.cat, id);
-    wrapLink.style.cssText = 'display:block;text-decoration:none;';
-    wrapLink.appendChild(wrap);
-    card.appendChild(wrapLink);
+    card.appendChild(wrap);
     makePhotoEditable(wrap, id);
-    wrapLink.addEventListener('click', function (e) { e.preventDefault(); }, true);
     var body = document.createElement('div');
-    body.style.cssText = 'display:flex;flex-direction:column;gap:5px;';
+    body.style.cssText = 'display:flex;flex-direction:column;gap:6px;flex:1;';
     body.innerHTML = '<div style="font-size:11px;font-weight:700;letter-spacing:.16em;color:#1F8A5B;">DISPONIBLE</div>'
-      + '<h3 style="margin:0;font-size:17px;font-weight:600;letter-spacing:-.01em;color:#1D1D1F;"></h3>'
-      + '<div style="font-size:13px;color:#6E6E73;"></div>'
-      + '<div style="display:flex;flex-direction:column;gap:2px;margin-top:6px;"><div style="font-size:20px;font-weight:600;letter-spacing:-.01em;color:#1D1D1F;">USD ' + fmtInt(ov.usd || 0) + '</div><div style="font-size:12px;color:#A1A1A6;">ARS ' + fmtInt((ov.usd || 0) * rate) + '</div></div>'
-      + '<a href="' + ('https://wa.me/5493814680653?text=' + encodeURIComponent('Hola! Quiero comprar el ' + (ov.name || '') + ' (USD ' + fmtInt(ov.usd || 0) + ').')) + '" target="_blank" rel="noopener" style="margin-top:10px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;background:#0A84FF;color:#fff;border-radius:980px;padding:12px 24px;font-size:15px;font-weight:600;align-self:flex-start;">Comprar</a>';
-    var h3lnk = document.createElement('a');
-    h3lnk.href = detailHrefFor(ov.cat, id);
-    h3lnk.style.cssText = 'color:inherit;text-decoration:none;';
-    h3lnk.textContent = ov.name || '';
-    body.children[1].textContent = '';
-    body.children[1].appendChild(h3lnk);
+      + '<h3 style="margin:0;font-size:21px;font-weight:600;letter-spacing:-.02em;color:#1D1D1F;"></h3>'
+      + '<div style="font-size:14px;color:#6E6E73;"></div>'
+      + '<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:auto;padding-top:10px;"><div style="display:flex;flex-direction:column;gap:2px;"><div style="font-size:26px;font-weight:600;letter-spacing:-.02em;color:#1D1D1F;">USD ' + fmtInt(ov.usd || 0) + '</div><div style="font-size:12px;color:#A1A1A6;">ARS ' + fmtInt((ov.usd || 0) * rate) + '</div></div><div style="width:44px;height:44px;border-radius:50%;background:#F5F1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></div></div>';
+    body.children[1].textContent = ov.name || '';
     var sw2 = body.children[2];
-    sw2.style.cssText = 'font-size:13px;color:#6E6E73;display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
+    sw2.style.cssText = 'font-size:14px;color:#6E6E73;display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
     if (ov.bat) {
       var bw2 = document.createElement('span');
       bw2.style.cssText = 'display:inline-flex;align-items:center;gap:6px;';
@@ -330,7 +359,14 @@
     var recBlocks = document.querySelectorAll('.rec-block');
     Array.prototype.forEach.call(recBlocks, function (el, i) { el.style.setProperty('display', i === 0 ? 'block' : 'none', 'important'); });
     Array.prototype.forEach.call(sec.children, function (el) { if (el.id !== 'zt-custom-detail') el.style.setProperty('display', 'none', 'important'); });
-    var sig = [ov.name, ov.spec, ov.usd, ov.bat || '', (ov.photo || '').length, rate, ov.sinStock ? 1 : 0, ov.cat || '', (ov.px || 0).toFixed ? (ov.px || 0).toFixed(1) : 0, (ov.py || 0).toFixed ? (ov.py || 0).toFixed(1) : 0, ov.pz || 1].join('|');
+    var defRowsByCat = {
+      'Smart TV': [{ k: 'Marca', v: 'A completar' }, { k: 'Tamaño', v: 'A completar' }, { k: 'Resolución', v: 'Ultra HD (4K)' }],
+      'Celulares': [{ k: 'Almacenamiento', v: ov.spec || '128 GB' }, { k: 'RAM', v: 'A completar' }, { k: 'Garantía', v: '30 días' }],
+      'Apple': [{ k: 'Almacenamiento', v: ov.spec || '128 GB' }, { k: 'Garantía', v: '30 días' }, { k: 'Color', v: 'A completar' }],
+      'Accesorios': [{ k: 'Condición', v: 'Nuevo · sellado' }, { k: 'Garantía', v: '30 días' }]
+    };
+    var rows = (ov.rows && ov.rows.length) ? ov.rows : (defRowsByCat[ov.cat] || [{ k: 'Detalle', v: ov.spec || 'A completar' }, { k: 'Garantía', v: '30 días' }]);
+    var sig = [ov.name, ov.spec, ov.usd, ov.bat || '', (ov.photo || '').length, rate, ov.sinStock ? 1 : 0, ov.cat || '', (ov.px || 0).toFixed ? (ov.px || 0).toFixed(1) : 0, (ov.py || 0).toFixed ? (ov.py || 0).toFixed(1) : 0, ov.pz || 1, JSON.stringify(rows), ov.desc || ''].join('|');
     var ex = document.getElementById('zt-custom-detail');
     if (ex && ex.getAttribute('data-zt-sig') === sig) return;
     if (ex) ex.remove();
@@ -353,30 +389,54 @@
     var info = document.createElement('div');
     info.className = 'det-info';
     info.style.cssText = 'display:flex;flex-direction:column;gap:11px;';
-    var eyeTxt = ov.sinStock ? 'SIN STOCK' : 'DISPONIBLE';
-    var eyeCol = ov.sinStock ? '#C9502A' : '#1F8A5B';
+    var eyeTxt = ov.sinStock ? 'SIN STOCK' : (ov.cat === 'Apple' ? 'SEMINUEVO CERTIFICADO' : 'NUEVO · DISPONIBLE');
+    var eyeCol = ov.sinStock ? '#C9502A' : (ov.cat === 'Apple' ? '#C9502A' : '#1F8A5B');
+    var dotCol = ov.sinStock ? '#C9502A' : '#1F8A5B';
+    var rowsHtml = '';
+    rows.forEach(function (r, i) {
+      rowsHtml += '<div style="display:flex;justify-content:space-between;align-items:center;gap:18px;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.08);font-size:14px;"><span data-zt-row-k="' + i + '" style="color:#86868B;"></span><span data-zt-row-v="' + i + '" style="font-weight:500;color:#1D1D1F;text-align:right;"></span></div>';
+    });
     info.innerHTML = '<div style="font-size:12px;font-weight:700;letter-spacing:.24em;color:' + eyeCol + ';">' + eyeTxt + '</div>'
-      + '<h1 style="margin:0;font-size:clamp(28px,3.4vw,42px);font-weight:700;letter-spacing:-.04em;line-height:.98;color:#1D1D1F;"></h1>'
+      + '<h1 data-zt-edit-name style="margin:0;font-size:clamp(28px,3.4vw,42px);font-weight:700;letter-spacing:-.04em;line-height:.98;color:#1D1D1F;"></h1>'
+      + '<div data-zt-edit-desc style="font-size:16.5px;color:#6E6E73;"></div>'
       + '<div data-zd="bat" style="display:none;align-items:center;gap:16px;margin-top:2px;"><span style="width:52px;height:19px;border:1.5px solid rgba(0,0,0,.32);border-radius:5px;display:inline-flex;align-items:center;padding:2px;box-sizing:border-box;"><span data-zd="batfill" style="height:100%;width:0;background:#1D1D1F;border-radius:2.5px;transition:width 1.1s cubic-bezier(.22,1,.36,1);"></span></span><span data-zd="battxt" style="font-size:16px;color:#6E6E73;"></span></div>'
       + '<div style="display:flex;flex-direction:column;gap:2px;margin-top:2px;border-top:1px solid rgba(0,0,0,.08);">'
-        + '<div data-zd="specrow" style="display:none;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.08);font-size:14px;"><span style="color:#86868B;">Detalle</span><span data-zd="spec" style="font-weight:500;color:#1D1D1F;"></span></div>'
-        + '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.08);font-size:14px;"><span style="color:#86868B;">Checking ICLUB</span><span style="font-weight:600;color:#1F8A5B;display:inline-flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F8A5B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>Pasado</span></div>'
-        + '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.08);font-size:14px;"><span style="color:#86868B;">Garantía</span><span style="font-weight:500;color:#1D1D1F;">30 días</span></div>'
+        + rowsHtml
+        + ((ov.cat === 'Apple') ? '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.08);font-size:14px;"><span style="color:#86868B;">Checking ICLUB</span><span style="font-weight:600;color:#1F8A5B;display:inline-flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F8A5B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>Pasado</span></div>' : '')
       + '</div>'
-      + '<div style="display:flex;align-items:baseline;gap:12px;margin-top:8px;"><span style="font-size:30px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;color:#1D1D1F;">USD ' + fmtInt(ov.usd || 0) + '</span><span style="font-size:15px;color:#A1A1A6;">ARS ' + fmtInt((ov.usd || 0) * rate) + ' · precio final</span></div>'
-      + '<div style="display:flex;flex-direction:column;gap:9px;margin-top:8px;max-width:430px;">'
-        + '<div style="display:flex;gap:10px;align-items:stretch;">'
-        + '<a href="' + wa + '" style="flex:1;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:10px;height:50px;background:#1D1D1F;color:#fff;font-size:16.5px;font-weight:600;border-radius:16px;font-family:inherit;">Comprar ahora<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>'
-        + cmpBtn
+      + '<div style="display:flex;flex-direction:row-reverse;align-items:center;justify-content:space-between;gap:16px;margin-top:8px;">'
+        + '<div style="display:inline-flex;align-self:flex-start;background:#F4F1EC;border-radius:12px;padding:3px;">'
+          + '<button data-zt-cur="USD" style="padding:7px 16px;border:none;background:transparent;border-radius:9px;font-family:inherit;font-size:13.5px;font-weight:600;color:#86868B;cursor:pointer;">USD</button>'
+          + '<button data-zt-cur="ARS" style="padding:7px 16px;border:none;background:transparent;border-radius:9px;font-family:inherit;font-size:13.5px;font-weight:600;color:#86868B;cursor:pointer;">ARS</button>'
         + '</div>'
+        + '<div style="display:flex;align-items:baseline;gap:12px;"><span data-zt-price data-usd-val="' + (ov.usd || 0) + '" style="font-size:30px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;color:#1D1D1F;">USD ' + fmtInt(ov.usd || 0) + '</span><span data-zt-price-alt style="font-size:15px;color:#A1A1A6;white-space:nowrap;"></span></div>'
+      + '</div>'
+      + '<div style="display:flex;flex-direction:column;gap:9px;margin-top:8px;max-width:430px;">'
+        + '<div style="display:flex;align-items:stretch;gap:12px;">'
+          + '<div style="display:inline-flex;align-items:center;background:#F4F1EC;border-radius:16px;padding:4px;height:50px;box-sizing:border-box;">'
+            + '<button data-zt-qminus aria-label="Quitar uno" style="width:44px;height:100%;border:none;background:transparent;border-radius:12px;font-size:22px;color:#1D1D1F;cursor:pointer;font-family:inherit;">−</button>'
+            + '<input data-zt-qty type="number" min="1" value="1" inputmode="numeric" style="width:40px;height:100%;border:none;text-align:center;font-family:inherit;font-size:17px;font-weight:600;color:#1D1D1F;background:transparent;">'
+            + '<button data-zt-qplus aria-label="Sumar uno" style="width:44px;height:100%;border:none;background:transparent;border-radius:12px;font-size:20px;color:#1D1D1F;cursor:pointer;font-family:inherit;">+</button>'
+          + '</div>'
+          + '<button data-zt-addcart style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:9px;height:50px;border:1.5px solid rgba(0,0,0,.16);cursor:pointer;background:#fff;color:#1D1D1F;font-size:16px;font-weight:600;border-radius:16px;font-family:inherit;">Agregar al carrito</button>'
+          + cmpBtn
+        + '</div>'
+        + '<a href="' + wa + '" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:10px;height:50px;background:#1D1D1F;color:#fff;font-size:16.5px;font-weight:600;border-radius:16px;font-family:inherit;">Comprar ahora<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>'
         + '<a href="Portal Clientes ZonaTech.dc.html#financiar" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:2px;color:#C9502A;font-size:14.5px;font-weight:600;font-family:inherit;">Consultar financiamiento en cuotas →</a>'
         + '<div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;padding-top:14px;border-top:1px solid rgba(0,0,0,.08);">'
-          + '<div style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:#1D1D1F;"><span style="width:8px;height:8px;border-radius:50%;background:' + eyeCol + ';box-shadow:0 0 0 3px ' + (ov.sinStock ? 'rgba(201,80,42,.15)' : 'rgba(31,138,91,.15)') + ';flex-shrink:0;"></span><span><strong style="font-weight:600;">' + (ov.sinStock ? 'Sin stock' : 'En stock') + '</strong> <span style="color:#86868B;">· ' + (ov.sinStock ? 'consultanos por WhatsApp' : 'entrega inmediata') + '</span></span></div>'
+          + '<div style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:#1D1D1F;"><span style="width:8px;height:8px;border-radius:50%;background:' + dotCol + ';box-shadow:0 0 0 3px ' + (ov.sinStock ? 'rgba(201,80,42,.15)' : 'rgba(31,138,91,.15)') + ';flex-shrink:0;"></span><span><strong style="font-weight:600;">' + (ov.sinStock ? 'Sin stock' : 'En stock') + '</strong> <span style="color:#86868B;">· ' + (ov.sinStock ? 'consultanos por WhatsApp' : 'entrega inmediata') + '</span></span></div>'
           + '<div style="font-size:13.5px;color:#6E6E73;">Envío a todo el país — despacho en el día, el envío se paga al recibir.</div>'
         + '</div>'
       + '</div>';
-    info.querySelector('h1').textContent = ov.name || '';
-    if (ov.spec) { var sr = info.querySelector('[data-zd="specrow"]'); sr.style.display = 'flex'; info.querySelector('[data-zd="spec"]').textContent = ov.spec; }
+    var h1 = info.querySelector('[data-zt-edit-name]');
+    h1.textContent = ov.name || '';
+    var descEl = info.querySelector('[data-zt-edit-desc]');
+    if (ov.desc) { descEl.textContent = ov.desc; }
+    else { descEl.textContent = 'Doble clic para agregar una descripción'; descEl.style.color = '#C4C1BB'; descEl.style.fontStyle = 'italic'; }
+    rows.forEach(function (r, i) {
+      info.querySelector('[data-zt-row-k="' + i + '"]').textContent = r.k || '';
+      info.querySelector('[data-zt-row-v="' + i + '"]').textContent = r.v || '';
+    });
     if (ov.bat) {
       var br = info.querySelector('[data-zd="bat"]'); br.style.display = 'flex';
       info.querySelector('[data-zd="battxt"]').textContent = 'Batería ' + ov.bat + '%';
@@ -385,6 +445,88 @@
     }
     d.appendChild(info);
     sec.appendChild(d);
+
+    /* ── edición en la página: doble clic sobre un texto ── */
+    function makeEditable(el, getVal, onSave) {
+      el.title = 'Doble clic para editar';
+      el.style.cursor = 'text';
+      el.addEventListener('dblclick', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        if (el.isContentEditable) return;
+        el.contentEditable = 'true';
+        el.style.outline = '2px solid #0A84FF'; el.style.outlineOffset = '3px'; el.style.borderRadius = '4px';
+        el.focus();
+        try { document.getSelection().selectAllChildren(el); } catch (err) {}
+        var onBlur = function () { done(true); };
+        var onKey = function (ev) {
+          if (ev.key === 'Enter') { ev.preventDefault(); el.blur(); }
+          else if (ev.key === 'Escape') { ev.preventDefault(); done(false); }
+        };
+        function done(save) {
+          el.removeEventListener('blur', onBlur); el.removeEventListener('keydown', onKey);
+          el.contentEditable = 'false'; el.style.outline = '';
+          var t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+          if (save) onSave(t); else el.textContent = getVal();
+        }
+        el.addEventListener('blur', onBlur); el.addEventListener('keydown', onKey);
+      });
+    }
+    function cloneRows() { return rows.map(function (r) { return { k: r.k, v: r.v }; }); }
+    makeEditable(h1, function () { return ov.name || ''; }, function (t) { if (t) saveOv(pid, { name: t }); });
+    makeEditable(descEl, function () { return ov.desc || ''; }, function (t) { saveOv(pid, { desc: t }); });
+    rows.forEach(function (r, i) {
+      makeEditable(info.querySelector('[data-zt-row-k="' + i + '"]'), function () { return r.k || ''; }, function (t) { var rr = cloneRows(); rr[i].k = t; saveOv(pid, { rows: rr }); });
+      makeEditable(info.querySelector('[data-zt-row-v="' + i + '"]'), function () { return r.v || ''; }, function (t) { var rr = cloneRows(); rr[i].v = t; saveOv(pid, { rows: rr }); });
+    });
+    var priceEl = info.querySelector('[data-zt-price]');
+    makeEditable(priceEl, function () { return priceEl.textContent; }, function (t) {
+      var digits = (t || '').replace(/[^0-9]/g, '');
+      if (!digits) { ztApplyCur(); return; }
+      var n = parseInt(digits, 10);
+      var c = 'USD'; try { c = localStorage.getItem('zt_cur') || 'USD'; } catch (err) {}
+      var usd = c === 'ARS' ? Math.round(n / rate) : n;
+      if (usd > 0) saveOv(pid, { usd: usd }); else ztApplyCur();
+    });
+
+    var qin = info.querySelector('[data-zt-qty]');
+    function ztApplyCur() {
+      var c = 'USD'; try { c = localStorage.getItem('zt_cur') || 'USD'; } catch (e) {}
+      var sp = info.querySelector('[data-zt-price]');
+      if (sp) {
+        var usd = parseFloat(sp.getAttribute('data-usd-val')) || 0;
+        sp.textContent = c === 'ARS' ? ('ARS ' + fmtInt(usd * rate)) : ('USD ' + fmtInt(usd));
+        var alt = info.querySelector('[data-zt-price-alt]');
+        if (alt) alt.textContent = (c === 'ARS' ? ('USD ' + fmtInt(usd)) : ('ARS ' + fmtInt(usd * rate))) + ' · precio final';
+      }
+      Array.prototype.forEach.call(info.querySelectorAll('[data-zt-cur]'), function (b) {
+        var act = b.getAttribute('data-zt-cur') === c;
+        b.style.background = act ? '#fff' : 'transparent';
+        b.style.color = act ? '#1D1D1F' : '#86868B';
+        b.style.boxShadow = act ? '0 1px 3px rgba(0,0,0,.12)' : 'none';
+      });
+    }
+    info.addEventListener('click', function (e) {
+      if (e.target.closest('[data-zt-qplus]')) { if (qin) qin.value = Math.max(1, (parseInt(qin.value, 10) || 1) + 1); return; }
+      if (e.target.closest('[data-zt-qminus]')) { if (qin) qin.value = Math.max(1, (parseInt(qin.value, 10) || 1) - 1); return; }
+      var cb = e.target.closest('[data-zt-cur]');
+      if (cb) { try { localStorage.setItem('zt_cur', cb.getAttribute('data-zt-cur')); } catch (err) {} ztApplyCur(); return; }
+      var addBtn = e.target.closest('[data-zt-addcart]');
+      if (addBtn) {
+        var qty = Math.max(1, parseInt(qin ? qin.value : 1, 10) || 1);
+        try {
+          var cart = JSON.parse(localStorage.getItem('zt_cart') || '[]');
+          var exi = null;
+          cart.forEach(function (x) { if (x.id === pid) exi = x; });
+          if (exi) exi.qty += qty; else cart.push({ id: pid, name: ov.name || 'Producto', usd: ov.usd || 0, qty: qty });
+          localStorage.setItem('zt_cart', JSON.stringify(cart));
+          try { window.dispatchEvent(new StorageEvent('storage', { key: 'zt_cart' })); } catch (err) {}
+        } catch (err) {}
+        addBtn.textContent = 'Agregado ✓';
+        setTimeout(function () { addBtn.textContent = 'Agregar al carrito'; }, 1400);
+        return;
+      }
+    });
+    ztApplyCur();
   }
 
 
@@ -419,7 +561,7 @@
           + '<span style="font-size:12.5px;color:#86868B;">' + (o.bat ? 'Batería ' + o.bat + '%' : '&nbsp;') + '</span>'
           + '<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:auto;padding-top:12px;">'
             + '<div style="display:flex;flex-direction:column;"><span style="font-size:18px;font-weight:700;letter-spacing:-.02em;color:#1D1D1F;">USD ' + fmtInt(o.usd || 0) + '</span><span style="font-size:12px;color:#A1A1A6;font-weight:500;">ARS ' + fmtInt((o.usd || 0) * rate) + '</span></div>'
-            + '<a href="' + wa + '" target="_blank" rel="noopener" aria-label="Comprar por WhatsApp" style="flex:0 0 auto;width:40px;height:40px;border-radius:980px;border:1.5px solid rgba(0,0,0,.12);background:#fff;display:inline-flex;align-items:center;justify-content:center;color:#1D1D1F;text-decoration:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>'
+            + '<a href="' + href + '" aria-label="Ver producto" style="flex:0 0 auto;width:40px;height:40px;border-radius:980px;border:1.5px solid rgba(0,0,0,.12);background:#fff;display:inline-flex;align-items:center;justify-content:center;color:#1D1D1F;text-decoration:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>'
           + '</div>';
         var nm = body.querySelector('a'); nm.href = href; nm.textContent = o.name || '';
         d.appendChild(body);
@@ -466,7 +608,7 @@
       'Smart TV': document.querySelector('[data-zt-dd="tv"]')
     };
     if (!panels.Apple && !panels.Celulares) return;
-    var pages = { Apple: 'Apple ZonaTech.dc.html', Accesorios: 'Apple ZonaTech.dc.html', Celulares: 'Android ZonaTech.dc.html', 'Smart TV': 'Smart TV ZonaTech.dc.html' };
+    var pages = { Apple: 'Apple ZonaTech.dc.html', Accesorios: 'Accesorios ZonaTech.dc.html', Celulares: 'Android ZonaTech.dc.html', 'Smart TV': 'Smart TV ZonaTech.dc.html' };
     var cat = db.catalog || {};
     Object.keys(cat).forEach(function (id) {
       var ov = cat[id] || {};
@@ -527,6 +669,89 @@
     });
   }
 
+  function capNovedades() {
+    if (!document.getElementById('novedades')) return;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-nv-grid]'), function (grid) {
+      var shown = 0;
+      Array.prototype.forEach.call(grid.children, function (k) {
+        if (k.nodeType !== 1) return;
+        if (k.getAttribute('data-zt-navcap') === '1') { k.style.display = ''; k.removeAttribute('data-zt-navcap'); }
+        if (k.style.display === 'none') return;
+        if (shown < 3) { shown++; }
+        else { k.style.display = 'none'; k.setAttribute('data-zt-navcap', '1'); }
+      });
+    });
+  }
+
+  /* Recorta el fondo blanco de una foto (relleno desde los bordes, sin tocar
+     los blancos internos del producto). Devuelve null si no se puede leer. */
+  var _cutCache = {};
+  function cutoutWhite(src, cb) {
+    if (_cutCache[src] !== undefined) { cb(_cutCache[src]); return; }
+    var im = new Image();
+    im.crossOrigin = 'anonymous';
+    im.onload = function () {
+      try {
+        var w = im.naturalWidth, hh = im.naturalHeight;
+        if (!w || !hh) { cb(null); return; }
+        var c = document.createElement('canvas');
+        c.width = w; c.height = hh;
+        var ctx = c.getContext('2d');
+        ctx.drawImage(im, 0, 0);
+        var d = ctx.getImageData(0, 0, w, hh);
+        var px = d.data, seen = new Uint8Array(w * hh), stack = [];
+        function isWhite(i) { var o = i * 4; return px[o] > 232 && px[o + 1] > 232 && px[o + 2] > 232; }
+        for (var x = 0; x < w; x++) { stack.push(x); stack.push((hh - 1) * w + x); }
+        for (var y = 0; y < hh; y++) { stack.push(y * w); stack.push(y * w + w - 1); }
+        while (stack.length) {
+          var i = stack.pop();
+          if (i < 0 || i >= w * hh || seen[i]) continue;
+          seen[i] = 1;
+          if (!isWhite(i)) continue;
+          px[i * 4 + 3] = 0;
+          var cx = i % w;
+          if (cx > 0) stack.push(i - 1);
+          if (cx < w - 1) stack.push(i + 1);
+          stack.push(i - w); stack.push(i + w);
+        }
+        ctx.putImageData(d, 0, 0);
+        var out = c.toDataURL('image/png');
+        _cutCache[src] = out;
+        cb(out);
+      } catch (e) { _cutCache[src] = null; cb(null); }
+    };
+    im.onerror = function () { _cutCache[src] = null; cb(null); };
+    im.src = src;
+  }
+
+  /* Slide PS5 del carrusel: toma foto y link del producto real del catálogo. */
+  function fillCarouselPs5(cat) {
+    var slide = document.querySelector('[data-ztc-ps5]');
+    if (!slide) return;
+    var found = null, foundId = null;
+    Object.keys(cat || {}).forEach(function (id) {
+      var ov = cat[id] || {};
+      if (found || ov.hidden || ov.deleted) return;
+      var nm = (ov.name || '').toLowerCase().replace(/\s+/g, '');
+      if (nm.indexOf('ps5') >= 0 || nm.indexOf('playstation5') >= 0) { found = ov; foundId = id; }
+    });
+    if (!found) return;
+    var href = found.custom ? detailHrefFor(found.cat, foundId) : 'Accesorios ZonaTech.dc.html';
+    Array.prototype.forEach.call(slide.querySelectorAll('[data-ztc-ps5-link]'), function (a) { a.href = href; });
+    var img = slide.querySelector('[data-ztc-ps5-img]');
+    var slot = slide.querySelector('[data-ztc-ps5-slot]');
+    if (found.photo && img) {
+      if (img.getAttribute('data-zt-srcref') !== found.photo) {
+        img.setAttribute('data-zt-srcref', found.photo);
+        img.src = found.photo;
+        cutoutWhite(found.photo, function (url) { if (url) img.src = url; else img.style.mixBlendMode = 'multiply'; });
+      }
+      img.style.display = 'block';
+      img.style.filter = 'drop-shadow(0 24px 34px rgba(20,20,22,.16)) drop-shadow(0 4px 8px rgba(20,20,22,.07))';
+      if (slot) slot.style.display = 'none';
+    }
+  }
+
   function apply(db) {
     if (!db) return;
     updateNav(db);
@@ -560,14 +785,16 @@
       }
       if (ov.photo) setPhoto(slot, ov.photo);
     });
+    fillCarouselPs5(cat);
     injectCustomDetail(db, rate);
     injectRecCards(db, rate);
     enhanceRecCarousels();
+    capNovedades();
     scheduleOrphans();
     // portada (carrusel)
     var track = document.getElementById('ztc-track');
     if (track && st.hero) {
-      var hrefs = { apple: 'Apple ZonaTech.dc.html', celulares: 'Android ZonaTech.dc.html', tv: 'Smart TV ZonaTech.dc.html' };
+      var hrefs = { apple: 'Apple ZonaTech.dc.html', celulares: 'Android ZonaTech.dc.html', tv: 'Smart TV ZonaTech.dc.html', accesorios: 'Accesorios ZonaTech.dc.html' };
       var slides = track.querySelectorAll('.ztc-slide');
       st.hero.forEach(function (h, i) {
         var sl = slides[i];
@@ -594,7 +821,7 @@
     }
     // si el título de una diapositiva coincide con un producto del catálogo, Comprar/Más info van directo a su tarjeta
     if (track) {
-      var pagesH = { Apple: 'Apple ZonaTech.dc.html', Accesorios: 'Apple ZonaTech.dc.html', Celulares: 'Android ZonaTech.dc.html', 'Smart TV': 'Smart TV ZonaTech.dc.html' };
+      var pagesH = { Apple: 'Apple ZonaTech.dc.html', Accesorios: 'Accesorios ZonaTech.dc.html', Celulares: 'Android ZonaTech.dc.html', 'Smart TV': 'Smart TV ZonaTech.dc.html' };
       Array.prototype.forEach.call(track.querySelectorAll('.ztc-slide'), function (sl, si) {
         if (st.hero && st.hero[si] && String(st.hero[si].dest || '').indexOf('prod:') === 0) return;
         var h2b = sl.querySelector('h2');
@@ -748,7 +975,7 @@
   });
 
   /* ===== Búsqueda global (lupa) ===== */
-  var ZT_SEARCH_INDEX = [{"n":"iPhone 13","h":"Producto ZonaTech.dc.html?m=iphone13","s":"iPhone · USD 400"},{"n":"iPhone 15","h":"Producto ZonaTech.dc.html?m=iphone15","s":"iPhone · USD 500"},{"n":"iPhone 16 Pro","h":"Producto ZonaTech.dc.html?m=iphone16pro","s":"iPhone · USD 820"},{"n":"AirPods Max","h":"Apple ZonaTech.dc.html#card-airpodsmax","s":"Accesorio Apple"},{"n":"iPad 11ª gen","h":"Apple ZonaTech.dc.html#card-ipad11","s":"Accesorio Apple"},{"n":"Samsung A07","h":"Producto Android.dc.html?id=and-samsung-a07","s":"Celular · 128 GB · 4 GB · USD 186"},{"n":"Samsung A17","h":"Producto Android.dc.html?id=and-samsung-a17","s":"Celular · 128 GB · 4 GB · USD 259"},{"n":"Samsung A26 5G","h":"Producto Android.dc.html?id=and-samsung-a26","s":"Celular · 256 GB · 8 GB · USD 393"},{"n":"Samsung A36 5G","h":"Producto Android.dc.html?id=and-samsung-a36","s":"Celular · 256 GB · 8 GB · USD 434"},{"n":"Redmi A5","h":"Producto Android.dc.html?id=and-redmi-a5","s":"Celular · 128 GB · 4 GB · USD 186"},{"n":"Xiaomi 15c","h":"Producto Android.dc.html?id=and-xiaomi-15c-4","s":"Celular · 256 GB · 4 GB · USD 205"},{"n":"Xiaomi 15c","h":"Producto Android.dc.html?id=and-xiaomi-15c-8","s":"Celular · 256 GB · 8 GB · USD 229"},{"n":"Xiaomi Note 14","h":"Producto Android.dc.html?id=and-xiaomi-note14","s":"Celular · 256 GB · 8 GB · USD 252"},{"n":"Xiaomi Note 14 Pro 5G","h":"Producto Android.dc.html?id=and-xiaomi-note14pro","s":"Celular · 256 GB · 8 GB · USD 381"},{"n":"Xiaomi Note 15","h":"Producto Android.dc.html?id=and-xiaomi-note15-128","s":"Celular · 128 GB · 6 GB · USD 252"},{"n":"Xiaomi Note 15","h":"Producto Android.dc.html?id=and-xiaomi-note15-256","s":"Celular · 256 GB · 8 GB · USD 300"},{"n":"Xiaomi Note 15 5G","h":"Producto Android.dc.html?id=and-xiaomi-note15-5g","s":"Celular · 256 GB · 8 GB · USD 355"},{"n":"Xiaomi Note 15 Pro","h":"Producto Android.dc.html?id=and-xiaomi-note15pro","s":"Celular · 512 GB · 12 GB · USD 435"},{"n":"Xiaomi Note 15 Pro Plus 5G","h":"Producto Android.dc.html?id=and-xiaomi-note15proplus","s":"Celular · 512 GB · 12 GB · USD 573"},{"n":"Poco C71","h":"Producto Android.dc.html?id=and-poco-c71-64","s":"Celular · 64 GB · 3 GB · USD 152"},{"n":"Poco C71","h":"Producto Android.dc.html?id=and-poco-c71-128","s":"Celular · 128 GB · 4 GB · USD 173"},{"n":"Poco C85","h":"Producto Android.dc.html?id=and-poco-c85","s":"Celular · 256 GB · 8 GB · USD 230"},{"n":"Poco X7 Pro 5G","h":"Producto Android.dc.html?id=and-poco-x7pro-256","s":"Celular · 256 GB · 12 GB · USD 420"},{"n":"Poco X7 Pro 5G","h":"Producto Android.dc.html?id=and-poco-x7pro-512","s":"Celular · 512 GB · 12 GB · USD 507"},{"n":"Motorola G06","h":"Producto Android.dc.html?id=and-moto-g06","s":"Celular · 128 GB · 4 GB · USD 180"},{"n":"Motorola G15","h":"Producto Android.dc.html?id=and-moto-g15","s":"Celular · 256 GB · 4 GB · USD 241"},{"n":"Infinix Smart 10","h":"Producto Android.dc.html?id=and-infinix-smart10","s":"Celular · 128 GB · 4 GB · USD 176"},{"n":"Infinix Hot 60i","h":"Producto Android.dc.html?id=and-infinix-hot60i-4","s":"Celular · 256 GB · 4 GB · USD 214"},{"n":"Infinix Hot 60i","h":"Producto Android.dc.html?id=and-infinix-hot60i-8","s":"Celular · 256 GB · 8 GB · USD 239"},{"n":"Infinix Hot 60 Pro","h":"Producto Android.dc.html?id=and-infinix-hot60pro","s":"Celular · 256 GB · 8 GB · USD 300"},{"n":"Infinix Hot 60 Pro Plus","h":"Producto Android.dc.html?id=and-infinix-hot60proplus","s":"Celular · 256 GB · 8 GB · USD 316"},{"n":"Smart TV EcoPower","h":"Producto Smart TV.dc.html?id=tv-ecopower","s":"Smart TV · 32\" · Full HD · USD 182"},{"n":"Smart TV RCA 40\"","h":"Producto Smart TV.dc.html?id=tv-rca-40","s":"Smart TV · 40\" · Full HD · USD 300"},{"n":"Smart TV Philco 58\"","h":"Producto Smart TV.dc.html?id=tv-philco-58","s":"Smart TV · 58\" · Ultra HD (4K) · USD 490"}];
+  var ZT_SEARCH_INDEX = [{"n":"iPhone 13","h":"Producto ZonaTech.dc.html?m=iphone13","s":"iPhone · USD 400"},{"n":"iPhone 15","h":"Producto ZonaTech.dc.html?m=iphone15","s":"iPhone · USD 500"},{"n":"iPhone 16 Pro","h":"Producto ZonaTech.dc.html?m=iphone16pro","s":"iPhone · USD 820"},{"n":"AirPods Max","h":"Producto ZonaTech.dc.html?m=airpodsmax","s":"Accesorio Apple · USD 350"},{"n":"iPad 11ª gen","h":"Producto ZonaTech.dc.html?m=ipad11","s":"Accesorio Apple · USD 519"},{"n":"Samsung A07","h":"Producto Android.dc.html?id=and-samsung-a07","s":"Celular · 128 GB · 4 GB · USD 186"},{"n":"Samsung A17","h":"Producto Android.dc.html?id=and-samsung-a17","s":"Celular · 128 GB · 4 GB · USD 259"},{"n":"Samsung A26 5G","h":"Producto Android.dc.html?id=and-samsung-a26","s":"Celular · 256 GB · 8 GB · USD 393"},{"n":"Samsung A36 5G","h":"Producto Android.dc.html?id=and-samsung-a36","s":"Celular · 256 GB · 8 GB · USD 434"},{"n":"Redmi A5","h":"Producto Android.dc.html?id=and-redmi-a5","s":"Celular · 128 GB · 4 GB · USD 186"},{"n":"Xiaomi 15c","h":"Producto Android.dc.html?id=and-xiaomi-15c-4","s":"Celular · 256 GB · 4 GB · USD 205"},{"n":"Xiaomi 15c","h":"Producto Android.dc.html?id=and-xiaomi-15c-8","s":"Celular · 256 GB · 8 GB · USD 229"},{"n":"Xiaomi Note 14","h":"Producto Android.dc.html?id=and-xiaomi-note14","s":"Celular · 256 GB · 8 GB · USD 252"},{"n":"Xiaomi Note 14 Pro 5G","h":"Producto Android.dc.html?id=and-xiaomi-note14pro","s":"Celular · 256 GB · 8 GB · USD 381"},{"n":"Xiaomi Note 15","h":"Producto Android.dc.html?id=and-xiaomi-note15-128","s":"Celular · 128 GB · 6 GB · USD 252"},{"n":"Xiaomi Note 15","h":"Producto Android.dc.html?id=and-xiaomi-note15-256","s":"Celular · 256 GB · 8 GB · USD 300"},{"n":"Xiaomi Note 15 5G","h":"Producto Android.dc.html?id=and-xiaomi-note15-5g","s":"Celular · 256 GB · 8 GB · USD 355"},{"n":"Xiaomi Note 15 Pro","h":"Producto Android.dc.html?id=and-xiaomi-note15pro","s":"Celular · 512 GB · 12 GB · USD 435"},{"n":"Xiaomi Note 15 Pro Plus 5G","h":"Producto Android.dc.html?id=and-xiaomi-note15proplus","s":"Celular · 512 GB · 12 GB · USD 573"},{"n":"Poco C71","h":"Producto Android.dc.html?id=and-poco-c71-64","s":"Celular · 64 GB · 3 GB · USD 152"},{"n":"Poco C71","h":"Producto Android.dc.html?id=and-poco-c71-128","s":"Celular · 128 GB · 4 GB · USD 173"},{"n":"Poco C85","h":"Producto Android.dc.html?id=and-poco-c85","s":"Celular · 256 GB · 8 GB · USD 230"},{"n":"Poco X7 Pro 5G","h":"Producto Android.dc.html?id=and-poco-x7pro-256","s":"Celular · 256 GB · 12 GB · USD 420"},{"n":"Poco X7 Pro 5G","h":"Producto Android.dc.html?id=and-poco-x7pro-512","s":"Celular · 512 GB · 12 GB · USD 507"},{"n":"Motorola G06","h":"Producto Android.dc.html?id=and-moto-g06","s":"Celular · 128 GB · 4 GB · USD 180"},{"n":"Motorola G15","h":"Producto Android.dc.html?id=and-moto-g15","s":"Celular · 256 GB · 4 GB · USD 241"},{"n":"Infinix Smart 10","h":"Producto Android.dc.html?id=and-infinix-smart10","s":"Celular · 128 GB · 4 GB · USD 176"},{"n":"Infinix Hot 60i","h":"Producto Android.dc.html?id=and-infinix-hot60i-4","s":"Celular · 256 GB · 4 GB · USD 214"},{"n":"Infinix Hot 60i","h":"Producto Android.dc.html?id=and-infinix-hot60i-8","s":"Celular · 256 GB · 8 GB · USD 239"},{"n":"Infinix Hot 60 Pro","h":"Producto Android.dc.html?id=and-infinix-hot60pro","s":"Celular · 256 GB · 8 GB · USD 300"},{"n":"Infinix Hot 60 Pro Plus","h":"Producto Android.dc.html?id=and-infinix-hot60proplus","s":"Celular · 256 GB · 8 GB · USD 316"},{"n":"Smart TV EcoPower","h":"Producto Smart TV.dc.html?id=tv-ecopower","s":"Smart TV · 32\" · Full HD · USD 182"},{"n":"Smart TV RCA 40\"","h":"Producto Smart TV.dc.html?id=tv-rca-40","s":"Smart TV · 40\" · Full HD · USD 300"},{"n":"Smart TV Philco 58\"","h":"Producto Smart TV.dc.html?id=tv-philco-58","s":"Smart TV · 58\" · Ultra HD (4K) · USD 490"}];
   function ztBuildIndex() {
     var list = ZT_SEARCH_INDEX.slice();
     try {
