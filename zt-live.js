@@ -247,7 +247,7 @@
       nv.style.cssText = 'text-decoration:none;color:#1D1D1F;display:flex;flex-direction:column;gap:13px;padding:20px;background:#fff;border-radius:24px;border:1px solid rgba(0,0,0,.05);box-shadow:0 12px 40px -18px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.03);font-family:inherit;' + (ov.sinStock ? 'opacity:.62;' : '');
       var nvi = document.createElement('div');
       nvi.setAttribute('data-nv-img', '');
-      nvi.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:#fff;position:relative;display:flex;align-items:center;justify-content:center;';
+      nvi.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#F2F3F4,#E7EAEC);position:relative;display:flex;align-items:center;justify-content:center;';
       if (ov.photo) { var nim = document.createElement('img'); nim.src = ov.photo; nim.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;transform:' + frameCss(ov) + ';'; nvi.appendChild(nim); }
       else { var nph = document.createElement('span'); nph.textContent = (ov.name || '?').charAt(0).toUpperCase(); nph.style.cssText = 'font-size:40px;font-weight:700;color:#C9BFB2;'; nvi.appendChild(nph); }
       nv.appendChild(nvi);
@@ -279,7 +279,7 @@
       row.style.cssText = 'display:flex;flex-direction:column;gap:16px;padding:22px;background:#fff;border-radius:24px;text-decoration:none;color:#1D1D1F;box-shadow:0 12px 40px -18px rgba(0,0,0,.14), 0 2px 6px rgba(0,0,0,.03);transition:box-shadow .4s, transform .4s;will-change:transform;' + (ov.sinStock ? 'opacity:.62;' : '');
       var rw = document.createElement('div');
       rw.setAttribute('data-appl-imgwrap', '');
-      rw.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:#fff;position:relative;display:flex;align-items:center;justify-content:center;';
+      rw.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#F2F3F4,#E7EAEC);position:relative;display:flex;align-items:center;justify-content:center;';
       if (ov.photo) { var ri = document.createElement('img'); ri.src = ov.photo; ri.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;transform:' + frameCss(ov) + ';'; rw.appendChild(ri); }
       else { var rp = document.createElement('span'); rp.textContent = (ov.name || '?').charAt(0).toUpperCase(); rp.style.cssText = 'font-size:44px;font-weight:700;color:#C9BFB2;'; rw.appendChild(rp); }
       if (ov.sinStock) { var rc = document.createElement('span'); rc.textContent = 'SIN STOCK'; rc.setAttribute('data-zt-nostock', ''); rc.style.cssText = 'position:absolute;top:12px;left:12px;background:rgba(201,80,42,.95);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:6px 12px;border-radius:980px;'; rw.appendChild(rc); }
@@ -316,7 +316,7 @@
     card.setAttribute('data-zt-sig', sig);
     card.style.cssText = 'display:flex;flex-direction:column;gap:18px;padding:28px;background:#fff;border-radius:28px;text-decoration:none;color:#1D1D1F;box-shadow:0 18px 60px -24px rgba(0,0,0,.16), 0 3px 8px rgba(0,0,0,.03);font-family:inherit;' + (ov.sinStock ? 'opacity:.62;' : '');
     var wrap = document.createElement('div');
-    wrap.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:20px;overflow:hidden;background:#fff;position:relative;display:flex;align-items:center;justify-content:center;';
+    wrap.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:20px;overflow:hidden;background:linear-gradient(160deg,#F2F3F4,#E7EAEC);position:relative;display:flex;align-items:center;justify-content:center;';
     if (ov.photo) {
       var im = document.createElement('img');
       im.src = ov.photo;
@@ -715,6 +715,35 @@
   /* Inicio: cada categoría muestra sus 3 productos más caros, de mayor a menor.
      Sólo se tocan 'order' y un atributo (el CSS hace el resto) para no chocar
      con el renderizado de la página. */
+  /* Todas las grillas de listado se ordenan de más caro a más barato.
+     Se usa 'order' para no reescribir el DOM de la página. */
+  function sortGridsByPrice() {
+    var sel = '[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom]';
+    var grids = [];
+    Array.prototype.forEach.call(document.querySelectorAll(sel), function (k) {
+      var g = k.parentElement;
+      if (!g) return;
+      if (g.closest && g.closest('#novedades')) return;
+      if (g.hasAttribute && g.hasAttribute('data-nv-grid')) return;
+      if (grids.indexOf(g) === -1) grids.push(g);
+    });
+    grids.forEach(function (grid) {
+      var cards = Array.prototype.filter.call(grid.children, function (k) {
+        return k.nodeType === 1 && k.matches && k.matches(sel);
+      });
+      if (cards.length < 2) return;
+      cards.forEach(function (k) {
+        var m = (k.textContent || '').match(/USD\s*([\d.,]+)/);
+        var n = m ? parseInt(m[1].replace(/[^0-9]/g, ''), 10) : 0;
+        k.setAttribute('data-zt-usd', isNaN(n) ? 0 : n);
+      });
+      cards.sort(function (a, b) {
+        return (+b.getAttribute('data-zt-usd') || 0) - (+a.getAttribute('data-zt-usd') || 0);
+      });
+      cards.forEach(function (k, i) { k.style.order = i; });
+    });
+  }
+
   function capNovedades() {
     if (!document.getElementById('novedades')) return;
     Array.prototype.forEach.call(document.querySelectorAll('[data-nv-grid]'), function (grid) {
@@ -806,6 +835,7 @@
     }
   }
 
+  var ZT_TOUCHED = 0;
   function apply(db) {
     if (!db) return;
     updateNav(db);
@@ -825,6 +855,7 @@
       if (!slot) return;
       var card = findCard(slot);
       if (!card) return;
+      ZT_TOUCHED++;
       if (ov.hidden) {
         if (card.style.display !== 'none') card.setAttribute('data-zt-disp', card.style.display || '');
         card.style.display = 'none';
@@ -844,6 +875,7 @@
     injectRecCards(db, rate);
     enhanceRecCarousels();
     capNovedades();
+    sortGridsByPrice();
     scheduleOrphans();
     // portada (carrusel)
     var track = document.getElementById('ztc-track');
@@ -993,6 +1025,19 @@
     if (remoteOk) pushRemote(db);
   }
 
+  /* Hover igual al de las tarjetas nativas, para todo producto inyectado
+     (presente y futuro). */
+  (function ztHoverStyle() {
+    if (document.getElementById('zt-hover-style')) return;
+    var st = document.createElement('style');
+    st.id = 'zt-hover-style';
+    st.textContent = '[data-zt-custom]{transition:box-shadow .4s, transform .4s;will-change:transform}' +
+      '[data-zt-custom]:hover{box-shadow:0 26px 64px -20px rgba(0,0,0,.22), 0 4px 10px rgba(0,0,0,.05) !important;transform:translateY(-4px)}' +
+      '[data-zt-reccustom]{transition:box-shadow .4s, transform .4s;will-change:transform}' +
+      '[data-zt-reccustom]:hover{box-shadow:0 22px 54px -20px rgba(0,0,0,.2) !important;transform:translateY(-3px)}';
+    (document.head || document.documentElement).appendChild(st);
+  })();
+
   var local = getLocal();
 
   /* Anti-parpadeo: si hay catálogo en caché, la página queda oculta hasta el
@@ -1007,12 +1052,24 @@
     var b = document.getElementById('zt-boot-hide');
     if (b) b.remove();
   }
+  /* La página es un DC: el HTML sigue pintándose después de DOMContentLoaded,
+     así que reaplicamos en cada mutación y sólo revelamos cuando ya tocamos
+     tarjetas reales (o al vencer la red de seguridad). */
   function firstApply() {
     try { apply(local); scheduleOrphans(); } catch (e) {}
-    revealPage();
+    if (ZT_TOUCHED > 0 || !document.querySelector('image-slot')) revealPage();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', firstApply);
   else firstApply();
+  try {
+    var ztMo = new MutationObserver(function () {
+      if (ztMoT) return;
+      ztMoT = setTimeout(function () { ztMoT = null; firstApply(); }, 40);
+    });
+    var ztMoT = null;
+    ztMo.observe(document.documentElement, { childList: true, subtree: true });
+    setTimeout(function () { ztMo.disconnect(); }, 6000);
+  } catch (e) {}
   // Red de seguridad: pase lo que pase, la página se muestra como máximo a los 2.5s.
   setTimeout(revealPage, 2500);
 
