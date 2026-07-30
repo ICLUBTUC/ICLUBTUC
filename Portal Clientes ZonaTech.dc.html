@@ -1223,10 +1223,20 @@
               <span style="font-size:14px; font-weight:600;">{{ c.name }}</span>
               <span style="font-size:12px; color:#A1A1A6;">{{ c.sub }}</span>
             </div>
-            <span style="margin-left:auto; font-size:15px; font-weight:700; color:#B0700F; white-space:nowrap;">{{ c.saldoStr }}</span>
+            <div style="margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:1px; white-space:nowrap;">
+              <span style="font-size:15px; font-weight:700; color:#B0700F;">{{ c.cobroStr }}</span>
+              <span style="font-size:11px; color:#A1A1A6;">{{ c.cobroSub }}</span>
+            </div>
             <button onClick="{{ c.view }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#fff; background:#C9502A; border:none; border-radius:980px; padding:8px 15px; cursor:pointer;">Ver cuenta</button>
           </div>
         </sc-for>
+        <div style="display:flex; align-items:baseline; gap:14px; border-top:1.5px solid rgba(0,0,0,.1); padding-top:14px; margin-top:2px;">
+          <span style="font-size:12px; font-weight:700; letter-spacing:.1em; color:#86868B;">TOTAL A COBRAR</span>
+          <div style="margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:1px; white-space:nowrap;">
+            <span style="font-size:19px; font-weight:700; letter-spacing:-.02em; color:#B0700F;">{{ cobrarTotProx }}</span>
+            <span style="font-size:11px; color:#A1A1A6;">{{ cobrarTotSaldo }}</span>
+          </div>
+        </div>
       </div>
     </div>
   </sc-if>
@@ -1771,6 +1781,41 @@ class Component extends DCLogic {
     this._save(Object.assign({}, db, { inventory: arr, ventas: ventas }));
   }
   _pad(n) { return String(n).padStart(6, '0'); }
+  /* Próximo cobro: la primera cuota impaga de los planes financiados,
+     respetando las fechas editadas a mano (finan.vencs). Si no hay plan,
+     cae al vencimiento suelto del cliente (proxImp/proxFreq/proxDow). */
+  _proxCobro(c, saldo) {
+    const dows = ['domingos', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábados'];
+    let best = null;
+    (c.movs || []).filter((m) => m.tipo === 'Compra' && m.finan).forEach((pm) => {
+      const n = pm.finan.n;
+      const total = pm.finan.base != null ? pm.finan.base : -pm.imp;
+      const cuotaImp = Math.round(total / n);
+      const vencs = pm.finan.vencs || {};
+      const dates = this._schedule(pm.f, n, pm.finan.freq || 'Mensual').map((d, i) => vencs[i] || d);
+      const pagas = (c.movs || []).filter((x) => x.tipo === 'Pago' && x.plan === pm.doc).length;
+      if (pagas >= n) return;
+      const d = dates[pagas];
+      const dt = this._parseDate(d);
+      if (!best || (dt && best.dt && dt < best.dt)) {
+        best = { imp: cuotaImp, fecha: d, dt: dt, nn: pagas + 1, n: n, freq: (pm.finan.freq || 'Mensual').toLowerCase() };
+      }
+    });
+    if (best) {
+      const atras = best.dt && best.dt < new Date();
+      return { imp: best.imp, label: (atras ? 'venció el ' : 'vence el ') + best.fecha + ' · cuota ' + best.nn + ' de ' + best.n + ' · ' + best.freq };
+    }
+    const semanal = c.proxFreq === 'Semanal';
+    const freq = semanal ? 'semanal' : 'mensual';
+    const fecha = semanal ? this._fmtDate(this._nextDow(c.proxDow != null ? c.proxDow : 0)) : c.proxFecha;
+    const imp = this._num(c.proxImp);
+    if (imp > 0) {
+      const cuando = semanal ? 'todos los ' + dows[c.proxDow != null ? c.proxDow : 0] + ' · próximo ' + fecha : (fecha ? 'vence ' + fecha : 'sin fecha');
+      return { imp: imp, label: cuando + ' · ' + freq };
+    }
+    if (saldo > 0) return { imp: 0, label: 'plan ' + freq + ' · falta definir el importe' };
+    return { imp: 0, label: 'sin saldo' };
+  }
   _uid() { return 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
   _settings(db) {
     const s = (db && db.settings) || {};
@@ -3027,10 +3072,22 @@ class Component extends DCLogic {
       const fMonths = [];
       for (let i = 5; i >= 0; i--) {
         const d = new Date(nowD2.getFullYear(), nowD2.getMonth() - i, 1);
-        fMonths.push({ mm: d.getMonth() + 1, yy: d.getFullYear(), label: monthNames2[d.getMonth()], ing: 0, gan: 0, gas: 0 });
+        fMonths.push({ mm: d.getMonth() + 1, yy: d.getFullYear(), label: monthNames2[d.getMonth()], ing: 0, gan: 0, gas: 0, fin: 0, cc: 0 });
       }
       const slotOf = (f) => { const dt = this._parseDate(f); return dt ? fMonths.find((x) => x.mm === dt.getMonth() + 1 && x.yy === dt.getFullYear()) : null; };
+      const cur0 = fMonths[5];
       ventasArr2.forEach((v) => { const s = slotOf(v.fecha); if (s) { s.ing += v.ventaArs; s.gan += (v.ventaArs - v.costoArs); } });
+      /* Cobros de cuotas: sólo pagos atados a un plan financiado (m.plan).
+         Los pagos sueltos de cuenta corriente se cuentan aparte. */
+      let finCuotas = 0, ccTot = 0;
+      Object.keys(db.clients).forEach((k) => {
+        (db.clients[k].movs || []).forEach((m) => {
+          if (m.tipo !== 'Pago') return;
+          const sl = slotOf(m.f);
+          if (m.plan) { if (sl) { sl.fin += m.imp; finCuotas += (sl === cur0 ? 1 : 0); } }
+          else if (sl) { sl.cc += m.imp; if (sl === cur0) ccTot += m.imp; }
+        });
+      });
       gastos.forEach((g) => { const s = slotOf(g.f); if (s) s.gas += g.monto; });
       const cur = fMonths[5];
       const fMax = Math.max(1, ...fMonths.map((x) => Math.max(x.ing, x.gas)));
@@ -3152,6 +3209,8 @@ class Component extends DCLogic {
           { label: 'INGRESOS · ' + cur.label.toUpperCase(), value: this._ars(cur.ing), sub: ventasArr2.filter((v) => slotOf(v.fecha) === cur).length + ' ventas este mes', bg: '#1D1D1F', lc: 'rgba(255,255,255,.55)', vc: '#fff', sc: 'rgba(255,255,255,.5)' },
           { label: 'GASTOS · ' + cur.label.toUpperCase(), value: this._ars(cur.gas), sub: gastos.filter((g) => slotOf(g.f) === cur).length + ' gastos registrados', bg: '#fff', lc: '#86868B', vc: '#C9502A', sc: '#A1A1A6' },
           { label: 'GANANCIA NETA · ' + cur.label.toUpperCase(), value: this._ars(cur.gan - cur.gas), sub: 'ganancia de ventas menos gastos', bg: 'rgba(31,138,91,.08)', lc: '#1F8A5B', vc: '#1F8A5B', sc: '#5FA98A' },
+          { label: 'COBROS DE CUOTAS · ' + cur.label.toUpperCase(), value: this._ars(cur.fin), sub: finCuotas + (finCuotas === 1 ? ' cuota cobrada · ya contada en la venta' : ' cuotas cobradas · ya contadas en la venta'), bg: '#fff', lc: '#86868B', vc: '#1F8A5B', sc: '#A1A1A6' },
+          { label: 'PAGOS DE CUENTA · ' + cur.label.toUpperCase(), value: this._ars(cur.cc), sub: 'pagos sin plan de financiación', bg: '#fff', lc: '#86868B', vc: '#1F8A5B', sc: '#A1A1A6' },
           { label: 'POR COBRAR (TOTAL)', value: this._ars(totCobrar), sub: porCobrar.length + (porCobrar.length === 1 ? ' cliente con saldo' : ' clientes con saldo'), bg: '#fff', lc: '#86868B', vc: '#B0700F', sc: '#A1A1A6' }
         ],
         fzChart: fMonths.map((m) => ({
@@ -3178,11 +3237,18 @@ class Component extends DCLogic {
           del: () => { if (!window.confirm('¿Eliminar este gasto?')) return; this._save(Object.assign({}, db, { gastos: gastos.filter((x) => x.id !== g.id) })); }
         })),
         cobrarEmpty: porCobrar.length === 0,
-        cobrarList: porCobrar.map((x) => ({
-          name: x.c.name, saldoStr: this._fmt(x.saldo),
-          sub: 'Tel ' + x.k + (x.c.proxFecha && x.c.proxImp ? ' · próx. venc. ' + x.c.proxFecha + ' · ' + this._fmt(x.c.proxImp) : ' · sin vencimiento programado'),
-          view: () => this.setState({ adminView: x.k, view: 'cuenta' })
-        })),
+        cobrarTotProx: this._ars(porCobrar.reduce((a, x) => a + this._proxCobro(x.c, x.saldo).imp, 0)),
+        cobrarTotSaldo: 'saldo total ' + this._ars(totCobrar),
+        cobrarList: porCobrar.map((x) => {
+          const prox = this._proxCobro(x.c, x.saldo);
+          return {
+            name: x.c.name, saldoStr: this._fmt(x.saldo),
+            sub: 'Tel ' + x.k + ' · saldo total ' + this._fmt(x.saldo),
+            cobroStr: prox.imp > 0 ? this._fmt(prox.imp) : '—',
+            cobroSub: prox.label,
+            view: () => this.setState({ adminView: x.k, view: 'cuenta' })
+          };
+        }),
         // ajustes
         ajRateNow: '1 US$ = ' + this._ars(rate2) + ' pesos',
         ajRate: this.state.ajRate, setAjRate: (e) => this.setState({ ajRate: e.target.value }),
