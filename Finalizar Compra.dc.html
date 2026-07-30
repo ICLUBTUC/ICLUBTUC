@@ -140,7 +140,7 @@ class Component extends DCLogic {
       usd: parseFloat(q.get('usd')) || 0,
       photo,
       rate: (db && db.settings && db.settings.rate) || 0,
-      qty: 1, entrega: 'envio', pago: 'transferencia',
+      qty: Math.min(10, Math.max(1, parseInt(q.get('qty'), 10) || 1)), entrega: 'envio', pago: 'transferencia',
       dir: prof.dir || '', city: prof.city || '', cp: prof.cp || '',
       factName: prof.factName || '', dni: prof.dni || '',
       copied: false,
@@ -204,7 +204,7 @@ class Component extends DCLogic {
       monogram: (s.name || 'I').trim().charAt(0).toUpperCase(),
       unitLine: this._fmt(s.usd) + (s.rate ? (' · ARS ' + Math.round(s.usd * s.rate).toLocaleString('es-AR')) : '') + ' c/u',
       qty: s.qty,
-      incQty: () => this.setState({ qty: s.qty + 1 }),
+      incQty: () => this.setState({ qty: Math.min(10, s.qty + 1) }),
       decQty: () => this.setState({ qty: Math.max(1, s.qty - 1) }),
       goBack: () => {
         if (window.history.length > 1 && document.referrer) { history.back(); }
