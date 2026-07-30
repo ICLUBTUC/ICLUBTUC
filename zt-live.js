@@ -653,6 +653,9 @@
     if (!panels.Apple && !panels.Celulares) return;
     var pages = { Apple: 'Apple ZonaTech.dc.html', Accesorios: 'Accesorios ZonaTech.dc.html', Celulares: 'Android ZonaTech.dc.html', 'Smart TV': 'Smart TV ZonaTech.dc.html' };
     var cat = db.catalog || {};
+    /* El reordenamiento se hace una sola vez por panel al final: hacerlo dentro
+       del bucle sacaba y volvía a poner los links en cada producto (parpadeo). */
+    var dirty = {};
     Object.keys(cat).forEach(function (id) {
       var ov = cat[id] || {};
       if (ov.custom) {
@@ -668,16 +671,7 @@
         var all = panel.querySelector('.zt-dd-all');
         a.setAttribute('data-zt-pos', ov.pos != null ? ov.pos : 9999);
         if (!a.parentNode) { if (all) panel.insertBefore(a, all); else panel.appendChild(a); }
-        var customLinks = Array.prototype.filter.call(panel.querySelectorAll('a[data-zt-navc]'), function (el) { return true; });
-        customLinks.sort(function (x, y) { return (+x.getAttribute('data-zt-pos') || 0) - (+y.getAttribute('data-zt-pos') || 0); });
-        customLinks.forEach(function (el) { el.remove(); });
-        customLinks.forEach(function (el) {
-          var pos = parseInt(el.getAttribute('data-zt-pos'), 10);
-          var links = Array.prototype.filter.call(panel.querySelectorAll('a'), function (l) { return !l.classList.contains('zt-dd-all') && l.style.display !== 'none'; });
-          if (!isNaN(pos) && pos < links.length) panel.insertBefore(el, links[pos]);
-          else if (all) panel.insertBefore(el, all);
-          else panel.appendChild(el);
-        });
+        dirty[ov.cat || 'Celulares'] = panel;
         return;
       }
       // producto base: ocultar / renombrar el link existente
@@ -691,6 +685,26 @@
       link.style.display = '';
       if (ov.name && link.firstChild && link.firstChild.nodeType === 3) link.firstChild.nodeValue = ov.name + ' ';
     });
+    Object.keys(dirty).forEach(function (k) { reorderPanel(dirty[k]); });
+  }
+
+  /* Ordena los links de un panel del menú sólo si el orden cambió. */
+  function reorderPanel(panel) {
+    var all = panel.querySelector('.zt-dd-all');
+    var links = Array.prototype.filter.call(panel.querySelectorAll('a'), function (l) {
+      return !l.classList.contains('zt-dd-all') && l.style.display !== 'none';
+    });
+    var want = links.slice().sort(function (x, y) {
+      var px = x.hasAttribute('data-zt-navc') ? (+x.getAttribute('data-zt-pos') || 0) : links.indexOf(x);
+      var py = y.hasAttribute('data-zt-navc') ? (+y.getAttribute('data-zt-pos') || 0) : links.indexOf(y);
+      if (px === py) return links.indexOf(x) - links.indexOf(y);
+      return px - py;
+    });
+    var same = want.every(function (el, i) { return el === links[i]; });
+    if (same) return;
+    var frag = document.createDocumentFragment();
+    want.forEach(function (el) { frag.appendChild(el); });
+    if (all) panel.insertBefore(frag, all); else panel.appendChild(frag);
   }
 
   function registerCompareCustoms(db) {
