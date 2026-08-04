@@ -614,6 +614,12 @@
             </sc-for>
           </select>
           <span style="font-size:12.5px; color:#A1A1A6; line-height:1.45;">{{ aMovProdHint }}</span>
+          <sc-if value="{{ aMovRateStale }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; background:rgba(176,112,15,.08); border-radius:13px; padding:11px 14px;">
+              <span style="font-size:12.5px; color:#B0700F; line-height:1.4; margin-right:auto;">{{ aMovRateMsg }}</span>
+              <button onClick="{{ aMovRateFix }}" style="font-family:inherit; font-size:12.5px; font-weight:700; color:#fff; background:#B0700F; border:none; border-radius:980px; padding:8px 14px; cursor:pointer; white-space:nowrap;">Actualizar</button>
+            </div>
+          </sc-if>
         </div>
       </sc-if>
       <div style="display:flex; flex-direction:column; gap:7px;">
@@ -707,15 +713,33 @@
           </sc-if>
         </div>
         <sc-if value="{{ aMovFinCuotas }}" hint-placeholder-val="{{ false }}">
-          <div style="display:flex; flex-direction:column; gap:7px;">
-            <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">CANTIDAD DE CUOTAS</label>
-            <input value="{{ aMovN }}" onChange="{{ setAMovN }}" type="text" inputMode="numeric" placeholder="10" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:15px; font-weight:600; color:#1D1D1F; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:13px; padding:13px 16px; outline:none;" style-focus="border-color:#1D1D1F; background:#fff;">
-            <span style="font-size:12.5px; color:#A1A1A6;">{{ aMovCuotaInfo }}</span>
-          </div>
-          <div style="display:flex; flex-direction:column; gap:7px;">
-            <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">RECARGO INCLUIDO EN EL IMPORTE (%)</label>
-            <input value="{{ aMovRec }}" onChange="{{ setAMovRec }}" type="text" inputMode="numeric" placeholder="45" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:15px; font-weight:600; color:#1D1D1F; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:13px; padding:13px 16px; outline:none;" style-focus="border-color:#1D1D1F; background:#fff;">
-            <span style="font-size:12.5px; color:#A1A1A6;">{{ aMovRecInfo }}</span>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">PLAN DE FINANCIACIÓN</label>
+            <span style="font-size:12.5px; color:#A1A1A6; line-height:1.45;">{{ aPlanCardsInfo }}</span>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:10px;">
+              <sc-for list="{{ aPlanCards }}" as="pc" hint-placeholder-count="5">
+                <button onClick="{{ pc.pick }}" style="font-family:inherit; text-align:left; display:flex; flex-direction:column; gap:5px; background:{{ pc.bg }}; border:1.5px solid {{ pc.bd }}; border-radius:16px; padding:14px 16px; cursor:pointer; transition:border-color .2s, background .2s;">
+                  <span style="font-size:11.5px; font-weight:700; letter-spacing:.08em; color:{{ pc.tagC }};">{{ pc.tag }}</span>
+                  <span style="font-size:19px; font-weight:700; letter-spacing:-.02em; color:{{ pc.fg }};">{{ pc.per }}</span>
+                  <span style="font-size:12.5px; color:{{ pc.subC }}; line-height:1.4;">{{ pc.sub }}</span>
+                  <span style="font-size:12.5px; font-weight:600; color:{{ pc.totC }};">{{ pc.tot }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <button onClick="{{ aPlanCustomToggle }}" style="align-self:flex-start; font-family:inherit; font-size:12.5px; font-weight:600; color:#6E6E73; background:none; border:none; padding:0; cursor:pointer; text-decoration:underline;">{{ aPlanCustomTxt }}</button>
+            <sc-if value="{{ aPlanCustom }}" hint-placeholder-val="{{ false }}">
+              <div data-pc-grid2 style="display:grid; grid-template-columns:1fr 1fr; gap:14px; min-width:0;">
+                <div style="display:flex; flex-direction:column; gap:7px;">
+                  <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">CANTIDAD DE CUOTAS</label>
+                  <input value="{{ aMovN }}" onChange="{{ setAMovN }}" type="text" inputMode="numeric" placeholder="16" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:15px; font-weight:600; color:#1D1D1F; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:13px; padding:13px 16px; outline:none;" style-focus="border-color:#1D1D1F; background:#fff;">
+                </div>
+                <div style="display:flex; flex-direction:column; gap:7px;">
+                  <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">RECARGO (%)</label>
+                  <input value="{{ aMovRec }}" onChange="{{ setAMovRec }}" type="text" inputMode="numeric" placeholder="45" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:15px; font-weight:600; color:#1D1D1F; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:13px; padding:13px 16px; outline:none;" style-focus="border-color:#1D1D1F; background:#fff;">
+                </div>
+              </div>
+            </sc-if>
+            <span style="font-size:13px; font-weight:600; color:#1F8A5B; line-height:1.5;">{{ aMovCuotaInfo }}</span>
           </div>
         </sc-if>
       </sc-if>
@@ -1666,7 +1690,7 @@ class Component extends DCLogic {
     atab: 'clientes', invMode: 'list', invFormData: null, invEdit: null, invError: '',
     search: '', filter: 'todos', calcPago: '', calcCompra: '',
     amode: 'list', editKey: null, form: null, formError: '', adminView: null,
-    movAmount: '', movDet: '', movMet: 'Transferencia', movPlan: '', movFin: 'contado', movFreq: 'Mensual', movN: '', movRec: '',
+    movAmount: '', movDet: '', movMet: 'Transferencia', movPlan: '', movFin: 'contado', movFreq: 'Mensual', movN: '', movRec: '', movPlanSel: '', movPlanSel: '',
     movProd: '', movAdel: 'no', movAdelMonto: '', movEfec: '', movTransf: '',
     pagoEdit: null, peF: '', peImp: '', peMet: 'Transferencia', peDet: '', recDoc: null, recVal: '',
     cuotaEdit: null, ceF: '', ceAll: true,
@@ -2253,6 +2277,37 @@ class Component extends DCLogic {
     const n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.,-]/g, '').replace(',', '.'));
     return isFinite(n) ? n : 0;
   }
+  /* Planes ofrecibles: salen de los recargos de Ajustes. La tabla está en
+     "pagos" mensuales; si el plan es semanal, el mismo período se convierte a
+     semanas (×4) manteniendo el recargo. */
+  /* Precio en USD del producto elegido en el formulario, para poder revaluarlo
+     cuando cambia el dólar de Ajustes. */
+  _movProdUsd(db, v) {
+    if (!v) return 0;
+    if (v.indexOf('cat:') === 0) {
+      const p = this._catalogAll(db).find((x) => 'cat:' + x.id === v);
+      return p ? this._usdNum(p.usd) : 0;
+    }
+    if (v.indexOf('inv:') === 0) {
+      const it = (db.inventory || [])[parseInt(v.slice(4), 10)];
+      if (!it) return 0;
+      return it.moneda === 'ARS' ? 0 : this._usdNum(it.venta);
+    }
+    return 0;
+  }
+  _planesOfrecidos(db, freq, financiado) {
+    const rec = this._settings(db).recargos || {};
+    const mult = freq === 'Semanal' ? 4 : 1;
+    return Object.keys(rec).map((k) => parseInt(k, 10)).filter((n) => n >= 2).sort((a, b) => a - b).map((meses) => {
+      const pct = this._num(rec[meses]);
+      const cuotas = meses * mult;
+      const total = Math.round(financiado * (1 + pct / 100));
+      return {
+        meses: meses, cuotas: cuotas, pct: pct, total: total,
+        porCuota: cuotas > 0 ? Math.round(total / cuotas) : 0
+      };
+    });
+  }
   _catalogAll(db) {
     const ov = (db && db.catalog) || {};
     const base = this._baseProducts();
@@ -2827,7 +2882,7 @@ class Component extends DCLogic {
             blockLabel: c.blocked ? 'Desbloquear' : 'Bloquear',
             view: () => this.setState({ adminView: k, view: 'dash' }),
             pay: () => this.setState({ amode: 'pago', editKey: k, movAmount: '', movDet: '', movMet: 'Transferencia', movPlan: '', movEfec: '', movTransf: '', formError: '' }),
-            buy: () => this.setState({ amode: 'compra', editKey: k, movAmount: '', movDet: '', movFin: 'contado', movFreq: 'Mensual', movN: '', movRec: '', movProd: '', movAdel: 'no', movAdelMonto: '', formError: '' }),
+            buy: () => this.setState({ amode: 'compra', editKey: k, movAmount: '', movDet: '', movFin: 'contado', movFreq: 'Mensual', movN: '', movRec: '', movPlanSel: '', movPlanSel: '', movProd: '', movAdel: 'no', movAdelMonto: '', formError: '' }),
             edit: () => this.setState({ amode: 'form', editKey: k, formError: '', form: { name: c.name, phone: k, pass: c.pass, cuit: c.cuit || '', dir: c.dir || '', mail: c.mail || '', vend: c.vend || '', iva: c.iva || '', desc: c.desc || '', lim: String(c.lim || ''), saldoIni: '', proxFecha: c.proxFecha || '', proxImp: c.proxImp ? String(c.proxImp) : '', proxFreq: c.proxFreq || 'Mensual', proxDow: c.proxDow != null ? c.proxDow : 0 } }),
             block: () => {
               const next = Object.assign({}, db, { clients: Object.assign({}, db.clients) });
@@ -2918,11 +2973,61 @@ class Component extends DCLogic {
         aMovAdelHint: (() => { const total = this._num(this.state.movAmount); const adel = this._num(this.state.movAdelMonto); const resta = Math.max(0, total - adel); return 'Paga ahora ' + this._fmt(adel) + ' · Queda debiendo ' + this._fmt(resta); })(),
         aMovCuotaInfo: (() => {
           const adel = this.state.movAdel === 'si' ? this._num(this.state.movAdelMonto) : 0;
-          const restante = Math.max(0, movAmountN - adel);
-          if (restante > 0 && this.state.movFin === 'cuotas' && movNN > 0)
-            return movNN + ' cuotas ' + (this.state.movFreq === 'Semanal' ? 'semanales' : 'mensuales') + ' de ' + this._fmt(Math.round(restante / movNN)) + ' · sobre lo que queda debiendo ' + this._fmt(restante);
-          return 'Las cuotas se calculan sobre lo que queda debiendo (importe menos adelanto).';
+          const financiado = Math.max(0, movAmountN - adel);
+          const pct = this._num(this.state.movRec);
+          if (!financiado) return 'Cargá primero el importe del producto.';
+          const nRaw = this._num(this.state.movN);
+          if (nRaw < 2) return this.state.movPlanSel === 'custom' ? 'Ingresá cuántas cuotas querés (mínimo 2).' : 'Elegí un plan para calcular las cuotas.';
+          const total = Math.round(financiado * (1 + pct / 100));
+          const semanal = this.state.movFreq === 'Semanal';
+          return nRaw + (nRaw === 1 ? (semanal ? ' cuota semanal de ' : ' cuota mensual de ') : (semanal ? ' cuotas semanales de ' : ' cuotas mensuales de ')) + this._fmt(Math.round(total / nRaw)) + ' · total financiado ' + this._fmt(total) + ' (contado ' + this._fmt(financiado) + (pct > 0 ? ' + ' + pct + '% de recargo' : '') + ')';
         })(),
+        aPlanCardsInfo: (() => {
+          const st = this._settings(db);
+          const base = 'Los recargos salen de Ajustes y las cuotas se calculan solas.';
+          return this.state.movFreq === 'Semanal'
+            ? base + ' En semanal, cada período mensual se convierte en 4 semanas.'
+            : base;
+        })(),
+        aPlanCards: (() => {
+          const adel = this.state.movAdel === 'si' ? this._num(this.state.movAdelMonto) : 0;
+          const financiado = Math.max(0, movAmountN - adel);
+          return this._planesOfrecidos(db, this.state.movFreq, financiado).map((p) => {
+            const act = this.state.movPlanSel === String(p.meses);
+            return {
+              tag: p.meses + (this.state.movFreq === 'Semanal' ? ' meses' : ' pagos') + ' · ' + p.pct + '%',
+              per: financiado ? this._fmt(p.porCuota) : '—',
+              sub: p.cuotas + (p.cuotas === 1 ? (this.state.movFreq === 'Semanal' ? ' cuota semanal' : ' cuota mensual') : (this.state.movFreq === 'Semanal' ? ' cuotas semanales' : ' cuotas mensuales')),
+              tot: financiado ? 'Total ' + this._fmt(p.total) : 'Cargá el importe',
+              bg: act ? '#1D1D1F' : '#F5F4F1',
+              bd: act ? '#1D1D1F' : 'rgba(0,0,0,.06)',
+              fg: act ? '#fff' : '#1D1D1F',
+              tagC: act ? 'rgba(255,255,255,.6)' : '#B0700F',
+              subC: act ? 'rgba(255,255,255,.65)' : '#6E6E73',
+              totC: act ? '#8FD6B2' : '#1F8A5B',
+              pick: () => this.setState({ movPlanSel: String(p.meses), movN: String(p.cuotas), movRec: String(p.pct) })
+            };
+          });
+        })(),
+        aPlanCustom: this.state.movPlanSel === 'custom',
+        aPlanCustomTxt: this.state.movPlanSel === 'custom' ? 'Volver a los planes de Ajustes' : 'Usar otra cantidad de cuotas o recargo',
+        aPlanCustomToggle: () => this.setState({ movPlanSel: this.state.movPlanSel === 'custom' ? '' : 'custom', movN: '', movRec: '' }),
+        aMovRateStale: (() => {
+          const v = String(this.state.movProd || '');
+          const usd = this._movProdUsd(db, v);
+          if (!usd) return false;
+          const hoy = Math.round(usd * invRate);
+          return movAmountN > 0 && Math.abs(hoy - movAmountN) > 1;
+        })(),
+        aMovRateMsg: (() => {
+          const usd = this._movProdUsd(db, String(this.state.movProd || ''));
+          if (!usd) return '';
+          return 'Al dólar de Ajustes (' + this._fmt(invRate) + ') este producto sale ' + this._fmt(Math.round(usd * invRate)) + ' — son US$ ' + usd + '.';
+        })(),
+        aMovRateFix: () => {
+          const usd = this._movProdUsd(db, String(this.state.movProd || ''));
+          if (usd) this.setState({ movAmount: String(Math.round(usd * invRate)) });
+        },
         aPlanOpts: editPlanes.map((m) => ({ value: m.doc, label: 'Plan ' + this._planTitle(m).slice(0, 28) + ' (' + m.doc + ')' })),
         aMovPlanShow: !!this._selPlanCalc(db),
         aMovPlanDue: (() => {
@@ -2949,18 +3054,6 @@ class Component extends DCLogic {
         },
         aMovRec: this.state.movRec,
         setAMovRec: (e) => this.setState({ movRec: e.target.value }),
-        aMovRecInfo: (() => {
-          const n = this._num(this.state.movN);
-          const st = this._settings(db);
-          const def = st.recargos[n] != null ? st.recargos[n] : 0;
-          const rec = String(this.state.movRec).trim() === '' ? def : this._num(this.state.movRec);
-          const amount = this._num(this.state.movAmount);
-          const adel = this.state.movAdel === 'si' ? this._num(this.state.movAdelMonto) : 0;
-          const fin = Math.max(0, amount - adel);
-          if (!fin) return 'Dejalo vacío para usar el recargo de Ajustes (' + def + '% para ' + (n || '—') + ' pagos).';
-          const contado = rec > 0 ? fin / (1 + rec / 100) : fin;
-          return 'Equivale a ' + this._fmt(Math.round(contado)) + ' de contado. Si el cliente adelanta cuotas, se le cobra ese valor y no el recargo.';
-        })(),
         setAMovAmount: (e) => this.setState({ movAmount: e.target.value }),
         setAMovProd: (e) => {
           const v = e.target.value;
@@ -2984,7 +3077,17 @@ class Component extends DCLogic {
         setAMovMet: (e) => this.setState({ movMet: e.target.value }),
         setAMovPlan: (e) => this.setState({ movPlan: e.target.value }),
         setAMovFin: (e) => this.setState({ movFin: e.target.value }),
-        setAMovFreq: (e) => this.setState({ movFreq: e.target.value }),
+        setAMovFreq: (e) => {
+          const freq = e.target.value;
+          const sel = this.state.movPlanSel;
+          /* El plan elegido está en períodos: al cambiar de frecuencia hay que
+             recalcular las cuotas, sino queda la cuenta de la frecuencia previa. */
+          if (sel && sel !== 'custom') {
+            const meses = parseInt(sel, 10);
+            if (meses > 0) { this.setState({ movFreq: freq, movN: String(meses * (freq === 'Semanal' ? 4 : 1)) }); return; }
+          }
+          this.setState({ movFreq: freq });
+        },
         setAMovN: (e) => this.setState({ movN: e.target.value }),
         aSaveMov: () => {
           const amount = this._num(this.state.movAmount);
@@ -3022,22 +3125,25 @@ class Component extends DCLogic {
             const num = 'FA 0004-' + this._pad(db.nextFa || 1);
             next.nextFa = (db.nextFa || 1) + 1;
             const n = this._num(this.state.movN);
-            if (this.state.movFin === 'cuotas' && n < 2) { this.setState({ formError: 'Ingresá la cantidad de cuotas (mínimo 2).' }); return; }
+            if (this.state.movFin === 'cuotas' && n < 2) { this.setState({ formError: 'Elegí un plan de financiación (o cargá cuotas y recargo a mano).' }); return; }
             const adel = this.state.movAdel === 'si' ? this._num(this.state.movAdelMonto) : 0;
             if (adel > amount) { this.setState({ formError: 'El adelanto no puede ser mayor al importe.' }); return; }
+            if (this.state.movFin === 'cuotas' && adel >= amount) { this.setState({ formError: 'Si el adelanto cubre todo el importe no hay nada para financiar.' }); return; }
             const resta = amount - adel;
+            const esCuotas = this.state.movFin === 'cuotas';
+            const pctRec = esCuotas ? this._num(this.state.movRec) : 0;
+            /* Lo que se carga es el precio de contado: el recargo del plan se
+               suma acá, así la factura refleja lo que el cliente realmente debe. */
+            const cargo = esCuotas ? Math.round(resta * (1 + pctRec / 100)) : resta;
+            const factura = adel + cargo;
             let det = this.state.movDet || 'Compra en ZonaTech';
-            if (adel > 0) det += ' · Adelanto ' + this._fmt(adel) + ', resta ' + this._fmt(resta);
-            const estado = adel >= amount ? 'PAGADA' : (this.state.movFin === 'cuotas' ? 'FINANCIADA' : 'PENDIENTE');
+            if (adel > 0) det += ' · Adelanto ' + this._fmt(adel);
+            if (esCuotas && pctRec > 0) det += ' · Contado ' + this._fmt(resta) + ' + ' + pctRec + '% = ' + this._fmt(cargo);
+            const estado = adel >= factura ? 'PAGADA' : (esCuotas ? 'FINANCIADA' : 'PENDIENTE');
             const grp = this._uid();
             let prodName = null;
-            mov = { f: this._today(), tipo: 'Compra', doc: num, det: det, imp: -amount, estado: estado, grp: grp };
-            if (this.state.movFin === 'cuotas') {
-              const stRec = this._settings(db).recargos;
-              const recDef = stRec[n] != null ? stRec[n] : 0;
-              const recVal = String(this.state.movRec).trim() === '' ? recDef : this._num(this.state.movRec);
-              mov.finan = { n: n, freq: this.state.movFreq, base: resta, rec: recVal };
-            }
+            mov = { f: this._today(), tipo: 'Compra', doc: num, det: det, imp: -factura, estado: estado, grp: grp };
+            if (esCuotas) mov.finan = { n: n, freq: this.state.movFreq, base: cargo, rec: pctRec };
             let movsToAdd = [mov];
             if (adel > 0) {
               const rcNum = 'RC 0002-' + this._pad(next.nextRc || 1);
@@ -3058,7 +3164,7 @@ class Component extends DCLogic {
                 invArr2[pidx] = Object.assign({}, it, { stock: it.stock - 1 });
                 next.inventory = invArr2;
                 const ca = it.moneda === 'ARS' ? it.costo : it.costo * invRate;
-                next.ventas = (db.ventas || []).concat([{ id: grp, name: it.name, fecha: this._today(), costoArs: ca, ventaArs: amount, clientKey: k, fin: this.state.movFin === 'cuotas' }]);
+                next.ventas = (db.ventas || []).concat([{ id: grp, name: it.name, fecha: this._today(), costoArs: ca, ventaArs: factura, clientKey: k, fin: esCuotas }]);
               }
             }
             mov.prodName = prodName;
@@ -3073,7 +3179,7 @@ class Component extends DCLogic {
             this.setState({ amode: 'list', editKey: null, formError: '', movAmount: '', movDet: '', movPlan: '' });
             this._openReceipt(next.clients[k], mov);
           } else {
-            this.setState({ amode: 'list', editKey: null, formError: '', movAmount: '', movDet: '', movN: '' });
+            this.setState({ amode: 'list', editKey: null, formError: '', movAmount: '', movDet: '', movN: '', movRec: '', movPlanSel: '' });
           }
         }
       };
