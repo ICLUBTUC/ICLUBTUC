@@ -339,7 +339,7 @@
               <sc-if value="{{ pl.payoffShow }}" hint-placeholder-val="{{ false }}">
                 <div style="background:rgba(31,138,91,.07); border-radius:20px; padding:20px 26px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:14px;">
                   <div style="display:flex; flex-direction:column; gap:4px;">
-                    <span style="font-size:12px; font-weight:700; letter-spacing:.14em; color:#1F8A5B;">CANCELAR POR ADELANTADO</span>
+                    <span style="font-size:12px; font-weight:700; letter-spacing:.14em; color:#1F8A5B;">SALDO DEL PLAN</span>
                     <span style="font-size:13.5px; color:#6E6E73; line-height:1.5; max-width:520px;">{{ pl.payoffSub }}</span>
                   </div>
                   <span style="font-size:24px; font-weight:700; color:#1F8A5B;">{{ pl.payoffStr }}</span>
@@ -660,9 +660,25 @@
             </div>
             <button onClick="{{ aMovFillDue }}" style="font-family:inherit; font-size:13px; font-weight:700; color:#1D1D1F; background:#fff; border:1px solid rgba(0,0,0,.1); border-radius:980px; padding:9px 16px; cursor:pointer; white-space:nowrap;">Sólo la cuota</button>
             <sc-if value="{{ aMovPayoffShow }}" hint-placeholder-val="{{ false }}">
-              <button onClick="{{ aMovFillPayoff }}" style="font-family:inherit; font-size:13px; font-weight:700; color:#fff; background:#1F8A5B; border:none; border-radius:980px; padding:9px 16px; cursor:pointer; white-space:nowrap;">{{ aMovPayoffBtn }}</button>
+              <button onClick="{{ aMovFillPayoff }}" style="font-family:inherit; font-size:13px; font-weight:700; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:9px 16px; cursor:pointer; white-space:nowrap;">{{ aMovPayoffBtn }}</button>
             </sc-if>
           </div>
+          <sc-if value="{{ aMovAdelShow }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:10px; background:rgba(31,138,91,.07); border-radius:16px; padding:15px 18px;">
+              <span style="font-size:13.5px; font-weight:700; color:#1D1D1F;">{{ aMovAdelTitle }}</span>
+              <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                <button onClick="{{ aMovAdelConInt }}" style="font-family:inherit; text-align:left; flex:1 1 210px; display:flex; flex-direction:column; gap:3px; background:{{ aMovAdelConBg }}; border:1.5px solid {{ aMovAdelConBd }}; border-radius:14px; padding:12px 14px; cursor:pointer;">
+                  <span style="font-size:13.5px; font-weight:700; color:{{ aMovAdelConFg }};">Con interés</span>
+                  <span style="font-size:12.5px; color:{{ aMovAdelConSub }}; line-height:1.4;">{{ aMovAdelConTxt }}</span>
+                </button>
+                <button onClick="{{ aMovAdelSinInt }}" style="font-family:inherit; text-align:left; flex:1 1 210px; display:flex; flex-direction:column; gap:3px; background:{{ aMovAdelSinBg }}; border:1.5px solid {{ aMovAdelSinBd }}; border-radius:14px; padding:12px 14px; cursor:pointer;">
+                  <span style="font-size:13.5px; font-weight:700; color:{{ aMovAdelSinFg }};">Sin interés</span>
+                  <span style="font-size:12.5px; color:{{ aMovAdelSinSub }}; line-height:1.4;">{{ aMovAdelSinTxt }}</span>
+                </button>
+              </div>
+              <span style="font-size:12.5px; color:#6E6E73; line-height:1.45;">{{ aMovAdelHint2 }}</span>
+            </div>
+          </sc-if>
         </sc-if>
         <sc-if value="{{ aMovIsComb }}" hint-placeholder-val="{{ false }}">
           <div data-pc-grid2 style="display:grid; grid-template-columns:1fr 1fr; gap:14px; min-width:0;">
@@ -1690,7 +1706,7 @@ class Component extends DCLogic {
     atab: 'clientes', invMode: 'list', invFormData: null, invEdit: null, invError: '',
     search: '', filter: 'todos', calcPago: '', calcCompra: '',
     amode: 'list', editKey: null, form: null, formError: '', adminView: null,
-    movAmount: '', movDet: '', movMet: 'Transferencia', movPlan: '', movFin: 'contado', movFreq: 'Mensual', movN: '', movRec: '', movPlanSel: '', movPlanSel: '',
+    movAmount: '', movDet: '', movMet: 'Transferencia', movPlan: '', movFin: 'contado', movFreq: 'Mensual', movN: '', movRec: '', movPlanSel: '', movSinInt: false, movPlanSel: '', movSinInt: false,
     movProd: '', movAdel: 'no', movAdelMonto: '', movEfec: '', movTransf: '',
     pagoEdit: null, peF: '', peImp: '', peMet: 'Transferencia', peDet: '', recDoc: null, recVal: '',
     cuotaEdit: null, ceF: '', ceAll: true,
@@ -1705,7 +1721,7 @@ class Component extends DCLogic {
   };
 
   componentDidMount() {
-    const db = this._load();
+    const db = this._reconcileNC(this._load());
     let user = null;
     try { user = localStorage.getItem('zt-portal-fin-user') || null; } catch (e) {}
     if (user && user !== 'admin' && !db.clients[user]) user = null;
@@ -1733,8 +1749,12 @@ class Component extends DCLogic {
     sb.from('portal_state').select('data').eq('id', 'main').maybeSingle().then((res) => {
       if (res && !res.error && res.data && res.data.data && res.data.data.clients) {
         const remote = res.data.data;
-        try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(remote)); } catch (e) {}
-        this.setState({ db: remote, cloud: 'ok' });
+        /* Todo lo que entra de la nube pasa por el mismo saneado que lo local,
+           y si cambió se devuelve corregido para no re-servir datos viejos. */
+        const clean = this._reconcileNC(remote);
+        try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(clean)); } catch (e) {}
+        this.setState({ db: clean, cloud: 'ok' });
+        if (JSON.stringify(clean) !== JSON.stringify(remote)) this._cloudPush(clean);
       } else if (res && res.error) {
         this.setState({ cloud: 'err' });
       } else {
@@ -1749,8 +1769,10 @@ class Component extends DCLogic {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'portal_state', filter: 'id=eq.main' }, (payload) => {
           const remote = payload && payload.new && payload.new.data;
           if (remote && remote.clients && JSON.stringify(remote) !== JSON.stringify(this.state.db)) {
-            try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(remote)); } catch (e) {}
-            this.setState({ db: remote, cloud: 'ok' });
+            const clean = this._reconcileNC(remote);
+            try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(clean)); } catch (e) {}
+            this.setState({ db: clean, cloud: 'ok' });
+            if (JSON.stringify(clean) !== JSON.stringify(remote)) this._cloudPush(clean);
           }
         }).subscribe();
     } catch (e) {}
@@ -1858,9 +1880,7 @@ class Component extends DCLogic {
       const q = pc.prox;
       if (!q) return;
       if (!best || (q.dt && best.dt && q.dt < best.dt)) {
-        const early = !!q.dt && q.dt > new Date() && pc.capImp < pc.cuotaImp;
-        const req = early ? pc.capImp : q.req;
-        best = { imp: Math.max(0, req - q.paid), fecha: q.d, dt: q.dt, nn: q.n, n: pc.n, freq: pc.freq.toLowerCase(), parcial: q.paid > 0, early: early };
+        best = { imp: Math.max(0, q.req - q.paid), fecha: q.d, dt: q.dt, nn: q.n, n: pc.n, freq: pc.freq.toLowerCase(), parcial: q.paid > 0 };
       }
     });
     if (best) {
@@ -1869,7 +1889,7 @@ class Component extends DCLogic {
       if (best.parcial) partes.push('resto de la cuota');
       partes.push((atras ? 'venció el ' : 'vence el ') + best.fecha);
       partes.push('cuota ' + best.nn + ' de ' + best.n);
-      partes.push(best.early ? 'valor contado por adelanto' : best.freq);
+      partes.push(best.freq);
       return { imp: best.imp, label: partes.join(' · ') };
     }
     const semanal = c.proxFreq === 'Semanal';
@@ -1971,6 +1991,20 @@ class Component extends DCLogic {
     }
     this._save(next);
     this.setState({ sellOpen: false, sellIdx: null, sellClient: '', sellFin: 'contado', sellPrice: '', sellAdel: '', sellCuota: '', sellN: '', sellFreq: 'Mensual', sellError: '' });
+  }
+  /* Recalcula las notas de crédito automáticas de TODOS los clientes al abrir.
+     Sin esto, una NC emitida con reglas anteriores sobrevive hasta que ocurra
+     una escritura y el saldo de cuenta contradice al plan. */
+  _reconcileNC(db) {
+    if (!db || !db.clients) return db;
+    let out = db, changed = false;
+    Object.keys(db.clients).forEach((k) => {
+      const antes = JSON.stringify((out.clients[k] || {}).movs || []);
+      const next = this._syncRecNC(out, k);
+      if (JSON.stringify((next.clients[k] || {}).movs || []) !== antes) { out = next; changed = true; }
+    });
+    if (changed) { try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(out)); } catch (e) {} }
+    return out;
   }
   /* Mantiene una sola Nota de Crédito automática por plan, igual al recargo ya
      perdonado por adelantos. Se recalcula ante cualquier cambio (pago nuevo,
@@ -2170,11 +2204,10 @@ class Component extends DCLogic {
   _saldo(c) { return (c.movs || []).reduce((a, m) => a - m.imp, 0); }
   /* Estado real de un plan financiado.
      Los pagos se asignan POR IMPORTE, no por cantidad: si un pago supera la
-     cuota, el excedente cubre las siguientes. Y toda cuota cubierta antes de
-     su vencimiento se cobra sólo a valor contado (sin la parte de recargo),
-     porque el cliente está adelantando. */
+     cuota, el excedente cubre las siguientes. La cuota siempre vale con el
+     recargo del plan; sólo se cobra a valor contado cuando el pago se registró
+     como "adelanto sin interés" (mov.sinInt), decisión que se toma al cobrar. */
   _planCalc(client, pm) {
-    const st = this._settings(this.state.db || {});
     const n = pm.finan.n;
     const freq = pm.finan.freq || 'Mensual';
     const base = pm.finan.base != null ? pm.finan.base : -pm.imp;
@@ -2187,39 +2220,40 @@ class Component extends DCLogic {
     const dates = this._schedule(pm.f, n, freq).map((d, i) => vencs[i] || d);
     const pagos = (client.movs || []).filter((x) => x.tipo === 'Pago' && x.plan === pm.doc)
       .slice().sort((a, b) => (this._parseDate(a.f) || 0) - (this._parseDate(b.f) || 0));
-    const cuotas = dates.map((d, i) => ({ n: i + 1, i: i, d: d, dt: this._parseDate(d), req: cuotaImp, paid: 0, pay: null, early: false, done: false }));
+    const cuotas = dates.map((d, i) => ({ n: i + 1, i: i, d: d, dt: this._parseDate(d), req: cuotaImp, paid: 0, pay: null, sinInt: false, done: false }));
     const TOL = 2;
     let ahorro = 0, credito = 0;
     pagos.forEach((p) => {
       let rest = p.imp;
       const pd = this._parseDate(p.f) || new Date();
+      let primera = true;
       for (let i = 0; i < cuotas.length && rest > 0; i++) {
         const q = cuotas[i];
         if (q.done) continue;
-        if (q.paid === 0 && q.dt && pd < q.dt) { q.req = capImp; q.early = true; }
+        /* El adelanto sin interés aplica a las cuotas que este pago adelanta
+           (no a la que ya estaba vencida o en curso). */
+        if (p.sinInt && q.paid === 0 && !primera && q.dt && pd < q.dt) { q.req = capImp; q.sinInt = true; }
+        primera = false;
         const take = Math.min(q.req - q.paid, rest);
         q.paid += take; rest -= take;
-        if (q.paid >= q.req - TOL) { q.done = true; q.pay = p; if (q.early) ahorro += (cuotaImp - capImp); }
+        if (q.paid >= q.req - TOL) { q.done = true; q.pay = p; if (q.sinInt) ahorro += (cuotaImp - capImp); }
       }
       if (rest > 0) credito += rest;
     });
+    let pendiente = 0, vencidoAhora = 0;
     const hoy = new Date();
-    let payoff = 0, ahorroPayoff = 0, vencidoAhora = 0;
     cuotas.forEach((q) => {
       if (q.done) return;
-      const early = !!q.dt && hoy < q.dt;
-      const req = early ? capImp : q.req;
-      const falta = Math.max(0, req - q.paid);
-      payoff += falta;
-      if (early) ahorroPayoff += (cuotaImp - capImp);
-      else vencidoAhora += falta;
+      const falta = Math.max(0, q.req - q.paid);
+      pendiente += falta;
+      if (q.dt && q.dt < hoy) vencidoAhora += falta;
     });
     const pagadas = cuotas.filter((q) => q.done).length;
     const prox = cuotas.find((q) => !q.done) || null;
     return {
       n: n, freq: freq, base: base, contado: Math.round(contado), recPct: recPct, recUnset: recUnset,
       cuotaImp: cuotaImp, capImp: capImp, cuotas: cuotas, ahorro: ahorro, credito: credito,
-      payoff: payoff, ahorroPayoff: ahorroPayoff, vencidoAhora: vencidoAhora,
+      pendiente: pendiente, vencidoAhora: vencidoAhora,
       pagadas: pagadas, pagadoTotal: pagos.reduce((a, x) => a + x.imp, 0), prox: prox
     };
   }
@@ -2469,8 +2503,7 @@ class Component extends DCLogic {
           const col = q.done ? '#1F8A5B' : parcial ? '#B0700F' : vencida ? '#C9502A' : proxima ? '#B0700F' : '#86868B';
           const bgc = q.done ? 'rgba(31,138,91,.1)' : parcial ? 'rgba(176,112,15,.1)' : vencida ? 'rgba(201,80,42,.12)' : proxima ? 'rgba(176,112,15,.1)' : '#F5F4F1';
           let sub;
-          const conDesc = q.early && pc.capImp < pc.cuotaImp;
-          if (q.done) sub = 'Pagada el ' + q.pay.f + ' · ' + q.pay.doc + (conDesc ? ' · adelantada, sin recargo' : '');
+          if (q.done) sub = 'Pagada el ' + q.pay.f + ' · ' + q.pay.doc + (q.sinInt ? ' · adelantada sin interés' : '');
           else if (parcial) sub = 'Pagó ' + this._fmt(q.paid) + ' · faltan ' + this._fmt(q.req - q.paid);
           else sub = (vencida ? 'Venció el ' : 'Vence el ') + q.d;
           return {
@@ -2513,9 +2546,9 @@ class Component extends DCLogic {
             this._save(this._syncRecNC(dbRec, clientKey));
             this.setState({ recDoc: null, recVal: '' });
           },
-          payoffShow: pc.payoff > 0 && pc.ahorroPayoff > 0,
-          payoffStr: this._fmt(pc.payoff),
-          payoffSub: 'Cancelando todo hoy pagás valor contado por las cuotas que no vencieron: ahorrás ' + this._fmt(pc.ahorroPayoff) + ' de recargo.',
+          payoffShow: pc.pendiente > 0,
+          payoffStr: this._fmt(pc.pendiente),
+          payoffSub: (pc.n - pc.pagadas) + ' cuotas de ' + this._fmt(pc.cuotaImp) + ' por cobrar' + (pc.vencidoAhora > 0 ? ' · ' + this._fmt(pc.vencidoAhora) + ' vencido' : ''),
           creditShow: pc.credito > 0,
           creditStr: 'Saldo a favor de ' + this._fmt(pc.credito) + ': pagó más de lo que cubría el plan.',
           cuotas: cuotas
@@ -2882,7 +2915,7 @@ class Component extends DCLogic {
             blockLabel: c.blocked ? 'Desbloquear' : 'Bloquear',
             view: () => this.setState({ adminView: k, view: 'dash' }),
             pay: () => this.setState({ amode: 'pago', editKey: k, movAmount: '', movDet: '', movMet: 'Transferencia', movPlan: '', movEfec: '', movTransf: '', formError: '' }),
-            buy: () => this.setState({ amode: 'compra', editKey: k, movAmount: '', movDet: '', movFin: 'contado', movFreq: 'Mensual', movN: '', movRec: '', movPlanSel: '', movPlanSel: '', movProd: '', movAdel: 'no', movAdelMonto: '', formError: '' }),
+            buy: () => this.setState({ amode: 'compra', editKey: k, movAmount: '', movDet: '', movFin: 'contado', movFreq: 'Mensual', movN: '', movRec: '', movPlanSel: '', movSinInt: false, movPlanSel: '', movSinInt: false, movProd: '', movAdel: 'no', movAdelMonto: '', formError: '' }),
             edit: () => this.setState({ amode: 'form', editKey: k, formError: '', form: { name: c.name, phone: k, pass: c.pass, cuit: c.cuit || '', dir: c.dir || '', mail: c.mail || '', vend: c.vend || '', iva: c.iva || '', desc: c.desc || '', lim: String(c.lim || ''), saldoIni: '', proxFecha: c.proxFecha || '', proxImp: c.proxImp ? String(c.proxImp) : '', proxFreq: c.proxFreq || 'Mensual', proxDow: c.proxDow != null ? c.proxDow : 0 } }),
             block: () => {
               const next = Object.assign({}, db, { clients: Object.assign({}, db.clients) });
@@ -3039,18 +3072,49 @@ class Component extends DCLogic {
         aMovPlanSub: (() => {
           const p = this._selPlanCalc(db); if (!p) return '';
           if (!p.prox) return 'Cualquier importe queda como saldo a favor.';
-          if (p.recUnset) return 'Si cobrás más que la cuota, el excedente cubre las siguientes. Para descontar el recargo al adelantar, definí el recargo del plan en la vista Cuotas.';
-          return 'Si cobrás más que la cuota, el excedente cubre las siguientes. Las que todavía no vencieron se toman a valor contado, sin la parte de recargo.';
+          return 'Saldo del plan ' + this._fmt(p.pendiente) + ' · ' + (p.n - p.pagadas) + ' cuotas de ' + this._fmt(p.cuotaImp) + '.';
         })(),
-        aMovPayoffShow: (() => { const p = this._selPlanCalc(db); return !!p && p.payoff > 0 && p.ahorroPayoff > 0; })(),
-        aMovPayoffBtn: (() => { const p = this._selPlanCalc(db); return p ? 'Cancelar todo · ' + this._fmt(p.payoff) : ''; })(),
+        aMovPayoffShow: (() => { const p = this._selPlanCalc(db); return !!p && p.pendiente > 0; })(),
+        aMovPayoffBtn: (() => { const p = this._selPlanCalc(db); return p ? 'Todo el plan · ' + this._fmt(p.pendiente) : ''; })(),
+        aMovAdelShow: (() => {
+          const p = this._selPlanCalc(db); if (!p || !p.prox) return false;
+          const falta = p.prox.req - p.prox.paid;
+          return movAmountN > falta + 2 && p.recPct > 0;
+        })(),
+        aMovAdelTitle: (() => {
+          const p = this._selPlanCalc(db); if (!p || !p.prox) return '';
+          const falta = p.prox.req - p.prox.paid;
+          const extra = movAmountN - falta;
+          return 'Este pago cubre ' + this._fmt(falta) + ' de la cuota ' + p.prox.n + ' y adelanta ' + this._fmt(extra) + '. ¿Cómo tomás el adelanto?';
+        })(),
+        aMovAdelConInt: () => this.setState({ movSinInt: false }),
+        aMovAdelSinInt: () => this.setState({ movSinInt: true }),
+        aMovAdelConBg: this.state.movSinInt ? '#fff' : '#1D1D1F',
+        aMovAdelConBd: this.state.movSinInt ? 'rgba(0,0,0,.08)' : '#1D1D1F',
+        aMovAdelConFg: this.state.movSinInt ? '#1D1D1F' : '#fff',
+        aMovAdelConSub: this.state.movSinInt ? '#6E6E73' : 'rgba(255,255,255,.65)',
+        aMovAdelConTxt: (() => {
+          const p = this._selPlanCalc(db); if (!p) return '';
+          return 'Cada cuota adelantada vale ' + this._fmt(p.cuotaImp) + ', igual que las demás.';
+        })(),
+        aMovAdelSinBg: this.state.movSinInt ? '#1F8A5B' : '#fff',
+        aMovAdelSinBd: this.state.movSinInt ? '#1F8A5B' : 'rgba(0,0,0,.08)',
+        aMovAdelSinFg: this.state.movSinInt ? '#fff' : '#1D1D1F',
+        aMovAdelSinSub: this.state.movSinInt ? 'rgba(255,255,255,.75)' : '#6E6E73',
+        aMovAdelSinTxt: (() => {
+          const p = this._selPlanCalc(db); if (!p) return '';
+          return 'Las adelantadas se cobran a ' + this._fmt(p.capImp) + ', el valor de contado.';
+        })(),
+        aMovAdelHint2: this.state.movSinInt
+          ? 'Se emite una nota de crédito por el recargo que le perdonás, así el saldo de la cuenta coincide con el plan.'
+          : 'El excedente cubre las cuotas siguientes a su valor normal.',
         aMovFillDue: () => {
           const p = this._selPlanCalc(db); if (!p || !p.prox) return;
           this.setState({ movAmount: String(p.prox.req - p.prox.paid) });
         },
         aMovFillPayoff: () => {
           const p = this._selPlanCalc(db); if (!p) return;
-          this.setState({ movAmount: String(p.payoff) });
+          this.setState({ movAmount: String(p.pendiente) });
         },
         aMovRec: this.state.movRec,
         setAMovRec: (e) => this.setState({ movRec: e.target.value }),
@@ -3111,7 +3175,7 @@ class Component extends DCLogic {
                 const before = this._planCalc(c, pm);
                 const after = this._planCalc(Object.assign({}, c, { movs: (c.movs || []).concat([{ f: this._today(), tipo: 'Pago', imp: amount, plan: plan }]) }), pm);
                 const from = before.pagadas + 1, to = after.pagadas;
-                const extra = after.ahorro > before.ahorro ? ' · adelanto a valor contado' : '';
+                const extra = after.ahorro > before.ahorro ? ' · adelanto sin interés' : '';
                 det = (to > from ? 'Cuotas ' + from + ' a ' + to : to === from ? 'Cuota ' + from : 'Pago parcial de la cuota ' + from) + ' de ' + pm.finan.n + ' · ' + this._planTitle(pm) + extra;
               }
             }
@@ -3121,6 +3185,7 @@ class Component extends DCLogic {
               metLabel = 'Combinado (efectivo ' + this._fmt(ef) + ' + transferencia ' + this._fmt(tr) + ')';
             }
             mov = { f: this._today(), tipo: 'Pago', doc: num, det: det || (metLabel + ' registrada por administración'), imp: amount, met: metLabel, plan: plan };
+            if (plan && this.state.movSinInt) mov.sinInt = true;
           } else {
             const num = 'FA 0004-' + this._pad(db.nextFa || 1);
             next.nextFa = (db.nextFa || 1) + 1;
@@ -3179,7 +3244,7 @@ class Component extends DCLogic {
             this.setState({ amode: 'list', editKey: null, formError: '', movAmount: '', movDet: '', movPlan: '' });
             this._openReceipt(next.clients[k], mov);
           } else {
-            this.setState({ amode: 'list', editKey: null, formError: '', movAmount: '', movDet: '', movN: '', movRec: '', movPlanSel: '' });
+            this.setState({ amode: 'list', editKey: null, formError: '', movAmount: '', movDet: '', movN: '', movRec: '', movPlanSel: '', movSinInt: false });
           }
         }
       };
