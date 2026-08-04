@@ -312,6 +312,9 @@
                     <button onClick="{{ pl.cancelRec }}" style="font-family:inherit; font-size:13px; font-weight:600; color:#6E6E73; background:#F5F4F1; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Cancelar</button>
                   </sc-if>
                   <sc-if value="{{ pl.recIdle }}" hint-placeholder-val="{{ true }}">
+                    <sc-if value="{{ pl.contadoShow }}" hint-placeholder-val="{{ false }}">
+                      <button onClick="{{ pl.toggleContado }}" style="font-family:inherit; font-size:13px; font-weight:700; color:{{ pl.contadoFg }}; background:{{ pl.contadoBg }}; border:none; border-radius:980px; padding:9px 18px; cursor:pointer;">{{ pl.contadoTxt }}</button>
+                    </sc-if>
                     <button onClick="{{ pl.openRec }}" style="font-family:inherit; font-size:13px; font-weight:700; color:{{ pl.recBtnC }}; background:{{ pl.recBtnB }}; border:none; border-radius:980px; padding:9px 18px; cursor:pointer;">{{ pl.recBtnTxt }}</button>
                   </sc-if>
                 </div>
@@ -2220,9 +2223,13 @@ class Component extends DCLogic {
     const dates = this._schedule(pm.f, n, freq).map((d, i) => vencs[i] || d);
     const pagos = (client.movs || []).filter((x) => x.tipo === 'Pago' && x.plan === pm.doc)
       .slice().sort((a, b) => (this._parseDate(a.f) || 0) - (this._parseDate(b.f) || 0));
-    const cuotas = dates.map((d, i) => ({ n: i + 1, i: i, d: d, dt: this._parseDate(d), req: cuotaImp, paid: 0, pay: null, sinInt: false, done: false }));
+    /* Plan liquidado a contado: el cliente pagó (o paga) en efectivo y se le
+       saca el recargo entero, sin importar la fecha de cada cuota. */
+    const esContado = !!pm.finan.contado;
+    const cuotaBase = esContado ? capImp : cuotaImp;
+    const cuotas = dates.map((d, i) => ({ n: i + 1, i: i, d: d, dt: this._parseDate(d), req: cuotaBase, paid: 0, pay: null, sinInt: esContado, done: false }));
     const TOL = 2;
-    let ahorro = 0, credito = 0;
+    let ahorro = esContado ? Math.round(base - contado) : 0, credito = 0;
     pagos.forEach((p) => {
       let rest = p.imp;
       const pd = this._parseDate(p.f) || new Date();
@@ -2236,7 +2243,7 @@ class Component extends DCLogic {
         primera = false;
         const take = Math.min(q.req - q.paid, rest);
         q.paid += take; rest -= take;
-        if (q.paid >= q.req - TOL) { q.done = true; q.pay = p; if (q.sinInt) ahorro += (cuotaImp - capImp); }
+        if (q.paid >= q.req - TOL) { q.done = true; q.pay = p; if (q.sinInt && !esContado) ahorro += (cuotaImp - capImp); }
       }
       if (rest > 0) credito += rest;
     });
@@ -2251,7 +2258,7 @@ class Component extends DCLogic {
     const pagadas = cuotas.filter((q) => q.done).length;
     const prox = cuotas.find((q) => !q.done) || null;
     return {
-      n: n, freq: freq, base: base, contado: Math.round(contado), recPct: recPct, recUnset: recUnset,
+      n: n, freq: freq, base: base, contado: Math.round(contado), recPct: recPct, recUnset: recUnset, esContado: esContado,
       cuotaImp: cuotaImp, capImp: capImp, cuotas: cuotas, ahorro: ahorro, credito: credito,
       pendiente: pendiente, vencidoAhora: vencidoAhora,
       pagadas: pagadas, pagadoTotal: pagos.reduce((a, x) => a + x.imp, 0), prox: prox
@@ -2523,12 +2530,25 @@ class Component extends DCLogic {
         });
         return {
           title: this._planTitle(pm),
-          sub: 'Factura ' + pm.doc + ' · ' + this._fmt(pc.base) + ' en ' + pc.n + ' cuotas ' + (pc.freq === 'Semanal' ? 'semanales' : 'mensuales') + ' de ' + this._fmt(pc.cuotaImp),
+          sub: 'Factura ' + pm.doc + ' · ' + this._fmt(pc.esContado ? pc.contado : pc.base) + ' en ' + pc.n + ' cuotas ' + (pc.freq === 'Semanal' ? 'semanales' : 'mensuales') + ' de ' + this._fmt(pc.esContado ? pc.capImp : pc.cuotaImp) + (pc.esContado ? ' · precio de contado' : ''),
           paidStr: this._fmt(pc.pagadoTotal),
           paidCount: pc.pagadas + ' de ' + pc.n + ' cuotas' + (pc.ahorro > 0 ? ' · ahorró ' + this._fmt(pc.ahorro) : ''),
           recAdmShow: isAdmin,
           recEditing: this.state.recDoc === pm.doc,
-          recLabel: pc.recUnset ? 'Definir el recargo de este plan' : 'Recargo del plan: ' + pc.recPct + '% · contado ' + this._fmt(pc.contado),
+          recLabel: pc.recUnset ? 'Definir el recargo de este plan' : (pc.esContado ? 'Liquidado a contado: ' + this._fmt(pc.contado) + ' · se descontó el ' + pc.recPct + '% de recargo' : 'Recargo del plan: ' + pc.recPct + '% · contado ' + this._fmt(pc.contado)),
+          contadoShow: isAdmin && !pc.recUnset && pc.recPct > 0,
+          contadoTxt: pc.esContado ? 'Volver a precio financiado' : 'Pasar a precio de contado',
+          contadoBg: pc.esContado ? '#1F8A5B' : '#F5F4F1',
+          contadoFg: pc.esContado ? '#fff' : '#1D1D1F',
+          toggleContado: () => {
+            const db2 = this.state.db || { clients: {} };
+            const c2 = db2.clients[clientKey]; if (!c2) return;
+            const on = !pc.esContado;
+            if (on && !window.confirm('¿Pasar este plan a precio de contado? Las cuotas se recalculan a ' + this._fmt(pc.capImp) + ' y se le descuenta ' + this._fmt(pc.base - pc.contado) + ' de recargo.')) return;
+            const movs2 = (c2.movs || []).map((m) => (m.doc === pm.doc && m.finan) ? Object.assign({}, m, { finan: Object.assign({}, m.finan, { contado: on }) }) : m);
+            const dbC = Object.assign({}, db2, { clients: Object.assign({}, db2.clients, { [clientKey]: Object.assign({}, c2, { movs: movs2 }) }) });
+            this._save(this._syncRecNC(dbC, clientKey));
+          },
           recIdle: this.state.recDoc !== pm.doc,
           recBtnTxt: pc.recUnset ? 'Definir' : 'Cambiar',
           recBtnC: pc.recUnset ? '#fff' : '#1D1D1F',
@@ -2548,7 +2568,7 @@ class Component extends DCLogic {
           },
           payoffShow: pc.pendiente > 0,
           payoffStr: this._fmt(pc.pendiente),
-          payoffSub: (pc.n - pc.pagadas) + ' cuotas de ' + this._fmt(pc.cuotaImp) + ' por cobrar' + (pc.vencidoAhora > 0 ? ' · ' + this._fmt(pc.vencidoAhora) + ' vencido' : ''),
+          payoffSub: (pc.n - pc.pagadas) + ' cuotas de ' + this._fmt(pc.esContado ? pc.capImp : pc.cuotaImp) + ' por cobrar' + (pc.esContado ? ' a precio de contado' : '') + (pc.vencidoAhora > 0 ? ' · ' + this._fmt(pc.vencidoAhora) + ' vencido' : ''),
           creditShow: pc.credito > 0,
           creditStr: 'Saldo a favor de ' + this._fmt(pc.credito) + ': pagó más de lo que cubría el plan.',
           cuotas: cuotas
