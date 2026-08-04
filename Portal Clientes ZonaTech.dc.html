@@ -303,6 +303,19 @@
                   <span style="font-size:13.5px; color:rgba(255,255,255,.55);">{{ pl.paidCount }}</span>
                 </div>
               </div>
+              <sc-if value="{{ pl.recAdmShow }}" hint-placeholder-val="{{ false }}">
+                <div style="background:#fff; border-radius:20px; padding:16px 26px; box-shadow:0 14px 44px -22px rgba(0,0,0,.08); display:flex; flex-wrap:wrap; align-items:center; gap:12px;">
+                  <span style="font-size:13.5px; color:#6E6E73; margin-right:auto;">{{ pl.recLabel }}</span>
+                  <sc-if value="{{ pl.recEditing }}" hint-placeholder-val="{{ false }}">
+                    <input value="{{ pl.recVal }}" onChange="{{ pl.setRec }}" type="text" inputMode="numeric" placeholder="85" style="width:90px; font-family:inherit; font-size:14px; font-weight:600; color:#1D1D1F; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:11px; padding:9px 12px; outline:none;" style-focus="border-color:#1D1D1F; background:#fff;">
+                    <button onClick="{{ pl.saveRec }}" style="font-family:inherit; font-size:13px; font-weight:700; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:9px 18px; cursor:pointer;">Guardar</button>
+                    <button onClick="{{ pl.cancelRec }}" style="font-family:inherit; font-size:13px; font-weight:600; color:#6E6E73; background:#F5F4F1; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Cancelar</button>
+                  </sc-if>
+                  <sc-if value="{{ pl.recIdle }}" hint-placeholder-val="{{ true }}">
+                    <button onClick="{{ pl.openRec }}" style="font-family:inherit; font-size:13px; font-weight:700; color:{{ pl.recBtnC }}; background:{{ pl.recBtnB }}; border:none; border-radius:980px; padding:9px 18px; cursor:pointer;">{{ pl.recBtnTxt }}</button>
+                  </sc-if>
+                </div>
+              </sc-if>
               <div style="background:#fff; border-radius:24px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); overflow:hidden;">
                 <sc-for list="{{ pl.cuotas }}" as="q" hint-placeholder-count="10">
                   <div onClick="{{ q.open }}" style="display:flex; align-items:center; justify-content:space-between; gap:14px; padding:16px 26px; border-bottom:1px solid rgba(0,0,0,.04); cursor:{{ q.cursor }}; transition:background .25s;" style-hover="background:#FAFAF9;">
@@ -323,6 +336,18 @@
                   </div>
                 </sc-for>
               </div>
+              <sc-if value="{{ pl.payoffShow }}" hint-placeholder-val="{{ false }}">
+                <div style="background:rgba(31,138,91,.07); border-radius:20px; padding:20px 26px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:14px;">
+                  <div style="display:flex; flex-direction:column; gap:4px;">
+                    <span style="font-size:12px; font-weight:700; letter-spacing:.14em; color:#1F8A5B;">CANCELAR POR ADELANTADO</span>
+                    <span style="font-size:13.5px; color:#6E6E73; line-height:1.5; max-width:520px;">{{ pl.payoffSub }}</span>
+                  </div>
+                  <span style="font-size:24px; font-weight:700; color:#1F8A5B;">{{ pl.payoffStr }}</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{ pl.creditShow }}" hint-placeholder-val="{{ false }}">
+                <div style="background:#F5F4F1; border-radius:20px; padding:16px 26px; font-size:13.5px; color:#6E6E73;">{{ pl.creditStr }}</div>
+              </sc-if>
             </div>
           </sc-for>
         </div>
@@ -581,7 +606,7 @@
       </div>
       <sc-if value="{{ aMovIsCompra }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex; flex-direction:column; gap:7px;">
-          <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">PRODUCTO DEL STOCK</label>
+          <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">PRODUCTO</label>
           <select value="{{ aMovProd }}" onChange="{{ setAMovProd }}" style="font-family:inherit; font-size:15px; font-weight:600; color:#1D1D1F; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:13px; padding:13px 16px; outline:none; cursor:pointer; width:100%; box-sizing:border-box; min-width:0;">
             <option value="">Otro / escribir manual</option>
             <sc-for list="{{ aStockOpts }}" as="o" hint-placeholder-count="3">
@@ -621,6 +646,18 @@
             </select>
           </div>
         </div>
+        <sc-if value="{{ aMovPlanShow }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; flex-wrap:wrap; align-items:center; gap:12px; background:#F5F4F1; border-radius:16px; padding:15px 18px;">
+            <div style="display:flex; flex-direction:column; gap:3px; margin-right:auto; min-width:200px;">
+              <span style="font-size:13.5px; font-weight:700; color:#1D1D1F;">{{ aMovPlanDue }}</span>
+              <span style="font-size:12.5px; color:#6E6E73; line-height:1.45;">{{ aMovPlanSub }}</span>
+            </div>
+            <button onClick="{{ aMovFillDue }}" style="font-family:inherit; font-size:13px; font-weight:700; color:#1D1D1F; background:#fff; border:1px solid rgba(0,0,0,.1); border-radius:980px; padding:9px 16px; cursor:pointer; white-space:nowrap;">Sólo la cuota</button>
+            <sc-if value="{{ aMovPayoffShow }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ aMovFillPayoff }}" style="font-family:inherit; font-size:13px; font-weight:700; color:#fff; background:#1F8A5B; border:none; border-radius:980px; padding:9px 16px; cursor:pointer; white-space:nowrap;">{{ aMovPayoffBtn }}</button>
+            </sc-if>
+          </div>
+        </sc-if>
         <sc-if value="{{ aMovIsComb }}" hint-placeholder-val="{{ false }}">
           <div data-pc-grid2 style="display:grid; grid-template-columns:1fr 1fr; gap:14px; min-width:0;">
             <div style="display:flex; flex-direction:column; gap:7px;">
@@ -674,6 +711,11 @@
             <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">CANTIDAD DE CUOTAS</label>
             <input value="{{ aMovN }}" onChange="{{ setAMovN }}" type="text" inputMode="numeric" placeholder="10" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:15px; font-weight:600; color:#1D1D1F; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:13px; padding:13px 16px; outline:none;" style-focus="border-color:#1D1D1F; background:#fff;">
             <span style="font-size:12.5px; color:#A1A1A6;">{{ aMovCuotaInfo }}</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:7px;">
+            <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">RECARGO INCLUIDO EN EL IMPORTE (%)</label>
+            <input value="{{ aMovRec }}" onChange="{{ setAMovRec }}" type="text" inputMode="numeric" placeholder="45" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:15px; font-weight:600; color:#1D1D1F; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:13px; padding:13px 16px; outline:none;" style-focus="border-color:#1D1D1F; background:#fff;">
+            <span style="font-size:12.5px; color:#A1A1A6;">{{ aMovRecInfo }}</span>
           </div>
         </sc-if>
       </sc-if>
@@ -1624,9 +1666,9 @@ class Component extends DCLogic {
     atab: 'clientes', invMode: 'list', invFormData: null, invEdit: null, invError: '',
     search: '', filter: 'todos', calcPago: '', calcCompra: '',
     amode: 'list', editKey: null, form: null, formError: '', adminView: null,
-    movAmount: '', movDet: '', movMet: 'Transferencia', movPlan: '', movFin: 'contado', movFreq: 'Mensual', movN: '',
+    movAmount: '', movDet: '', movMet: 'Transferencia', movPlan: '', movFin: 'contado', movFreq: 'Mensual', movN: '', movRec: '',
     movProd: '', movAdel: 'no', movAdelMonto: '', movEfec: '', movTransf: '',
-    pagoEdit: null, peF: '', peImp: '', peMet: 'Transferencia', peDet: '',
+    pagoEdit: null, peF: '', peImp: '', peMet: 'Transferencia', peDet: '', recDoc: null, recVal: '',
     cuotaEdit: null, ceF: '', ceAll: true,
     sellOpen: false, sellIdx: null, sellClient: '', sellFin: 'contado', sellPrice: '', sellAdel: '', sellCuota: '', sellN: '', sellFreq: 'Mensual', sellError: '',
     ventaEdit: null, ventaEditPrice: '', ventaEditCost: '',
@@ -1781,29 +1823,30 @@ class Component extends DCLogic {
     this._save(Object.assign({}, db, { inventory: arr, ventas: ventas }));
   }
   _pad(n) { return String(n).padStart(6, '0'); }
-  /* Próximo cobro: la primera cuota impaga de los planes financiados,
-     respetando las fechas editadas a mano (finan.vencs). Si no hay plan,
-     cae al vencimiento suelto del cliente (proxImp/proxFreq/proxDow). */
+  /* Próximo cobro: la primera cuota impaga según la asignación por importe
+     (un pago grande adelanta cuotas). Si no hay plan, cae al vencimiento
+     suelto del cliente. */
   _proxCobro(c, saldo) {
     const dows = ['domingos', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábados'];
     let best = null;
     (c.movs || []).filter((m) => m.tipo === 'Compra' && m.finan).forEach((pm) => {
-      const n = pm.finan.n;
-      const total = pm.finan.base != null ? pm.finan.base : -pm.imp;
-      const cuotaImp = Math.round(total / n);
-      const vencs = pm.finan.vencs || {};
-      const dates = this._schedule(pm.f, n, pm.finan.freq || 'Mensual').map((d, i) => vencs[i] || d);
-      const pagas = (c.movs || []).filter((x) => x.tipo === 'Pago' && x.plan === pm.doc).length;
-      if (pagas >= n) return;
-      const d = dates[pagas];
-      const dt = this._parseDate(d);
-      if (!best || (dt && best.dt && dt < best.dt)) {
-        best = { imp: cuotaImp, fecha: d, dt: dt, nn: pagas + 1, n: n, freq: (pm.finan.freq || 'Mensual').toLowerCase() };
+      const pc = this._planCalc(c, pm);
+      const q = pc.prox;
+      if (!q) return;
+      if (!best || (q.dt && best.dt && q.dt < best.dt)) {
+        const early = !!q.dt && q.dt > new Date() && pc.capImp < pc.cuotaImp;
+        const req = early ? pc.capImp : q.req;
+        best = { imp: Math.max(0, req - q.paid), fecha: q.d, dt: q.dt, nn: q.n, n: pc.n, freq: pc.freq.toLowerCase(), parcial: q.paid > 0, early: early };
       }
     });
     if (best) {
       const atras = best.dt && best.dt < new Date();
-      return { imp: best.imp, label: (atras ? 'venció el ' : 'vence el ') + best.fecha + ' · cuota ' + best.nn + ' de ' + best.n + ' · ' + best.freq };
+      const partes = [];
+      if (best.parcial) partes.push('resto de la cuota');
+      partes.push((atras ? 'venció el ' : 'vence el ') + best.fecha);
+      partes.push('cuota ' + best.nn + ' de ' + best.n);
+      partes.push(best.early ? 'valor contado por adelanto' : best.freq);
+      return { imp: best.imp, label: partes.join(' · ') };
     }
     const semanal = c.proxFreq === 'Semanal';
     const freq = semanal ? 'semanal' : 'mensual';
@@ -1905,12 +1948,34 @@ class Component extends DCLogic {
     this._save(next);
     this.setState({ sellOpen: false, sellIdx: null, sellClient: '', sellFin: 'contado', sellPrice: '', sellAdel: '', sellCuota: '', sellN: '', sellFreq: 'Mensual', sellError: '' });
   }
+  /* Mantiene una sola Nota de Crédito automática por plan, igual al recargo ya
+     perdonado por adelantos. Se recalcula ante cualquier cambio (pago nuevo,
+     pago editado o borrado, o al declarar el recargo del plan) para que el
+     saldo de cuenta y el estado del plan nunca se contradigan. */
+  _syncRecNC(db, key) {
+    const c = (db.clients || {})[key];
+    if (!c) return db;
+    const limpios = (c.movs || []).filter((m) => !(m.tipo === 'Nota de Crédito' && m.auto === 'rec'));
+    const cTmp = Object.assign({}, c, { movs: limpios });
+    const planes = limpios.filter((m) => m.tipo === 'Compra' && m.finan);
+    let movs = limpios, nextNc = db.nextNc || 1;
+    planes.forEach((pm) => {
+      const dif = Math.round(this._planCalc(cTmp, pm).ahorro);
+      if (dif <= 0) return;
+      movs = movs.concat([{
+        f: this._today(), tipo: 'Nota de Crédito', doc: 'NC 0003-' + this._pad(nextNc), imp: dif,
+        det: 'Descuento de recargo por pago adelantado · ' + this._planTitle(pm), plan: pm.doc, auto: 'rec'
+      }]);
+      nextNc++;
+    });
+    return Object.assign({}, db, { nextNc: nextNc, clients: Object.assign({}, db.clients, { [key]: Object.assign({}, c, { movs: movs }) }) });
+  }
   _movDelete(clientKey, ref) {
     if (!window.confirm('¿Eliminar este pago del historial? Esta acción no se puede deshacer.')) return;
     const db = this.state.db; const c = db.clients[clientKey]; if (!c) return;
     const next = Object.assign({}, db, { clients: Object.assign({}, db.clients) });
     next.clients[clientKey] = Object.assign({}, c, { movs: (c.movs || []).filter((x) => x !== ref) });
-    this._save(next);
+    this._save(this._syncRecNC(next, clientKey));
   }
   _movSave() {
     const pe = this.state.pagoEdit; if (!pe) return;
@@ -1920,7 +1985,7 @@ class Component extends DCLogic {
     next.clients[pe.key] = Object.assign({}, c, {
       movs: (c.movs || []).map((x) => x === pe.ref ? Object.assign({}, x, { f: this.state.peF || x.f, imp: imp, met: this.state.peMet, det: this.state.peDet }) : x)
     });
-    this._save(next);
+    this._save(this._syncRecNC(next, pe.key));
     this.setState({ pagoEdit: null });
   }
   _movDeleteOld(clientKey, ref) {}
@@ -2079,6 +2144,124 @@ class Component extends DCLogic {
     return d;
   }
   _saldo(c) { return (c.movs || []).reduce((a, m) => a - m.imp, 0); }
+  /* Estado real de un plan financiado.
+     Los pagos se asignan POR IMPORTE, no por cantidad: si un pago supera la
+     cuota, el excedente cubre las siguientes. Y toda cuota cubierta antes de
+     su vencimiento se cobra sólo a valor contado (sin la parte de recargo),
+     porque el cliente está adelantando. */
+  _planCalc(client, pm) {
+    const st = this._settings(this.state.db || {});
+    const n = pm.finan.n;
+    const freq = pm.finan.freq || 'Mensual';
+    const base = pm.finan.base != null ? pm.finan.base : -pm.imp;
+    const recUnset = pm.finan.rec == null;
+    const recPct = recUnset ? 0 : this._num(pm.finan.rec);
+    const contado = recPct > 0 ? base / (1 + recPct / 100) : base;
+    const cuotaImp = Math.round(base / n);
+    const capImp = Math.round(contado / n);
+    const vencs = pm.finan.vencs || {};
+    const dates = this._schedule(pm.f, n, freq).map((d, i) => vencs[i] || d);
+    const pagos = (client.movs || []).filter((x) => x.tipo === 'Pago' && x.plan === pm.doc)
+      .slice().sort((a, b) => (this._parseDate(a.f) || 0) - (this._parseDate(b.f) || 0));
+    const cuotas = dates.map((d, i) => ({ n: i + 1, i: i, d: d, dt: this._parseDate(d), req: cuotaImp, paid: 0, pay: null, early: false, done: false }));
+    const TOL = 2;
+    let ahorro = 0, credito = 0;
+    pagos.forEach((p) => {
+      let rest = p.imp;
+      const pd = this._parseDate(p.f) || new Date();
+      for (let i = 0; i < cuotas.length && rest > 0; i++) {
+        const q = cuotas[i];
+        if (q.done) continue;
+        if (q.paid === 0 && q.dt && pd < q.dt) { q.req = capImp; q.early = true; }
+        const take = Math.min(q.req - q.paid, rest);
+        q.paid += take; rest -= take;
+        if (q.paid >= q.req - TOL) { q.done = true; q.pay = p; if (q.early) ahorro += (cuotaImp - capImp); }
+      }
+      if (rest > 0) credito += rest;
+    });
+    const hoy = new Date();
+    let payoff = 0, ahorroPayoff = 0, vencidoAhora = 0;
+    cuotas.forEach((q) => {
+      if (q.done) return;
+      const early = !!q.dt && hoy < q.dt;
+      const req = early ? capImp : q.req;
+      const falta = Math.max(0, req - q.paid);
+      payoff += falta;
+      if (early) ahorroPayoff += (cuotaImp - capImp);
+      else vencidoAhora += falta;
+    });
+    const pagadas = cuotas.filter((q) => q.done).length;
+    const prox = cuotas.find((q) => !q.done) || null;
+    return {
+      n: n, freq: freq, base: base, contado: Math.round(contado), recPct: recPct, recUnset: recUnset,
+      cuotaImp: cuotaImp, capImp: capImp, cuotas: cuotas, ahorro: ahorro, credito: credito,
+      payoff: payoff, ahorroPayoff: ahorroPayoff, vencidoAhora: vencidoAhora,
+      pagadas: pagadas, pagadoTotal: pagos.reduce((a, x) => a + x.imp, 0), prox: prox
+    };
+  }
+  _selPlanCalc(db) {
+    const c = (db.clients || {})[this.state.editKey];
+    if (!c || !this.state.movPlan) return null;
+    const pm = (c.movs || []).find((x) => x.doc === this.state.movPlan && x.finan);
+    return pm ? this._planCalc(c, pm) : null;
+  }
+  /* Catálogo base de la tienda. Es un método para poder usarlo también desde
+     la carga de compras, que se evalúa antes de la sección de financiación. */
+  _baseProducts() {
+    return [
+      { id: 'iphone13', name: 'iPhone 13', spec: '128 GB · seminuevo', usd: 400, cat: 'Apple' },
+      { id: 'iphone15', name: 'iPhone 15', spec: '128 GB · seminuevo', usd: 500, cat: 'Apple' },
+      { id: 'iphone16pro', name: 'iPhone 16 Pro', spec: '128 GB · Batería 99% · seminuevo', usd: 820, cat: 'Apple' },
+      { id: 'ipad11', name: 'iPad 11.ª generación', spec: '128 GB', usd: 519, cat: 'Apple' },
+      { id: 'airpodsmax', name: 'AirPods Max', spec: 'Cancelación activa de ruido', usd: 350, cat: 'Apple' },
+      { id: 'samsung-a07', name: 'Samsung A07', spec: '128 GB · 4 GB RAM', usd: 186, cat: 'Celulares' },
+      { id: 'samsung-a17', name: 'Samsung A17', spec: '128 GB · 4 GB RAM', usd: 259, cat: 'Celulares' },
+      { id: 'samsung-a26', name: 'Samsung A26 5G', spec: '256 GB · 8 GB RAM', usd: 393, cat: 'Celulares' },
+      { id: 'samsung-a36', name: 'Samsung A36 5G', spec: '256 GB · 8 GB RAM', usd: 434, cat: 'Celulares' },
+      { id: 'redmi-a5', name: 'Redmi A5', spec: '128 GB · 4 GB RAM', usd: 186, cat: 'Celulares' },
+      { id: 'xiaomi-15c-4', name: 'Xiaomi 15c', spec: '256 GB · 4 GB RAM', usd: 205, cat: 'Celulares' },
+      { id: 'xiaomi-15c-8', name: 'Xiaomi 15c', spec: '256 GB · 8 GB RAM', usd: 229, cat: 'Celulares' },
+      { id: 'xiaomi-note14', name: 'Xiaomi Note 14', spec: '256 GB · 8 GB RAM', usd: 252, cat: 'Celulares' },
+      { id: 'xiaomi-note14pro', name: 'Xiaomi Note 14 Pro 5G', spec: '256 GB · 8 GB RAM', usd: 381, cat: 'Celulares' },
+      { id: 'xiaomi-note15-128', name: 'Xiaomi Note 15', spec: '128 GB · 6 GB RAM', usd: 252, cat: 'Celulares' },
+      { id: 'xiaomi-note15-256', name: 'Xiaomi Note 15', spec: '256 GB · 8 GB RAM', usd: 300, cat: 'Celulares' },
+      { id: 'xiaomi-note15-5g', name: 'Xiaomi Note 15 5G', spec: '256 GB · 8 GB RAM', usd: 355, cat: 'Celulares' },
+      { id: 'xiaomi-note15pro', name: 'Xiaomi Note 15 Pro', spec: '512 GB · 12 GB RAM', usd: 435, cat: 'Celulares' },
+      { id: 'xiaomi-note15proplus', name: 'Xiaomi Note 15 Pro Plus 5G', spec: '512 GB · 12 GB RAM', usd: 573, cat: 'Celulares' },
+      { id: 'poco-c71-64', name: 'Poco C71', spec: '64 GB · 3 GB RAM', usd: 152, cat: 'Celulares' },
+      { id: 'poco-c71-128', name: 'Poco C71', spec: '128 GB · 4 GB RAM', usd: 173, cat: 'Celulares' },
+      { id: 'poco-c85', name: 'Poco C85', spec: '256 GB · 8 GB RAM', usd: 230, cat: 'Celulares' },
+      { id: 'poco-x7pro-256', name: 'Poco X7 Pro 5G', spec: '256 GB · 12 GB RAM', usd: 420, cat: 'Celulares' },
+      { id: 'poco-x7pro-512', name: 'Poco X7 Pro 5G', spec: '512 GB · 12 GB RAM', usd: 507, cat: 'Celulares' },
+      { id: 'moto-g06', name: 'Motorola G06', spec: '128 GB · 4 GB RAM', usd: 180, cat: 'Celulares' },
+      { id: 'moto-g15', name: 'Motorola G15', spec: '256 GB · 4 GB RAM', usd: 241, cat: 'Celulares' },
+      { id: 'infinix-smart10', name: 'Infinix Smart 10', spec: '128 GB · 4 GB RAM', usd: 176, cat: 'Celulares' },
+      { id: 'infinix-hot60i-4', name: 'Infinix Hot 60i', spec: '256 GB · 4 GB RAM', usd: 214, cat: 'Celulares' },
+      { id: 'infinix-hot60i-8', name: 'Infinix Hot 60i', spec: '256 GB · 8 GB RAM', usd: 239, cat: 'Celulares' },
+      { id: 'infinix-hot60pro', name: 'Infinix Hot 60 Pro', spec: '256 GB · 8 GB RAM', usd: 300, cat: 'Celulares' },
+      { id: 'infinix-hot60proplus', name: 'Infinix Hot 60 Pro Plus', spec: '256 GB · 8 GB RAM', usd: 316, cat: 'Celulares' },
+      { id: 'tv-philco-58', name: 'Smart TV Philco 58"', spec: '58" · Ultra HD (4K)', usd: 490, cat: 'Smart TV' },
+      { id: 'tv-rca-40', name: 'Smart TV RCA 40"', spec: '40" · Full HD', usd: 300, cat: 'Smart TV' },
+      { id: 'tv-ecopower', name: 'Smart TV EcoPower', spec: '32" · Full HD', usd: 182, cat: 'Smart TV' }
+    ];
+  }
+  /* Catálogo completo = base + lo editado/agregado en el panel. */
+  /* El precio del catálogo viene en USD con decimales: _num trata el punto como
+     separador de miles, así que acá se parsea respetando el decimal. */
+  _usdNum(v) {
+    if (typeof v === 'number') return isFinite(v) ? v : 0;
+    const n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.,-]/g, '').replace(',', '.'));
+    return isFinite(n) ? n : 0;
+  }
+  _catalogAll(db) {
+    const ov = (db && db.catalog) || {};
+    const base = this._baseProducts();
+    const ids = {};
+    base.forEach((p) => { ids[p.id] = true; });
+    return base.map((p) => Object.assign({}, p, ov[p.id] || {}))
+      .concat(Object.keys(ov).filter((k) => !ids[k] && ov[k] && ov[k].custom).map((k) => Object.assign({ id: k }, ov[k])))
+      .filter((p) => !p.deleted);
+  }
   _planTitle(m) { return (m.prods && m.prods[0] ? m.prods[0].name : m.det || 'Plan financiado'); }
 
   _login() {
@@ -2222,43 +2405,64 @@ class Component extends DCLogic {
       // planes financiados
       const planMovs = (client.movs || []).filter((m) => m.tipo === 'Compra' && m.finan);
       const planes = planMovs.map((pm) => {
-        const total = pm.finan && pm.finan.base != null ? pm.finan.base : -pm.imp;
-        const n = pm.finan.n;
-        const freq = pm.finan.freq || 'Mensual';
-        const cuotaImp = Math.round(total / n);
-        const vencs = (pm.finan && pm.finan.vencs) || {};
-        const dates = this._schedule(pm.f, n, freq).map((d, i) => vencs[i] || d);
-        const planPagos = (client.movs || []).filter((x) => x.tipo === 'Pago' && x.plan === pm.doc);
-        const cuotas = dates.map((d, i) => {
-          const nn = i + 1;
-          const pp = planPagos[i] || null;
-          const dt = this._parseDate(d);
-          const editable = isAdmin && !pp;
-          const vencida = !pp && dt && dt < new Date();
-          const proxima = !pp && !vencida && i === planPagos.length;
+        const pc = this._planCalc(client, pm);
+        const cuotas = pc.cuotas.map((q) => {
+          const vencida = !q.done && q.dt && q.dt < new Date();
+          const parcial = !q.done && q.paid > 0;
+          const proxima = !q.done && !vencida && !parcial && pc.prox && pc.prox.i === q.i;
+          const est = q.done ? 'PAGADA' : parcial ? 'PARCIAL' : vencida ? 'VENCIDA' : proxima ? 'PRÓXIMA' : 'PENDIENTE';
+          const col = q.done ? '#1F8A5B' : parcial ? '#B0700F' : vencida ? '#C9502A' : proxima ? '#B0700F' : '#86868B';
+          const bgc = q.done ? 'rgba(31,138,91,.1)' : parcial ? 'rgba(176,112,15,.1)' : vencida ? 'rgba(201,80,42,.12)' : proxima ? 'rgba(176,112,15,.1)' : '#F5F4F1';
+          let sub;
+          const conDesc = q.early && pc.capImp < pc.cuotaImp;
+          if (q.done) sub = 'Pagada el ' + q.pay.f + ' · ' + q.pay.doc + (conDesc ? ' · adelantada, sin recargo' : '');
+          else if (parcial) sub = 'Pagó ' + this._fmt(q.paid) + ' · faltan ' + this._fmt(q.req - q.paid);
+          else sub = (vencida ? 'Venció el ' : 'Vence el ') + q.d;
           return {
-            n: nn, label: 'Cuota ' + nn + ' de ' + n,
-            impStr: this._fmt(cuotaImp),
-            sub: pp ? 'Pagada el ' + pp.f + ' · ' + pp.doc : (vencida ? 'Venció el ' + d : 'Vence el ' + d),
-            estado: pp ? 'PAGADA' : vencida ? 'VENCIDA' : proxima ? 'PRÓXIMA' : 'PENDIENTE',
-            ec: pp ? '#1F8A5B' : vencida ? '#C9502A' : proxima ? '#B0700F' : '#86868B',
-            eb: pp ? 'rgba(31,138,91,.1)' : vencida ? 'rgba(201,80,42,.12)' : proxima ? 'rgba(176,112,15,.1)' : '#F5F4F1',
-            nb: pp ? 'rgba(31,138,91,.12)' : '#F5F4F1',
-            nc: pp ? '#1F8A5B' : '#86868B',
-            cursor: pp ? 'pointer' : 'default',
-            admShow: editable,
+            n: q.n, label: 'Cuota ' + q.n + ' de ' + pc.n,
+            impStr: this._fmt(q.req), estado: est, ec: col, eb: bgc,
+            nb: q.done ? 'rgba(31,138,91,.12)' : '#F5F4F1',
+            nc: q.done ? '#1F8A5B' : '#86868B',
+            cursor: q.done ? 'pointer' : 'default',
+            sub: sub,
+            admShow: isAdmin && !q.done,
             editDate: (e) => {
               if (e && e.stopPropagation) e.stopPropagation();
-              this.setState({ cuotaEdit: { key: clientKey, doc: pm.doc, i: i, label: 'Cuota ' + nn + ' de ' + n + ' · ' + this._planTitle(pm) }, ceF: d, ceAll: true });
+              this.setState({ cuotaEdit: { key: clientKey, doc: pm.doc, i: q.i, label: 'Cuota ' + q.n + ' de ' + pc.n + ' · ' + this._planTitle(pm) }, ceF: q.d, ceAll: true });
             },
-            open: pp ? () => this._openReceipt(client, pp) : () => {}
+            open: q.done ? () => this._openReceipt(client, q.pay) : () => {}
           };
         });
         return {
           title: this._planTitle(pm),
-          sub: 'Factura ' + pm.doc + ' · ' + this._fmt(total) + ' en ' + n + ' cuotas ' + (freq === 'Semanal' ? 'semanales' : 'mensuales') + ' de ' + this._fmt(cuotaImp),
-          paidStr: this._fmt(planPagos.reduce((a, x) => a + x.imp, 0)),
-          paidCount: planPagos.length + ' de ' + n + ' cuotas',
+          sub: 'Factura ' + pm.doc + ' · ' + this._fmt(pc.base) + ' en ' + pc.n + ' cuotas ' + (pc.freq === 'Semanal' ? 'semanales' : 'mensuales') + ' de ' + this._fmt(pc.cuotaImp),
+          paidStr: this._fmt(pc.pagadoTotal),
+          paidCount: pc.pagadas + ' de ' + pc.n + ' cuotas' + (pc.ahorro > 0 ? ' · ahorró ' + this._fmt(pc.ahorro) : ''),
+          recAdmShow: isAdmin,
+          recEditing: this.state.recDoc === pm.doc,
+          recLabel: pc.recUnset ? 'Definir el recargo de este plan' : 'Recargo del plan: ' + pc.recPct + '% · contado ' + this._fmt(pc.contado),
+          recIdle: this.state.recDoc !== pm.doc,
+          recBtnTxt: pc.recUnset ? 'Definir' : 'Cambiar',
+          recBtnC: pc.recUnset ? '#fff' : '#1D1D1F',
+          recBtnB: pc.recUnset ? '#B0700F' : '#F5F4F1',
+          recVal: this.state.recVal,
+          openRec: () => this.setState({ recDoc: pm.doc, recVal: pc.recUnset ? '' : String(pc.recPct) }),
+          setRec: (e) => this.setState({ recVal: e.target.value }),
+          cancelRec: () => this.setState({ recDoc: null, recVal: '' }),
+          saveRec: () => {
+            const v = this._num(this.state.recVal);
+            const db2 = this.state.db || { clients: {} };
+            const c2 = db2.clients[clientKey]; if (!c2) return;
+            const movs2 = (c2.movs || []).map((m) => (m.doc === pm.doc && m.finan) ? Object.assign({}, m, { finan: Object.assign({}, m.finan, { rec: v }) }) : m);
+            const dbRec = Object.assign({}, db2, { clients: Object.assign({}, db2.clients, { [clientKey]: Object.assign({}, c2, { movs: movs2 }) }) });
+            this._save(this._syncRecNC(dbRec, clientKey));
+            this.setState({ recDoc: null, recVal: '' });
+          },
+          payoffShow: pc.payoff > 0 && pc.ahorroPayoff > 0,
+          payoffStr: this._fmt(pc.payoff),
+          payoffSub: 'Cancelando todo hoy pagás valor contado por las cuotas que no vencieron: ahorrás ' + this._fmt(pc.ahorroPayoff) + ' de recargo.',
+          creditShow: pc.credito > 0,
+          creditStr: 'Saldo a favor de ' + this._fmt(pc.credito) + ': pagó más de lo que cubría el plan.',
           cuotas: cuotas
         };
       });
@@ -2623,7 +2827,7 @@ class Component extends DCLogic {
             blockLabel: c.blocked ? 'Desbloquear' : 'Bloquear',
             view: () => this.setState({ adminView: k, view: 'dash' }),
             pay: () => this.setState({ amode: 'pago', editKey: k, movAmount: '', movDet: '', movMet: 'Transferencia', movPlan: '', movEfec: '', movTransf: '', formError: '' }),
-            buy: () => this.setState({ amode: 'compra', editKey: k, movAmount: '', movDet: '', movFin: 'contado', movFreq: 'Mensual', movN: '', movProd: '', movAdel: 'no', movAdelMonto: '', formError: '' }),
+            buy: () => this.setState({ amode: 'compra', editKey: k, movAmount: '', movDet: '', movFin: 'contado', movFreq: 'Mensual', movN: '', movRec: '', movProd: '', movAdel: 'no', movAdelMonto: '', formError: '' }),
             edit: () => this.setState({ amode: 'form', editKey: k, formError: '', form: { name: c.name, phone: k, pass: c.pass, cuit: c.cuit || '', dir: c.dir || '', mail: c.mail || '', vend: c.vend || '', iva: c.iva || '', desc: c.desc || '', lim: String(c.lim || ''), saldoIni: '', proxFecha: c.proxFecha || '', proxImp: c.proxImp ? String(c.proxImp) : '', proxFreq: c.proxFreq || 'Mensual', proxDow: c.proxDow != null ? c.proxDow : 0 } }),
             block: () => {
               const next = Object.assign({}, db, { clients: Object.assign({}, db.clients) });
@@ -2695,17 +2899,18 @@ class Component extends DCLogic {
         aMovCombColor: (() => { const s = this._num(this.state.movEfec) + this._num(this.state.movTransf); return s > 0 && s === this._num(this.state.movAmount) ? '#1F8A5B' : '#C9502A'; })(),
         aMovPlan: this.state.movPlan, aMovFin: this.state.movFin, aMovFreq: this.state.movFreq, aMovN: this.state.movN,
         aMovFinCuotas: this.state.movFin === 'cuotas',
-        aStockOpts: invArr.map((it, idx) => ({ value: String(idx), label: it.name + ' — ' + (it.moneda === 'ARS' ? this._ars(it.venta) : this._usd(it.venta)) + ' · stock ' + (it.stock || 0) })),
+        aStockOpts: invArr.map((it, idx) => ({ value: 'inv:' + idx, label: 'STOCK · ' + it.name + ' — ' + (it.moneda === 'ARS' ? this._ars(it.venta) : this._usd(it.venta)) + ' · ' + (it.stock || 0) + ' u.' }))
+          .concat(this._catalogAll(db).filter((p) => !p.hidden).map((p) => ({
+            value: 'cat:' + p.id,
+            label: 'CATÁLOGO · ' + p.name + (p.spec ? ' ' + p.spec : '') + ' — ' + this._ars(Math.round(this._usdNum(p.usd) * invRate))
+          }))),
+        aMovProdHint: (() => {
+          const v = String(this.state.movProd || '');
+          if (v.indexOf('cat:') === 0) return 'Producto del catálogo: completa precio y detalle, pero no descuenta stock ni calcula margen. Cargalo en Inventario si querés medir la ganancia.';
+          if (v.indexOf('inv:') === 0) return 'Precio de venta cargado. Al registrar la compra se descuenta 1 del stock automáticamente.';
+          return 'Elegí cualquier producto del stock o del catálogo, o dejalo en "Otro" y escribí manual.';
+        })(),
         aMovProd: this.state.movProd || '',
-        setAMovProd: (e) => {
-          const v = e.target.value;
-          if (v === '') { this.setState({ movProd: '' }); return; }
-          const it = invArr[parseInt(v, 10)];
-          if (!it) { this.setState({ movProd: '' }); return; }
-          const precioArs = Math.round(it.moneda === 'ARS' ? it.venta : it.venta * invRate);
-          this.setState({ movProd: v, movDet: it.name, movAmount: String(precioArs) });
-        },
-        aMovProdHint: this.state.movProd !== '' ? 'Precio de venta cargado. Al registrar la compra se descuenta 1 del stock automáticamente.' : 'Elegí un producto para autocompletar precio y detalle, o dejalo en "Otro" y escribí manual.',
         aMovAdelOpts: [{ v: 'no', t: 'No' }, { v: 'si', t: 'Sí' }].map((o) => { const a = (this.state.movAdel || 'no') === o.v; return { txt: o.t, pick: () => this.setState({ movAdel: o.v }), bg: a ? '#1D1D1F' : 'transparent', color: a ? '#fff' : '#6E6E73' }; }),
         aMovAdelSi: this.state.movAdel === 'si',
         aMovAdelMonto: this.state.movAdelMonto,
@@ -2719,7 +2924,62 @@ class Component extends DCLogic {
           return 'Las cuotas se calculan sobre lo que queda debiendo (importe menos adelanto).';
         })(),
         aPlanOpts: editPlanes.map((m) => ({ value: m.doc, label: 'Plan ' + this._planTitle(m).slice(0, 28) + ' (' + m.doc + ')' })),
+        aMovPlanShow: !!this._selPlanCalc(db),
+        aMovPlanDue: (() => {
+          const p = this._selPlanCalc(db); if (!p) return '';
+          const q = p.prox; if (!q) return 'El plan ya está cubierto por completo.';
+          const falta = q.req - q.paid;
+          return 'Cuota ' + q.n + ' de ' + p.n + ': ' + this._fmt(falta) + (q.paid > 0 ? ' (resto)' : '') + ' · vence el ' + q.d;
+        })(),
+        aMovPlanSub: (() => {
+          const p = this._selPlanCalc(db); if (!p) return '';
+          if (!p.prox) return 'Cualquier importe queda como saldo a favor.';
+          if (p.recUnset) return 'Si cobrás más que la cuota, el excedente cubre las siguientes. Para descontar el recargo al adelantar, definí el recargo del plan en la vista Cuotas.';
+          return 'Si cobrás más que la cuota, el excedente cubre las siguientes. Las que todavía no vencieron se toman a valor contado, sin la parte de recargo.';
+        })(),
+        aMovPayoffShow: (() => { const p = this._selPlanCalc(db); return !!p && p.payoff > 0 && p.ahorroPayoff > 0; })(),
+        aMovPayoffBtn: (() => { const p = this._selPlanCalc(db); return p ? 'Cancelar todo · ' + this._fmt(p.payoff) : ''; })(),
+        aMovFillDue: () => {
+          const p = this._selPlanCalc(db); if (!p || !p.prox) return;
+          this.setState({ movAmount: String(p.prox.req - p.prox.paid) });
+        },
+        aMovFillPayoff: () => {
+          const p = this._selPlanCalc(db); if (!p) return;
+          this.setState({ movAmount: String(p.payoff) });
+        },
+        aMovRec: this.state.movRec,
+        setAMovRec: (e) => this.setState({ movRec: e.target.value }),
+        aMovRecInfo: (() => {
+          const n = this._num(this.state.movN);
+          const st = this._settings(db);
+          const def = st.recargos[n] != null ? st.recargos[n] : 0;
+          const rec = String(this.state.movRec).trim() === '' ? def : this._num(this.state.movRec);
+          const amount = this._num(this.state.movAmount);
+          const adel = this.state.movAdel === 'si' ? this._num(this.state.movAdelMonto) : 0;
+          const fin = Math.max(0, amount - adel);
+          if (!fin) return 'Dejalo vacío para usar el recargo de Ajustes (' + def + '% para ' + (n || '—') + ' pagos).';
+          const contado = rec > 0 ? fin / (1 + rec / 100) : fin;
+          return 'Equivale a ' + this._fmt(Math.round(contado)) + ' de contado. Si el cliente adelanta cuotas, se le cobra ese valor y no el recargo.';
+        })(),
         setAMovAmount: (e) => this.setState({ movAmount: e.target.value }),
+        setAMovProd: (e) => {
+          const v = e.target.value;
+          const patch = { movProd: v };
+          if (v.indexOf('cat:') === 0) {
+            const p = this._catalogAll(db).find((x) => 'cat:' + x.id === v);
+            if (p) {
+              patch.movDet = p.name + (p.spec ? ' ' + p.spec : '');
+              if (!String(this.state.movAmount).trim()) patch.movAmount = String(Math.round(this._usdNum(p.usd) * invRate));
+            }
+          } else if (v.indexOf('inv:') === 0) {
+            const it = invArr[parseInt(v.slice(4), 10)];
+            if (it) {
+              patch.movDet = it.name;
+              if (!String(this.state.movAmount).trim()) patch.movAmount = String(Math.round(it.moneda === 'ARS' ? it.venta : it.venta * invRate));
+            }
+          }
+          this.setState(patch);
+        },
         setAMovDet: (e) => this.setState({ movDet: e.target.value }),
         setAMovMet: (e) => this.setState({ movMet: e.target.value }),
         setAMovPlan: (e) => this.setState({ movPlan: e.target.value }),
@@ -2734,6 +2994,7 @@ class Component extends DCLogic {
           if (!c) return;
           const isPago = amode === 'pago';
           const next = Object.assign({}, db, { clients: Object.assign({}, db.clients) });
+          const extraMovs = [];
           let mov;
           if (isPago) {
             const num = 'RC 0002-' + this._pad(db.nextRc || 1);
@@ -2743,8 +3004,13 @@ class Component extends DCLogic {
             if (this.state.movPlan) {
               plan = this.state.movPlan;
               const pm = (c.movs || []).find((x) => x.doc === plan && x.finan);
-              const idx = (c.movs || []).filter((x) => x.tipo === 'Pago' && x.plan === plan).length + 1;
-              if (pm && !det) det = 'Cuota ' + idx + ' de ' + pm.finan.n + ' · ' + this._planTitle(pm);
+              if (pm && !det) {
+                const before = this._planCalc(c, pm);
+                const after = this._planCalc(Object.assign({}, c, { movs: (c.movs || []).concat([{ f: this._today(), tipo: 'Pago', imp: amount, plan: plan }]) }), pm);
+                const from = before.pagadas + 1, to = after.pagadas;
+                const extra = after.ahorro > before.ahorro ? ' · adelanto a valor contado' : '';
+                det = (to > from ? 'Cuotas ' + from + ' a ' + to : to === from ? 'Cuota ' + from : 'Pago parcial de la cuota ' + from) + ' de ' + pm.finan.n + ' · ' + this._planTitle(pm) + extra;
+              }
             }
             let metLabel = this.state.movMet;
             if (this.state.movMet === 'Combinado') {
@@ -2766,7 +3032,12 @@ class Component extends DCLogic {
             const grp = this._uid();
             let prodName = null;
             mov = { f: this._today(), tipo: 'Compra', doc: num, det: det, imp: -amount, estado: estado, grp: grp };
-            if (this.state.movFin === 'cuotas') mov.finan = { n: n, freq: this.state.movFreq, base: resta };
+            if (this.state.movFin === 'cuotas') {
+              const stRec = this._settings(db).recargos;
+              const recDef = stRec[n] != null ? stRec[n] : 0;
+              const recVal = String(this.state.movRec).trim() === '' ? recDef : this._num(this.state.movRec);
+              mov.finan = { n: n, freq: this.state.movFreq, base: resta, rec: recVal };
+            }
             let movsToAdd = [mov];
             if (adel > 0) {
               const rcNum = 'RC 0002-' + this._pad(next.nextRc || 1);
@@ -2774,8 +3045,12 @@ class Component extends DCLogic {
               movsToAdd.push({ f: this._today(), tipo: 'Pago', doc: rcNum, det: 'Adelanto de compra · ' + (this.state.movDet || 'Compra'), imp: adel, met: 'Efectivo', grp: grp });
             }
             // descontar stock y registrar venta si vino del inventario
-            if (this.state.movProd !== '') {
-              const pidx = parseInt(this.state.movProd, 10);
+            const selProd = String(this.state.movProd || '');
+            if (selProd.indexOf('cat:') === 0) {
+              const cp = this._catalogAll(db).find((x) => 'cat:' + x.id === selProd);
+              if (cp) prodName = cp.name;
+            } else if (selProd.indexOf('inv:') === 0) {
+              const pidx = parseInt(selProd.slice(4), 10);
               const it = (next.inventory || db.inventory || [])[pidx];
               if (it && (it.stock || 0) > 0) {
                 prodName = it.name;
@@ -2792,8 +3067,8 @@ class Component extends DCLogic {
             this.setState({ amode: 'list', editKey: null, formError: '', movAmount: '', movDet: '', movN: '', movProd: '', movAdel: 'no', movAdelMonto: '' });
             return;
           }
-          next.clients[k] = Object.assign({}, c, { movs: (c.movs || []).concat([mov]) });
-          this._save(next);
+          next.clients[k] = Object.assign({}, c, { movs: (c.movs || []).concat([mov]).concat(extraMovs) });
+          this._save(isPago ? this._syncRecNC(next, k) : next);
           if (isPago) {
             this.setState({ amode: 'list', editKey: null, formError: '', movAmount: '', movDet: '', movPlan: '' });
             this._openReceipt(next.clients[k], mov);
@@ -2808,42 +3083,7 @@ class Component extends DCLogic {
     const screen = this.state.screen;
     const fin = this.state.fin || {};
     const setFin = (patch) => this.setState({ fin: Object.assign({}, this.state.fin, patch) });
-    const finProductsAll = [
-      { id: 'iphone13', name: 'iPhone 13', spec: '128 GB · seminuevo', usd: 400, cat: 'Apple' },
-      { id: 'iphone15', name: 'iPhone 15', spec: '128 GB · seminuevo', usd: 500, cat: 'Apple' },
-      { id: 'iphone16pro', name: 'iPhone 16 Pro', spec: '128 GB · Batería 99% · seminuevo', usd: 820, cat: 'Apple' },
-      { id: 'ipad11', name: 'iPad 11.ª generación', spec: '128 GB', usd: 519, cat: 'Apple' },
-      { id: 'airpodsmax', name: 'AirPods Max', spec: 'Cancelación activa de ruido', usd: 350, cat: 'Apple' },
-      { id: 'samsung-a07', name: 'Samsung A07', spec: '128 GB · 4 GB RAM', usd: 186, cat: 'Celulares' },
-      { id: 'samsung-a17', name: 'Samsung A17', spec: '128 GB · 4 GB RAM', usd: 259, cat: 'Celulares' },
-      { id: 'samsung-a26', name: 'Samsung A26 5G', spec: '256 GB · 8 GB RAM', usd: 393, cat: 'Celulares' },
-      { id: 'samsung-a36', name: 'Samsung A36 5G', spec: '256 GB · 8 GB RAM', usd: 434, cat: 'Celulares' },
-      { id: 'redmi-a5', name: 'Redmi A5', spec: '128 GB · 4 GB RAM', usd: 186, cat: 'Celulares' },
-      { id: 'xiaomi-15c-4', name: 'Xiaomi 15c', spec: '256 GB · 4 GB RAM', usd: 205, cat: 'Celulares' },
-      { id: 'xiaomi-15c-8', name: 'Xiaomi 15c', spec: '256 GB · 8 GB RAM', usd: 229, cat: 'Celulares' },
-      { id: 'xiaomi-note14', name: 'Xiaomi Note 14', spec: '256 GB · 8 GB RAM', usd: 252, cat: 'Celulares' },
-      { id: 'xiaomi-note14pro', name: 'Xiaomi Note 14 Pro 5G', spec: '256 GB · 8 GB RAM', usd: 381, cat: 'Celulares' },
-      { id: 'xiaomi-note15-128', name: 'Xiaomi Note 15', spec: '128 GB · 6 GB RAM', usd: 252, cat: 'Celulares' },
-      { id: 'xiaomi-note15-256', name: 'Xiaomi Note 15', spec: '256 GB · 8 GB RAM', usd: 300, cat: 'Celulares' },
-      { id: 'xiaomi-note15-5g', name: 'Xiaomi Note 15 5G', spec: '256 GB · 8 GB RAM', usd: 355, cat: 'Celulares' },
-      { id: 'xiaomi-note15pro', name: 'Xiaomi Note 15 Pro', spec: '512 GB · 12 GB RAM', usd: 435, cat: 'Celulares' },
-      { id: 'xiaomi-note15proplus', name: 'Xiaomi Note 15 Pro Plus 5G', spec: '512 GB · 12 GB RAM', usd: 573, cat: 'Celulares' },
-      { id: 'poco-c71-64', name: 'Poco C71', spec: '64 GB · 3 GB RAM', usd: 152, cat: 'Celulares' },
-      { id: 'poco-c71-128', name: 'Poco C71', spec: '128 GB · 4 GB RAM', usd: 173, cat: 'Celulares' },
-      { id: 'poco-c85', name: 'Poco C85', spec: '256 GB · 8 GB RAM', usd: 230, cat: 'Celulares' },
-      { id: 'poco-x7pro-256', name: 'Poco X7 Pro 5G', spec: '256 GB · 12 GB RAM', usd: 420, cat: 'Celulares' },
-      { id: 'poco-x7pro-512', name: 'Poco X7 Pro 5G', spec: '512 GB · 12 GB RAM', usd: 507, cat: 'Celulares' },
-      { id: 'moto-g06', name: 'Motorola G06', spec: '128 GB · 4 GB RAM', usd: 180, cat: 'Celulares' },
-      { id: 'moto-g15', name: 'Motorola G15', spec: '256 GB · 4 GB RAM', usd: 241, cat: 'Celulares' },
-      { id: 'infinix-smart10', name: 'Infinix Smart 10', spec: '128 GB · 4 GB RAM', usd: 176, cat: 'Celulares' },
-      { id: 'infinix-hot60i-4', name: 'Infinix Hot 60i', spec: '256 GB · 4 GB RAM', usd: 214, cat: 'Celulares' },
-      { id: 'infinix-hot60i-8', name: 'Infinix Hot 60i', spec: '256 GB · 8 GB RAM', usd: 239, cat: 'Celulares' },
-      { id: 'infinix-hot60pro', name: 'Infinix Hot 60 Pro', spec: '256 GB · 8 GB RAM', usd: 300, cat: 'Celulares' },
-      { id: 'infinix-hot60proplus', name: 'Infinix Hot 60 Pro Plus', spec: '256 GB · 8 GB RAM', usd: 316, cat: 'Celulares' },
-      { id: 'tv-philco-58', name: 'Smart TV Philco 58"', spec: '58" · Ultra HD (4K)', usd: 490, cat: 'Smart TV' },
-      { id: 'tv-rca-40', name: 'Smart TV RCA 40"', spec: '40" · Full HD', usd: 300, cat: 'Smart TV' },
-      { id: 'tv-ecopower', name: 'Smart TV EcoPower', spec: '32" · Full HD', usd: 182, cat: 'Smart TV' }
-    ];
+    const finProductsAll = this._baseProducts();
     /* El cotizador usa el catálogo real: precios editados en el panel y
        productos nuevos aparecen acá sin tocar la lista base. */
     const finOv = (db.catalog || {});
