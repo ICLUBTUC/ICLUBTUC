@@ -1260,6 +1260,13 @@
             <span style="font-size:12px; color:#A1A1A6;">Movelo con ↑ ↓ para decidir si va 1.º, 2.º, 3.º… en su categoría.</span>
           </div>
         </sc-if>
+        <div style="display:flex; flex-direction:column; gap:9px; background:#F8F7F5; border-radius:16px; padding:16px 18px;">
+          <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">PRECIO DE UNO NUEVO (USD)</label>
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <input value="{{ catUsdNew }}" onChange="{{ setCatUsdNew }}" type="text" inputMode="numeric" placeholder="Ej: 1700" style="width:130px; box-sizing:border-box; font-family:inherit; font-size:15px; font-weight:600; color:#1D1D1F; background:#fff; border:1.5px solid rgba(0,0,0,.08); border-radius:12px; padding:11px 14px; outline:none;" style-focus="border-color:#1D1D1F;">
+            <span style="font-size:12.5px; color:#A1A1A6; line-height:1.45; flex:1; min-width:180px;">{{ catAhorroHint }}</span>
+          </div>
+        </div>
         <div onClick="{{ catVisToggle }}" style="display:flex; align-items:center; gap:16px; background:#F8F7F5; border-radius:16px; padding:16px 18px; cursor:pointer;">
           <div style="display:flex; flex-direction:column; gap:3px; margin-right:auto;">
             <span style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">VISIBILIDAD</span>
@@ -4050,7 +4057,7 @@ class Component extends DCLogic {
           stkToggle: () => setOv(p.id, { sinStock: !p.sinStock }),
           setPhoto: (e) => this._readImg(e, (url) => setOv(p.id, { photo: url })),
           clearPhoto: () => setOv(p.id, { photo: null }),
-          edit: () => this.setState({ catMode: 'form', catEdit: p.id, catError: '', catForm: { desc: p.desc || '', rows: (p.rows || []).map((r) => ({ k: r.k, v: r.v })), name: p.name, spec: p.spec || '', cat: p.cat || 'Celulares', usd: String(p.usd || ''), photo: p.photo || null, bat: p.bat ? String(p.bat) : '', pos: p.pos != null ? p.pos : null, hidden: !!p.hidden } }),
+          edit: () => this.setState({ catMode: 'form', catEdit: p.id, catError: '', catForm: { desc: p.desc || '', rows: (p.rows || []).map((r) => ({ k: r.k, v: r.v })), name: p.name, spec: p.spec || '', cat: p.cat || 'Celulares', usd: String(p.usd || ''), photo: p.photo || null, bat: p.bat ? String(p.bat) : '', pos: p.pos != null ? p.pos : null, hidden: !!p.hidden, usdNew: p.usdNew || '' } }),
           canDel: true,
           del: () => {
             if (!window.confirm('¿Eliminar "' + p.name + '" del catálogo? Se saca de la tienda y de esta lista.')) return;
@@ -4060,7 +4067,7 @@ class Component extends DCLogic {
             this._save(Object.assign({}, db, { catalog: cat }));
           }
         })),
-        catNew: () => this.setState({ catMode: 'form', catEdit: null, catError: '', catForm: { name: '', spec: '', cat: 'Celulares', usd: '', photo: null, desc: '', rows: [], hidden: false } }),
+        catNew: () => this.setState({ catMode: 'form', catEdit: null, catError: '', catForm: { name: '', spec: '', cat: 'Celulares', usd: '', photo: null, desc: '', rows: [], hidden: false, usdNew: '' } }),
         catVisible: !cform.hidden,
         catVisTxt: cform.hidden ? 'Oculto — no aparece en la tienda' : 'Visible en la tienda',
         catVisSub: cform.hidden ? 'Lo seguís viendo acá y lo podés vender, pero nadie lo ve en la página.' : 'Aparece en su categoría y en el buscador de la página.',
@@ -4090,6 +4097,13 @@ class Component extends DCLogic {
         catRowAdd: () => this.setState({ catForm: Object.assign({}, cform, { rows: (cform.rows || []).map((x) => ({ k: x.k, v: x.v })).concat([{ k: '', v: '' }]) }) }),
         catCat: cform.cat, setCatCat: setCf('cat'),
         catUsd: cform.usd, setCatUsd: setCf('usd'),
+        catUsdNew: cform.usdNew || '', setCatUsdNew: setCf('usdNew'),
+        catAhorroHint: (() => {
+          const n = this._numF(cform.usdNew), u = this._numF(cform.usd);
+          if (!(n > 0)) return 'Opcional. Si lo cargás, la tienda muestra cuánto ahorra el cliente contra uno nuevo.';
+          if (!(u > 0) || n <= u) return 'Tiene que ser mayor al precio de venta para que el ahorro tenga sentido.';
+          return 'Ahorra ' + this._usd(n - u) + ' · ' + Math.round((1 - u / n) * 100) + '% menos que uno nuevo.';
+        })(),
         catHasPhoto: !!cform.photo, catNoPhoto: !cform.photo, catPhoto: cform.photo || '', catPhotoCss: '"' + (cform.photo || '') + '"',
         catInitial: String(cform.name || '?').trim().charAt(0).toUpperCase() || '?',
         catBatFill: Math.max(8, Math.min(100, this._num(cform.bat) || 0)) + '%',
@@ -4104,6 +4118,7 @@ class Component extends DCLogic {
           if (usd <= 0) { this.setState({ catError: 'Ingresá el precio en US$.' }); return; }
           const fields = { name: String(cform.name).trim(), spec: String(cform.spec || '').trim(), cat: cform.cat || 'Otro', usd: usd, photo: cform.photo || null, bat: cform.cat === 'Apple' ? this._num(cform.bat) : null, pos: catPosVal };
           fields.hidden = !!cform.hidden;
+          fields.usdNew = this._numF(cform.usdNew) || null;
           fields.desc = String(cform.desc || '').trim();
           fields.rows = (cform.rows || []).map((r) => ({ k: String(r.k || '').trim(), v: String(r.v || '').trim() })).filter((r) => r.k || r.v);
           if (this.state.catEdit) setOv(this.state.catEdit, fields);

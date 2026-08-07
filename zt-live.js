@@ -279,6 +279,51 @@
       tag.textContent = 'ARS ' + fmtInt(usd * rate);
     });
   }
+  /* "Nuevo USD X · ahorrás Y": el argumento del seminuevo. Sólo aparece si el
+     precio de nuevo está cargado en el panel y es mayor al de venta. */
+  function stampAhorro(cat) {
+    var norm = function (s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); };
+    var list = [];
+    Object.keys(cat || {}).forEach(function (id) {
+      var o = cat[id] || {};
+      var nu = parseFloat(o.usdNew) || 0, u = parseFloat(o.usd) || 0;
+      if (nu > u && u > 0 && o.name) list.push({ n: norm(o.name), nuevo: nu, usd: u });
+    });
+    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],.det-info');
+    Array.prototype.forEach.call(cards, function (card) {
+      var old = card.querySelector('[data-zt-ahorro]');
+      var txt = norm(card.textContent);
+      var hit = null;
+      list.forEach(function (x) { if (x.n.length > 5 && txt.indexOf(x.n) >= 0) hit = x; });
+      if (!hit) { if (old) old.parentNode.removeChild(old); return; }
+      var host = null;
+      var all = card.querySelectorAll('*');
+      for (var i = 0; i < all.length; i++) {
+        var el = all[i];
+        if (el.children.length) continue;
+        if (/^\s*(?:USD|US\$)\s*[\d.,]+\s*$/.test(el.textContent || '')) { host = el; break; }
+      }
+      if (!host) { if (old) old.parentNode.removeChild(old); return; }
+      var tag = old;
+      if (!tag) {
+        tag = document.createElement('div');
+        tag.setAttribute('data-zt-ahorro', '');
+        tag.style.cssText = 'font-size:12.5px;font-weight:600;color:#1F8A5B;letter-spacing:-.01em;margin-top:3px;white-space:nowrap;';
+        var par = host.parentNode, dir = 'column';
+        try { var cs = getComputedStyle(par); if (cs.display.indexOf('flex') >= 0 || cs.display.indexOf('grid') >= 0) dir = cs.flexDirection; } catch (e) {}
+        if (dir === 'row' || dir === 'row-reverse') {
+          var col = document.createElement('div');
+          col.style.cssText = 'display:flex;flex-direction:column;gap:1px;min-width:0;';
+          par.insertBefore(col, host);
+          col.appendChild(host);
+          col.appendChild(tag);
+        } else {
+          par.insertBefore(tag, host.nextSibling);
+        }
+      }
+      tag.innerHTML = '<span style="color:#A1A1A6;font-weight:500;text-decoration:line-through;">Nuevo US$ ' + fmtInt(hit.nuevo) + '</span> \u00b7 ahorrás ' + Math.round((1 - hit.usd / hit.nuevo) * 100) + '%';
+    });
+  }
   function markSinStock(card) {
     if (card.querySelector('[data-zt-nostock]')) return;
     var wrap = card.querySelector('[data-cc-imgwrap],[data-appl-imgwrap]') || card;
@@ -515,7 +560,7 @@
     var cmpBtn = (ov.cat === 'Accesorios') ? '' : '<button data-compare="' + pid + '" aria-pressed="false" aria-label="Comparar" title="Comparar equipos" style="width:50px;height:50px;flex-shrink:0;border:1.5px solid rgba(0,0,0,.16);background:#fff;border-radius:16px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#1D1D1F;font-family:inherit;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8h14M5 8l-3 6a3 3 0 0 0 6 0zM19 8l-3 6a3 3 0 0 0 6 0z"></path></svg></button>';
     var info = document.createElement('div');
     info.className = 'det-info';
-    info.style.cssText = 'display:flex;flex-direction:column;gap:11px;';
+    info.style.cssText = 'display:flex;flex-direction:column;gap:11px;min-width:0;';
     var eyeTxt = ov.sinStock ? 'SIN STOCK' : (ov.cat === 'Apple' ? 'SEMINUEVO CERTIFICADO' : 'NUEVO · DISPONIBLE');
     var eyeCol = ov.sinStock ? '#C9502A' : (ov.cat === 'Apple' ? '#C9502A' : '#1F8A5B');
     var dotCol = ov.sinStock ? '#C9502A' : '#1F8A5B';
@@ -531,12 +576,12 @@
         + rowsHtml
         + ((ov.cat === 'Apple') ? '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.08);font-size:14px;"><span style="color:#86868B;">Checking ICLUB</span><span style="font-weight:600;color:#1F8A5B;display:inline-flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F8A5B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>Pasado</span></div>' : '')
       + '</div>'
-      + '<div style="display:flex;flex-direction:row-reverse;align-items:center;justify-content:space-between;gap:16px;margin-top:8px;">'
+      + '<div style="display:flex;flex-direction:row-reverse;align-items:center;justify-content:space-between;gap:16px;margin-top:8px;flex-wrap:wrap;">'
         + '<div style="display:inline-flex;align-self:flex-start;background:#F4F1EC;border-radius:12px;padding:3px;">'
           + '<button data-zt-cur="USD" style="padding:7px 16px;border:none;background:transparent;border-radius:9px;font-family:inherit;font-size:13.5px;font-weight:600;color:#86868B;cursor:pointer;">USD</button>'
           + '<button data-zt-cur="ARS" style="padding:7px 16px;border:none;background:transparent;border-radius:9px;font-family:inherit;font-size:13.5px;font-weight:600;color:#86868B;cursor:pointer;">ARS</button>'
         + '</div>'
-        + '<div style="display:flex;align-items:baseline;gap:12px;"><span data-zt-price data-usd-val="' + (ov.usd || 0) + '" style="font-size:30px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;color:#1D1D1F;">USD ' + fmtInt(ov.usd || 0) + '</span><span data-zt-price-alt style="font-size:15px;color:#A1A1A6;white-space:nowrap;"></span></div>'
+        + '<div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;"><span data-zt-price data-usd-val="' + (ov.usd || 0) + '" style="font-size:30px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;color:#1D1D1F;">USD ' + fmtInt(ov.usd || 0) + '</span><span data-zt-price-alt style="font-size:15px;color:#A1A1A6;white-space:nowrap;"></span></div>'
       + '</div>'
       + '<div style="display:flex;flex-direction:column;gap:9px;margin-top:8px;max-width:430px;">'
         + '<div style="display:flex;align-items:stretch;gap:12px;">'
@@ -982,6 +1027,7 @@
     injectRecCards(db, rate);
     resyncArs(rate);
     stampArs(rate);
+    stampAhorro(cat);
     stampUltimas(db);
     enhanceRecCarousels();
     capNovedades();
