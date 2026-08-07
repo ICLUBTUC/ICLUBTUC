@@ -7,7 +7,17 @@
   if (window.__ztCompareLoaded) return;
   window.__ztCompareLoaded = true;
 
-  var RATE = 1520;
+  /* Cotización vigente del panel: se lee en cada formato para que el
+     comparador no quede desfasado del resto de la tienda. */
+  function ztRate() {
+    try {
+      var raw = localStorage.getItem('zt-portal-fin-db-v2');
+      var db = raw ? JSON.parse(raw) : null;
+      var r = db && db.settings && db.settings.rate;
+      if (r > 0) return r;
+    } catch (e) {}
+    return 1520;
+  }
   var KEY = 'zt_compare';
   var MAX = 4;
 
@@ -79,7 +89,7 @@
     var cur = 'USD';
     try { cur = localStorage.getItem('zt_cur') || 'USD'; } catch (e) {}
     return cur === 'ARS'
-      ? 'ARS ' + Math.round(usd * RATE).toLocaleString('es-AR')
+      ? 'ARS ' + Math.round(usd * ztRate()).toLocaleString('es-AR')
       : 'USD ' + usd.toLocaleString('es-AR');
   }
 

@@ -186,6 +186,41 @@
       else if (/^\s*(ARS|\$)\s*[\d.,]+\s*$/.test(t)) node.nodeValue = t.replace(/[\d.,]+/, fmtInt(usd * rate));
     }
   }
+  /* La cotización tiene que valer para TODOS los precios, no sólo para los
+     productos editados en el panel: las tarjetas nativas traen el valor en
+     pesos escrito a mano. Se recalcula por TARJETA (nunca por grilla: una
+     grilla tiene muchos productos y todos quedarían con el primer precio)
+     desde el USD que muestra cada una, con la cotización vigente. */
+  function resyncArs(rate) {
+    var seen = [];
+    function scopeArs(scope, usdHint) {
+      var usd = usdHint || 0, arsNodes = [];
+      var walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
+      var node;
+      while ((node = walker.nextNode())) {
+        if (seen.indexOf(node) >= 0) continue;
+        var t = node.nodeValue || '';
+        var mUsd = t.match(/^\s*(USD|US\$)\s*([\d.,]+)\s*$/);
+        if (mUsd) { seen.push(node); if (!usd) usd = parseFloat(mUsd[2].replace(/\./g, '').replace(',', '.')) || 0; continue; }
+        if (/^\s*(ARS|\$)\s*[\d.,]+\s*$/.test(t)) { arsNodes.push(node); seen.push(node); }
+      }
+      if (!usd || !arsNodes.length) return;
+      var want = fmtInt(usd * rate);
+      arsNodes.forEach(function (n) {
+        if (n.nodeValue.indexOf(want) < 0) n.nodeValue = n.nodeValue.replace(/[\d.,]+/, want);
+      });
+    }
+    /* Primero las tarjetas (lo más específico), después el resto de la ficha. */
+    var cards = [];
+    function push(list) { Array.prototype.forEach.call(list, function (el) { if (cards.indexOf(el) < 0) cards.push(el); }); }
+    push(document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-zt-reccustom],[data-nv-card],[data-ztc-slide]'));
+    Array.prototype.forEach.call(document.querySelectorAll('.rec-grid'), function (g) { push(g.children); });
+    cards.forEach(function (el) {
+      var attr = el.getAttribute && el.getAttribute('data-zt-usd');
+      scopeArs(el, attr ? parseFloat(attr) || 0 : 0);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.det-section,.det-info'), function (el) { scopeArs(el, 0); });
+  }
   function markSinStock(card) {
     if (card.querySelector('[data-zt-nostock]')) return;
     var wrap = card.querySelector('[data-cc-imgwrap],[data-appl-imgwrap]') || card;
@@ -887,6 +922,7 @@
     fillCarouselPs5(cat);
     injectCustomDetail(db, rate);
     injectRecCards(db, rate);
+    resyncArs(rate);
     enhanceRecCarousels();
     capNovedades();
     sortGridsByPrice();

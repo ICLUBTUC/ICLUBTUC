@@ -477,13 +477,32 @@
 <sc-if value="{{ showAdmin }}" hint-placeholder-val="{{ false }}">
 <section class="np" style="position:relative; z-index:2; max-width:980px; margin:0 auto; padding:6px 24px 100px;">
 
-  <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px 20px; flex-wrap:wrap; margin-bottom:24px; animation:ztReveal .8s .05s both;">
+  <div style="position:relative; z-index:40; display:flex; align-items:flex-end; justify-content:space-between; gap:16px 20px; flex-wrap:wrap; margin-bottom:24px; animation:ztReveal .8s .05s both;">
     <div style="display:flex; flex-direction:column; gap:12px;">
       <div style="font-size:12.5px; font-weight:600; letter-spacing:.2em; color:#C9502A;">PANEL ADMINISTRATIVO</div>
       <div style="display:inline-flex; flex-wrap:wrap; background:#EAE8E3; border-radius:22px; padding:4px; align-self:flex-start; gap:2px;">
         <sc-for list="{{ aTabs }}" as="t" hint-placeholder-count="6">
           <button onClick="{{ t.pick }}" style="font-family:inherit; font-size:14px; font-weight:600; border:none; border-radius:980px; padding:10px 18px; cursor:pointer; background:{{ t.bg }}; color:{{ t.color }}; transition:background .25s, color .25s;">{{ t.label }}</button>
         </sc-for>
+      </div>
+      <div style="position:relative; max-width:420px;">
+        <input value="{{ gsQ }}" onChange="{{ gsSet }}" type="text" placeholder="Buscar cliente, factura, recibo o producto…" autocomplete="off" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:14px; font-weight:500; color:#1D1D1F; background:#fff; border:1.5px solid rgba(0,0,0,.08); border-radius:14px; padding:12px 16px; outline:none; transition:border-color .3s;" style-focus="border-color:#1D1D1F;">
+        <sc-if value="{{ gsOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; top:calc(100% + 8px); left:0; right:0; z-index:30; background:#fff; border-radius:18px; box-shadow:0 24px 70px -24px rgba(0,0,0,.35); overflow:hidden; max-height:360px; overflow-y:auto;">
+            <sc-if value="{{ gsEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:20px; font-size:13.5px; color:#A1A1A6; text-align:center;">Sin resultados para "{{ gsQ }}".</div>
+            </sc-if>
+            <sc-for list="{{ gsResults }}" as="g" hint-placeholder-count="3">
+              <div onClick="{{ g.go }}" style="display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; padding:13px 18px; border-bottom:1px solid rgba(0,0,0,.05); cursor:pointer; transition:background .2s;" style-hover="background:#FAFAF9;">
+                <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+                  <span style="font-size:14px; font-weight:600; color:#1D1D1F;">{{ g.title }}</span>
+                  <span style="font-size:12.5px; color:#A1A1A6;">{{ g.sub }}</span>
+                </div>
+                <span style="font-size:10.5px; font-weight:700; letter-spacing:.06em; color:{{ g.kc }}; background:{{ g.kb }}; padding:5px 11px; border-radius:980px; white-space:nowrap;">{{ g.kind }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
       </div>
     </div>
     <sc-if value="{{ aShowNewCli }}" hint-placeholder-val="{{ true }}">
@@ -513,6 +532,50 @@
   <sc-if value="{{ aTabClientes }}" hint-placeholder-val="{{ true }}">
   <!-- lista -->
   <sc-if value="{{ aList }}" hint-placeholder-val="{{ true }}">
+    <sc-if value="{{ cobShow }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#1D1D1F; border-radius:26px; padding:26px 28px; margin-bottom:20px; color:#fff; display:flex; flex-direction:column; gap:18px; box-shadow:0 20px 60px -26px rgba(0,0,0,.4); animation:ztReveal .7s both;">
+        <div style="display:flex; flex-wrap:wrap; align-items:flex-end; gap:18px;">
+          <div style="display:flex; flex-direction:column; gap:5px; margin-right:auto;">
+            <span style="font-size:11.5px; font-weight:700; letter-spacing:.16em; color:rgba(255,255,255,.5);">COBRANZAS</span>
+            <span style="font-size:22px; font-weight:700; letter-spacing:-.02em;">{{ cobTitle }}</span>
+            <span style="font-size:13px; color:rgba(255,255,255,.5);">{{ cobSub }}</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:3px; align-items:flex-end;">
+            <span style="font-size:11.5px; font-weight:700; letter-spacing:.12em; color:rgba(255,255,255,.45);">VENCIDO</span>
+            <span style="font-size:22px; font-weight:700; color:#F0A48A;">{{ cobVencidoStr }}</span>
+            <span style="font-size:12px; color:rgba(255,255,255,.45);">{{ cobVencidasN }}</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:3px; align-items:flex-end;">
+            <span style="font-size:11.5px; font-weight:700; letter-spacing:.12em; color:rgba(255,255,255,.45);">POR VENCER</span>
+            <span style="font-size:22px; font-weight:700; color:#8FD6B2;">{{ cobPorVencerStr }}</span>
+            <button onClick="{{ cobRangeToggle }}" style="font-family:inherit; font-size:12px; font-weight:700; color:#fff; background:rgba(255,255,255,.12); border:none; border-radius:980px; padding:6px 14px; cursor:pointer;">{{ cobRangeTxt }}</button>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <sc-for list="{{ cobRows }}" as="r" hint-placeholder-count="3">
+            <div style="background:rgba(255,255,255,.06); border:1px solid {{ r.bd }}; border-radius:18px; padding:15px 18px; display:grid; grid-template-columns:1fr auto; gap:14px; align-items:center;">
+              <div style="display:flex; flex-direction:column; gap:3px; min-width:0;">
+                <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap;">
+                  <span style="font-size:15px; font-weight:700;">{{ r.name }}</span>
+                  <span style="font-size:10.5px; font-weight:700; letter-spacing:.06em; color:{{ r.eC }}; background:{{ r.eB }}; padding:4px 10px; border-radius:980px;">{{ r.eL }}</span>
+                  <span style="font-size:15px; font-weight:700; color:#8FD6B2;">{{ r.impStr }}</span>
+                </div>
+                <span style="font-size:12.5px; color:rgba(255,255,255,.55);">{{ r.sub }}</span>
+                <span style="font-size:12.5px; color:rgba(255,255,255,.4);">{{ r.when }}</span>
+                <sc-if value="{{ r.moraShow }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-size:12.5px; font-weight:600; color:#F0A48A;">{{ r.moraStr }}</span>
+                </sc-if>
+              </div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+                <a href="{{ r.waHref }}" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; text-decoration:none; font-family:inherit; font-size:12.5px; font-weight:700; color:#0B2E20; background:#8FD6B2; border-radius:980px; padding:9px 16px;">Recordar</a>
+                <button onClick="{{ r.pay }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#1D1D1F; background:#fff; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Cobrar</button>
+                <button onClick="{{ r.view }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:rgba(255,255,255,.8); background:rgba(255,255,255,.1); border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Ver plan</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
     <div style="display:flex; flex-direction:column; gap:14px; animation:ztReveal .7s .1s both;">
       <sc-for list="{{ aClients }}" as="c" hint-placeholder-count="2">
         <div data-adm-row style="background:#fff; border-radius:22px; padding:22px 26px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:grid; grid-template-columns:1fr auto; gap:16px; align-items:center;">
@@ -778,6 +841,9 @@
   <sc-if value="{{ aTabStock }}" hint-placeholder-val="{{ false }}">
 
     <sc-if value="{{ invList }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex; align-items:flex-start; gap:10px; background:#F8F7F5; border-radius:16px; padding:14px 18px; margin-bottom:14px; animation:ztReveal .7s both;">
+        <span style="font-size:12.5px; color:#6E6E73; line-height:1.5;"><b style="color:#1D1D1F;">Stock privado.</b> Lo que cargás acá no sale en la página web: es para facturar, descontar stock y medir ganancia. Lo que va a la tienda se carga en <b style="color:#1D1D1F;">Catálogo</b>.</span>
+      </div>
       <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(155px,1fr)); gap:14px; margin-bottom:14px; animation:ztReveal .7s .05s both;">
         <sc-for list="{{ invCards }}" as="c" hint-placeholder-count="4">
           <div style="background:{{ c.bg }}; border:1px solid rgba(0,0,0,.05); border-radius:20px; padding:20px 22px; display:flex; flex-direction:column; gap:6px; box-shadow:0 14px 44px -28px rgba(0,0,0,.18);">
@@ -1069,6 +1135,9 @@
               <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:2px;">
                 <button onClick="{{ p.visToggle }}" style="font-family:inherit; font-size:10.5px; font-weight:700; letter-spacing:.05em; color:{{ p.visC }}; background:{{ p.visB }}; border:none; border-radius:980px; padding:5px 12px; cursor:pointer;">{{ p.visLabel }}</button>
                 <button onClick="{{ p.stkToggle }}" style="font-family:inherit; font-size:10.5px; font-weight:700; letter-spacing:.05em; color:{{ p.stkC }}; background:{{ p.stkB }}; border:none; border-radius:980px; padding:5px 12px; cursor:pointer;">{{ p.stkLabel }}</button>
+                <sc-if value="{{ p.invShow }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-size:10.5px; font-weight:700; letter-spacing:.05em; color:{{ p.invC }}; background:{{ p.invB }}; padding:5px 12px; border-radius:980px;">{{ p.invLabel }}</span>
+                </sc-if>
               </div>
             </div>
             <div data-adm-actions style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
@@ -1190,6 +1259,16 @@
             <span style="font-size:12px; color:#A1A1A6;">Movelo con ↑ ↓ para decidir si va 1.º, 2.º, 3.º… en su categoría.</span>
           </div>
         </sc-if>
+        <div onClick="{{ catVisToggle }}" style="display:flex; align-items:center; gap:16px; background:#F8F7F5; border-radius:16px; padding:16px 18px; cursor:pointer;">
+          <div style="display:flex; flex-direction:column; gap:3px; margin-right:auto;">
+            <span style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">VISIBILIDAD</span>
+            <span style="font-size:14px; font-weight:600; color:#1D1D1F;">{{ catVisTxt }}</span>
+            <span style="font-size:12.5px; color:#6E6E73; line-height:1.45;">{{ catVisSub }}</span>
+          </div>
+          <span style="position:relative; flex:0 0 auto; width:50px; height:28px; border-radius:980px; background:{{ catVisBg }}; transition:background .25s;">
+            <span style="position:absolute; top:3px; left:{{ catVisKnob }}; width:22px; height:22px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.2); transition:left .25s cubic-bezier(.22,1,.36,1);"></span>
+          </span>
+        </div>
         <sc-if value="{{ catError }}" hint-placeholder-val="{{ false }}">
           <div style="font-size:13.5px; color:#C9502A; font-weight:500;">{{ catErrorMsg }}</div>
         </sc-if>
@@ -1336,6 +1415,16 @@
           <input value="{{ ajRate }}" onChange="{{ setAjRate }}" type="text" inputMode="numeric" placeholder="Nuevo valor, ej: 1580" style="flex:1; min-width:180px; box-sizing:border-box; font-family:inherit; font-size:15px; font-weight:600; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:13px; padding:13px 16px; outline:none;" style-focus="border-color:#1D1D1F; background:#fff;">
           <button onClick="{{ ajRateSave }}" style="font-family:inherit; font-size:14.5px; font-weight:600; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:13px 26px; cursor:pointer;" style-hover="background:#000;">Actualizar dólar</button>
         </div>
+        <div style="display:flex; flex-direction:column; gap:10px; background:#F8F7F5; border-radius:16px; padding:16px 18px;">
+          <span style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">QUÉ SE ACTUALIZA</span>
+          <sc-for list="{{ ajRateImpact }}" as="i" hint-placeholder-count="4">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; gap:14px; border-top:1px solid rgba(0,0,0,.05); padding-top:9px;">
+              <span style="font-size:13px; color:#6E6E73; line-height:1.45;">{{ i.label }}</span>
+              <span style="font-size:13.5px; font-weight:700; color:{{ i.c }}; white-space:nowrap;">{{ i.value }}</span>
+            </div>
+          </sc-for>
+          <span style="font-size:12.5px; color:#A1A1A6; line-height:1.5;">{{ ajRateNote }}</span>
+        </div>
       </div>
       <div style="background:#fff; border-radius:22px; padding:26px 28px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:14px;">
         <h3 style="margin:0; font-size:17px; font-weight:700;">Planes de financiación</h3>
@@ -1347,6 +1436,20 @@
             <span style="font-size:12.5px; color:#A1A1A6;">{{ pl.hint }}</span>
           </div>
         </sc-for>
+      </div>
+      <div style="background:#fff; border-radius:22px; padding:26px 28px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:14px;">
+        <h3 style="margin:0; font-size:17px; font-weight:700;">Mora por atraso</h3>
+        <span style="font-size:13.5px; color:#6E6E73;">{{ ajMoraHint }}</span>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px;">
+          <sc-for list="{{ ajMoraFields }}" as="f" hint-placeholder-count="3">
+            <div style="display:flex; flex-direction:column; gap:7px;">
+              <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">{{ f.label }}</label>
+              <input value="{{ f.value }}" onChange="{{ f.set }}" type="text" inputMode="decimal" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:14.5px; font-weight:600; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:12px; padding:11px 14px; outline:none;" style-focus="border-color:#1D1D1F; background:#fff;">
+              <span style="font-size:12px; color:#A1A1A6; line-height:1.45;">{{ f.hint }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <span style="font-size:12.5px; color:#A1A1A6; line-height:1.5; border-top:1px solid rgba(0,0,0,.05); padding-top:12px;">La mora se calcula sola y se informa en el recordatorio de WhatsApp y en el panel de Cobranzas. El botón "Cobrar" carga solo la cuota — si cobrás la mora, sumala como pago aparte.</span>
       </div>
       <div style="background:#fff; border-radius:22px; padding:26px 28px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:16px;">
         <h3 style="margin:0; font-size:17px; font-weight:700;">Portada (carrusel)</h3>
@@ -1771,6 +1874,9 @@ class Component extends DCLogic {
       sb.channel('zt-portal')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'portal_state', filter: 'id=eq.main' }, (payload) => {
           const remote = payload && payload.new && payload.new.data;
+          /* Si hay una escritura local en curso, el eco de la nube llegaría a
+             pisar lo que el usuario acaba de cambiar: se ignora hasta terminar. */
+          if (this._pushT || this._pushPending) return;
           if (remote && remote.clients && JSON.stringify(remote) !== JSON.stringify(this.state.db)) {
             const clean = this._reconcileNC(remote);
             try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(clean)); } catch (e) {}
@@ -1785,10 +1891,13 @@ class Component extends DCLogic {
     if (!sb) return;
     if (this._pushT) clearTimeout(this._pushT);
     this._pushT = setTimeout(() => {
+      this._pushT = null;
+      this._pushPending = true;
       this.setState({ cloud: 'sync' });
+      const done = (st) => { this._pushPending = false; this.setState({ cloud: st }); };
       sb.from('portal_state').upsert({ id: 'main', data: db, updated_at: new Date().toISOString() }).then((res) => {
-        this.setState({ cloud: res && res.error ? 'err' : 'ok' });
-      }, () => this.setState({ cloud: 'err' }));
+        done(res && res.error ? 'err' : 'ok');
+      }, () => done('err'));
     }, 500);
   }
 
@@ -1856,7 +1965,7 @@ class Component extends DCLogic {
     return (neg ? '-$' : '$') + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   }
   _num(s) { return parseInt(String(s).replace(/[^0-9]/g, ''), 10) || 0; }
-  _numF(s) { const v = parseFloat(String(s).replace(/[^0-9.]/g, '')); return isNaN(v) ? 0 : v; }
+  _numF(s) { const v = parseFloat(String(s).replace(',', '.').replace(/[^0-9.]/g, '')); return isNaN(v) ? 0 : v; }
   _invStock(idx, delta) {
     const db = this.state.db; const arr = (db.inventory || []).slice(); const it = arr[idx]; if (!it) return;
     arr[idx] = Object.assign({}, it, { stock: Math.max(0, (it.stock || 0) + delta) });
@@ -1912,6 +2021,9 @@ class Component extends DCLogic {
     return {
       rate: s.rate || 1520,
       recargos: Object.assign({ 2: 25, 3: 45, 4: 65, 5: 80, 6: 90 }, s.recargos || {}),
+      mora: s.mora != null ? s.mora : 0,
+      moraTope: s.moraTope != null ? s.moraTope : 20,
+      moraGracia: s.moraGracia != null ? s.moraGracia : 3,
       hero: this._heroList(s.hero)
     };
   }
@@ -2221,8 +2333,13 @@ class Component extends DCLogic {
     const capImp = Math.round(contado / n);
     const vencs = pm.finan.vencs || {};
     const dates = this._schedule(pm.f, n, freq).map((d, i) => vencs[i] || d);
-    const pagos = (client.movs || []).filter((x) => x.tipo === 'Pago' && x.plan === pm.doc)
-      .slice().sort((a, b) => (this._parseDate(a.f) || 0) - (this._parseDate(b.f) || 0));
+    /* Si el cliente tiene un solo plan financiado, los pagos sueltos (cargados
+       sin elegir "Aplicar a") también se imputan a ese plan — salvo el adelanto
+       de la propia compra, que ya está descontado del monto financiado. */
+    const planesCount = (client.movs || []).filter((x) => x.finan).length;
+    const pagos = (client.movs || []).filter((x) => x.tipo === 'Pago' && (
+      x.plan === pm.doc || (planesCount === 1 && !x.plan && !(x.grp && x.grp === pm.grp))
+    )).slice().sort((a, b) => (this._parseDate(a.f) || 0) - (this._parseDate(b.f) || 0));
     /* Plan liquidado a contado: el cliente pagó (o paga) en efectivo y se le
        saca el recargo entero, sin importar la fecha de cada cuota. */
     const esContado = !!pm.finan.contado;
@@ -2263,6 +2380,49 @@ class Component extends DCLogic {
       pendiente: pendiente, vencidoAhora: vencidoAhora,
       pagadas: pagadas, pagadoTotal: pagos.reduce((a, x) => a + x.imp, 0), prox: prox
     };
+  }
+  /* Número en formato wa.me: sin símbolos, con 549 adelante si es argentino. */
+  _wa(phone) {
+    let d = String(phone || '').replace(/\D/g, '');
+    if (!d) return '';
+    if (d.indexOf('54') !== 0) d = '549' + d.replace(/^0/, '').replace(/^15/, '');
+    else if (d.indexOf('549') !== 0) d = '549' + d.slice(2);
+    return d;
+  }
+  /* Cuotas por cobrar de todos los clientes: vencidas primero, después las que
+     vencen dentro de los próximos `dias`. Una fila por cuota pendiente. */
+  _cobranzas(db, dias) {
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    const limite = new Date(hoy); limite.setDate(limite.getDate() + dias);
+    const out = [];
+    Object.keys(db.clients || {}).forEach((k) => {
+      const c = db.clients[k];
+      (c.movs || []).filter((m) => m.finan).forEach((pm) => {
+        const pc = this._planCalc(c, pm);
+        if (!pc || pc.pendiente <= 0) return;
+        pc.cuotas.forEach((q) => {
+          if (q.done || !q.dt) return;
+          if (q.dt > limite) return;
+          const falta = Math.max(0, q.req - q.paid);
+          if (falta <= 0) return;
+          const dias0 = Math.round((q.dt - hoy) / 86400000);
+          out.push({ key: k, client: c, pm: pm, pc: pc, q: q, falta: falta, dias: dias0 });
+        });
+      });
+    });
+    return out.sort((a, b) => a.q.dt - b.q.dt);
+  }
+  /* Mora: % por día sobre el importe impago, con días de gracia y tope. */
+  _mora(db, falta, diasAtraso) {
+    const st = this._settings(db);
+    const pct = this._numF(st.mora);
+    if (!(pct > 0) || !(diasAtraso > 0)) return 0;
+    const dias = Math.max(0, diasAtraso - this._num(st.moraGracia));
+    if (dias <= 0) return 0;
+    const tope = this._numF(st.moraTope);
+    let p = pct * dias;
+    if (tope > 0) p = Math.min(p, tope);
+    return Math.round(falta * p / 100);
   }
   _selPlanCalc(db) {
     const c = (db.clients || {})[this.state.editKey];
@@ -2510,8 +2670,8 @@ class Component extends DCLogic {
           const col = q.done ? '#1F8A5B' : parcial ? '#B0700F' : vencida ? '#C9502A' : proxima ? '#B0700F' : '#86868B';
           const bgc = q.done ? 'rgba(31,138,91,.1)' : parcial ? 'rgba(176,112,15,.1)' : vencida ? 'rgba(201,80,42,.12)' : proxima ? 'rgba(176,112,15,.1)' : '#F5F4F1';
           let sub;
-          if (q.done) sub = 'Pagada el ' + q.pay.f + ' · ' + q.pay.doc + (q.sinInt ? ' · adelantada sin interés' : '');
-          else if (parcial) sub = 'Pagó ' + this._fmt(q.paid) + ' · faltan ' + this._fmt(q.req - q.paid);
+          if (q.done) sub = 'Pagada el ' + q.pay.f + ' · ' + this._fmt(q.paid) + ' aplicados · ' + q.pay.doc + (q.sinInt ? ' · adelantada sin interés' : '');
+          else if (parcial) sub = this._fmt(q.paid) + ' aplicados · faltan ' + this._fmt(q.req - q.paid);
           else sub = (vencida ? 'Venció el ' : 'Vence el ') + q.d;
           return {
             n: q.n, label: 'Cuota ' + q.n + ' de ' + pc.n,
@@ -2732,6 +2892,90 @@ class Component extends DCLogic {
       let vIngresos = 0, vGan = 0; ventasArr.forEach((v) => { vIngresos += v.ventaArs; vGan += (v.ventaArs - v.costoArs); });
       const atab = this.state.atab || 'clientes';
 
+      /* ===== buscador global: clientes, documentos, catálogo e inventario ===== */
+      const gsQ = String(this.state.gsQ || '').trim().toLowerCase();
+      const gsRes = { open: gsQ.length >= 2, rows: [] };
+      if (gsRes.open) {
+        const hit = (s) => String(s || '').toLowerCase().indexOf(gsQ) >= 0;
+        const kinds = {
+          cliente: { c: '#C9502A', b: 'rgba(201,80,42,.12)' },
+          documento: { c: '#1D1D1F', b: '#F0EEEA' },
+          catálogo: { c: '#1F8A5B', b: 'rgba(31,138,91,.1)' },
+          stock: { c: '#B0700F', b: 'rgba(176,112,15,.12)' }
+        };
+        /* Cupo por tipo: si no, una búsqueda amplia se llena de facturas y los
+           productos nunca llegan a mostrarse. */
+        const buckets = { cliente: [], documento: [], 'catálogo': [], stock: [] };
+        const push = (kind, title, sub, go) => {
+          if (buckets[kind].length >= 4) return;
+          buckets[kind].push({ kind: kind.toUpperCase(), kc: kinds[kind].c, kb: kinds[kind].b, title: title, sub: sub, go: () => { this.setState({ gsQ: '' }); go(); } });
+        };
+        Object.keys(db.clients || {}).forEach((k) => {
+          const c = db.clients[k];
+          if (hit(c.name) || hit(k)) push('cliente', c.name, 'Tel ' + k + ' · saldo ' + this._fmt(this._saldo(c)), () => this.setState({ atab: 'clientes', amode: 'list', adminView: k, view: 'dash' }));
+          (c.movs || []).forEach((m) => {
+            if (!hit(m.doc) && !hit(m.det)) return;
+            push('documento', m.doc, c.name + ' · ' + m.f + ' · ' + this._fmt(Math.abs(m.imp)) + ' · ' + m.tipo, () => this.setState({ atab: 'clientes', amode: 'list', adminView: k, view: 'cuenta' }));
+          });
+        });
+        this._catalogAll(db).forEach((p) => {
+          if (p.deleted || !hit(p.name + ' ' + (p.spec || ''))) return;
+          push('catálogo', p.name, (p.spec || p.cat || '') + ' · ' + this._usd(p.usd || 0) + (p.hidden ? ' · oculto' : ''), () => this.setState({ atab: 'catalogo', catMode: 'list', catQ: String(p.name || '').toLowerCase() }));
+        });
+        (db.inventory || []).forEach((it) => {
+          if (!hit(it.name)) return;
+          push('stock', it.name, (it.stock || 0) + ' u · ' + (it.moneda === 'ARS' ? this._ars(it.venta) : this._usd(it.venta)), () => this.setState({ atab: 'stock', invMode: 'list' }));
+        });
+        gsRes.rows = buckets['cliente'].concat(buckets['catálogo'], buckets['stock'], buckets['documento']).slice(0, 12);
+      }
+
+      /* ===== cobranzas: agenda de cuotas a cobrar ===== */
+      const cobDias = this.state.cobDias || 7;
+      const cobRaw = this._cobranzas(db, cobDias);
+      let cobVencido = 0, cobPorVencer = 0, cobVencidasN = 0;
+      cobRaw.forEach((r) => { if (r.dias < 0) { cobVencido += r.falta; cobVencidasN++; } else cobPorVencer += r.falta; });
+      let cobMoraTot = 0;
+      const cobRows = cobRaw.map((r) => {
+        const venc = r.dias < 0, hoyEs = r.dias === 0;
+        const mora = venc ? this._mora(db, r.falta, -r.dias) : 0;
+        cobMoraTot += mora;
+        const totalCobrar = r.falta + mora;
+        const cuando = venc ? 'Venció el ' + r.q.d + ' · ' + Math.abs(r.dias) + (Math.abs(r.dias) === 1 ? ' día de atraso' : ' días de atraso')
+          : hoyEs ? 'Vence hoy' : 'Vence el ' + r.q.d + ' · en ' + r.dias + (r.dias === 1 ? ' día' : ' días');
+        const prod = this._planTitle(r.pm);
+        /* Nombre limpio para el mensaje al cliente: nunca el detalle interno
+           (costo de contado, recargo, batería) que sí se ve en el panel. */
+        const prodMsg = (() => {
+          let s = (r.pm.prods && r.pm.prods[0] && r.pm.prods[0].name) || r.pm.prodName || String(r.pm.det || '');
+          s = s.split('·')[0].split('=')[0].split(/contado/i)[0]
+            .replace(/%\s*\d+/g, '').replace(/\d+\s*%/g, '')
+            .replace(/\s+/g, ' ').replace(/[\s·\-–.,%]+$/, '').trim();
+          return s || 'tu compra';
+        })();
+        const msg = 'Hola ' + r.client.name + '! ' + (venc
+          ? 'Te recordamos que la cuota ' + r.q.n + ' de ' + r.pc.n + ' de tu plan de ' + prodMsg + ' venció el ' + r.q.d + '.'
+          : 'Te recordamos que la cuota ' + r.q.n + ' de ' + r.pc.n + ' de tu plan de ' + prodMsg + ' vence el ' + r.q.d + '.')
+          + '\n\n\uD83D\uDCB5 Importe: ' + this._fmt(r.falta)
+          + (mora > 0 ? '\n\u23F0 Recargo por mora: ' + this._fmt(mora) + '\n\u2705 Total a abonar: ' + this._fmt(totalCobrar) : '')
+          + '\n\nPodés abonar por transferencia o en el local. Cualquier cosa escribinos por acá.\n\n— ICLUB';
+        const waN = this._wa(r.key);
+        return {
+          name: r.client.name,
+          sub: prod + ' · Cuota ' + r.q.n + ' de ' + r.pc.n + (r.q.paid > 0 ? ' (resto)' : ''),
+          when: cuando,
+          impStr: this._fmt(r.falta),
+          moraShow: mora > 0,
+          moraStr: '+ ' + this._fmt(mora) + ' de mora · total ' + this._fmt(totalCobrar),
+          eL: venc ? 'VENCIDA' : hoyEs ? 'HOY' : 'POR VENCER',
+          eC: venc ? '#C9502A' : hoyEs ? '#B0700F' : '#6E6E73',
+          eB: venc ? 'rgba(201,80,42,.12)' : hoyEs ? 'rgba(176,112,15,.12)' : '#F5F4F1',
+          bd: venc ? 'rgba(201,80,42,.28)' : 'rgba(0,0,0,.05)',
+          waHref: waN ? 'https://wa.me/' + waN + '?text=' + encodeURIComponent(msg) : 'https://wa.me/?text=' + encodeURIComponent(msg),
+          pay: () => this.setState({ amode: 'pago', editKey: r.key, movAmount: String(r.falta), movDet: '', movMet: 'Transferencia', movPlan: r.pm.doc, movEfec: '', movTransf: '', formError: '' }),
+          view: () => this.setState({ adminView: r.key, view: 'cuotas' })
+        };
+      });
+
       adminOut = {
         aList: amode === 'list', aForm: amode === 'form',
         aMov: amode === 'pago' || amode === 'compra',
@@ -2934,7 +3178,14 @@ class Component extends DCLogic {
             stB: c.blocked ? 'rgba(201,80,42,.12)' : saldo <= 0 ? 'rgba(31,138,91,.1)' : 'rgba(176,112,15,.1)',
             blockLabel: c.blocked ? 'Desbloquear' : 'Bloquear',
             view: () => this.setState({ adminView: k, view: 'dash' }),
-            pay: () => this.setState({ amode: 'pago', editKey: k, movAmount: '', movDet: '', movMet: 'Transferencia', movPlan: '', movEfec: '', movTransf: '', formError: '' }),
+            pay: () => {
+              /* Preselecciona el plan financiado con saldo: así el pago se
+                 imputa a la cuota y no queda suelto en cuenta corriente. */
+              const abiertos = (c.movs || []).filter((m) => m.finan).filter((m) => {
+                const st = this._planCalc(c, m); return st && st.pendiente > 0;
+              });
+              this.setState({ amode: 'pago', editKey: k, movAmount: '', movDet: '', movMet: 'Transferencia', movPlan: abiertos.length === 1 ? abiertos[0].doc : '', movEfec: '', movTransf: '', formError: '' });
+            },
             buy: () => this.setState({ amode: 'compra', editKey: k, movAmount: '', movDet: '', movFin: 'contado', movFreq: 'Mensual', movN: '', movRec: '', movPlanSel: '', movSinInt: false, movPlanSel: '', movSinInt: false, movProd: '', movAdel: 'no', movAdelMonto: '', formError: '' }),
             edit: () => this.setState({ amode: 'form', editKey: k, formError: '', form: { name: c.name, phone: k, pass: c.pass, cuit: c.cuit || '', dir: c.dir || '', mail: c.mail || '', vend: c.vend || '', iva: c.iva || '', desc: c.desc || '', lim: String(c.lim || ''), saldoIni: '', proxFecha: c.proxFecha || '', proxImp: c.proxImp ? String(c.proxImp) : '', proxFreq: c.proxFreq || 'Mensual', proxDow: c.proxDow != null ? c.proxDow : 0 } }),
             block: () => {
@@ -2950,6 +3201,20 @@ class Component extends DCLogic {
             }
           };
         }),
+        gsQ: this.state.gsQ || '',
+        gsSet: (e) => this.setState({ gsQ: e.target.value }),
+        gsOpen: gsRes.open,
+        gsEmpty: gsRes.open && gsRes.rows.length === 0,
+        gsResults: gsRes.rows,
+        cobShow: cobRows.length > 0,
+        cobRows: cobRows,
+        cobTitle: cobRows.length + (cobRows.length === 1 ? ' cuota por cobrar' : ' cuotas por cobrar'),
+        cobSub: cobDias === 7 ? 'Vencidas y las que vencen en los próximos 7 días.' : 'Vencidas y las que vencen en los próximos 30 días.',
+        cobVencidoStr: this._fmt(cobVencido),
+        cobPorVencerStr: this._fmt(cobPorVencer),
+        cobVencidasN: cobVencidasN + (cobVencidasN === 1 ? ' cuota vencida' : ' cuotas vencidas') + (cobMoraTot > 0 ? ' · + ' + this._fmt(cobMoraTot) + ' de mora' : ''),
+        cobRangeTxt: cobDias === 7 ? 'Ver 30 días' : 'Ver 7 días',
+        cobRangeToggle: () => this.setState({ cobDias: cobDias === 7 ? 30 : 7 }),
         aNew: () => this.setState({ amode: 'form', editKey: null, formError: '', form: this._blankForm() }),
         aBack: () => this.setState({ amode: 'list', editKey: null, form: null, formError: '' }),
         aFormTitle: this.state.editKey ? 'Editar cliente' : 'Nuevo cliente',
@@ -3549,6 +3814,18 @@ class Component extends DCLogic {
         catItems: merged.filter((p) => !catQ || (String(p.name) + ' ' + String(p.spec || '') + ' ' + String(p.cat || '')).toLowerCase().includes(catQ)).map((p) => ({
           name: p.name, spec: (p.cat || '') + (p.spec ? ' · ' + p.spec : '') + (p.bat ? ' · Batería ' + p.bat + '%' : ''),
           priceStr: this._usd(p.usd || 0) + ' · ' + this._ars((p.usd || 0) * rate2),
+          /* Cruce con inventario: si el mismo producto está en stock, avisa si
+             el precio de la web quedó desfasado del precio de venta real. */
+          ...(() => {
+            const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            const it = (db.inventory || []).find((x) => norm(x.name) === norm(p.name));
+            if (!it) return { invShow: false, invLabel: '', invC: '', invB: '' };
+            const ventaArs = it.moneda === 'ARS' ? this._numF(it.venta) : this._numF(it.venta) * rate2;
+            const webArs = (p.usd || 0) * rate2;
+            const dif = webArs > 0 ? Math.round((ventaArs / webArs - 1) * 100) : 0;
+            if (Math.abs(dif) <= 2) return { invShow: true, invLabel: 'EN STOCK · ' + (it.stock || 0) + ' U', invC: '#1F8A5B', invB: 'rgba(31,138,91,.1)' };
+            return { invShow: true, invLabel: 'STOCK ' + (dif > 0 ? '+' : '') + dif + '% · ' + this._ars(ventaArs), invC: '#B0700F', invB: 'rgba(176,112,15,.12)' };
+          })(),
           hasPhoto: !!p.photo, hasPhotoNot: !p.photo, photo: p.photo || '', photoCss: '"' + (p.photo || '') + '"',
           initial: String(p.name || '?').charAt(0).toUpperCase(),
           visLabel: p.hidden ? 'OCULTO' : 'VISIBLE',
@@ -3561,7 +3838,7 @@ class Component extends DCLogic {
           stkToggle: () => setOv(p.id, { sinStock: !p.sinStock }),
           setPhoto: (e) => this._readImg(e, (url) => setOv(p.id, { photo: url })),
           clearPhoto: () => setOv(p.id, { photo: null }),
-          edit: () => this.setState({ catMode: 'form', catEdit: p.id, catError: '', catForm: { desc: p.desc || '', rows: (p.rows || []).map((r) => ({ k: r.k, v: r.v })), name: p.name, spec: p.spec || '', cat: p.cat || 'Celulares', usd: String(p.usd || ''), photo: p.photo || null, bat: p.bat ? String(p.bat) : '', pos: p.pos != null ? p.pos : null } }),
+          edit: () => this.setState({ catMode: 'form', catEdit: p.id, catError: '', catForm: { desc: p.desc || '', rows: (p.rows || []).map((r) => ({ k: r.k, v: r.v })), name: p.name, spec: p.spec || '', cat: p.cat || 'Celulares', usd: String(p.usd || ''), photo: p.photo || null, bat: p.bat ? String(p.bat) : '', pos: p.pos != null ? p.pos : null, hidden: !!p.hidden } }),
           canDel: true,
           del: () => {
             if (!window.confirm('¿Eliminar "' + p.name + '" del catálogo? Se saca de la tienda y de esta lista.')) return;
@@ -3571,7 +3848,13 @@ class Component extends DCLogic {
             this._save(Object.assign({}, db, { catalog: cat }));
           }
         })),
-        catNew: () => this.setState({ catMode: 'form', catEdit: null, catError: '', catForm: { name: '', spec: '', cat: 'Celulares', usd: '', photo: null, desc: '', rows: [] } }),
+        catNew: () => this.setState({ catMode: 'form', catEdit: null, catError: '', catForm: { name: '', spec: '', cat: 'Celulares', usd: '', photo: null, desc: '', rows: [], hidden: false } }),
+        catVisible: !cform.hidden,
+        catVisTxt: cform.hidden ? 'Oculto — no aparece en la tienda' : 'Visible en la tienda',
+        catVisSub: cform.hidden ? 'Lo seguís viendo acá y lo podés vender, pero nadie lo ve en la página.' : 'Aparece en su categoría y en el buscador de la página.',
+        catVisBg: cform.hidden ? '#E5E3DF' : '#1F8A5B',
+        catVisKnob: cform.hidden ? '3px' : '25px',
+        catVisToggle: () => this.setState({ catForm: Object.assign({}, cform, { hidden: !cform.hidden }) }),
         catBack: () => this.setState({ catMode: 'list', catEdit: null, catForm: null, catError: '' }),
         catIsApple: cform.cat === 'Apple',
         catShowPos: !this.state.catEdit || !!((db.catalog || {})[this.state.catEdit] || {}).custom,
@@ -3608,6 +3891,7 @@ class Component extends DCLogic {
           const usd = this._numF(cform.usd);
           if (usd <= 0) { this.setState({ catError: 'Ingresá el precio en US$.' }); return; }
           const fields = { name: String(cform.name).trim(), spec: String(cform.spec || '').trim(), cat: cform.cat || 'Otro', usd: usd, photo: cform.photo || null, bat: cform.cat === 'Apple' ? this._num(cform.bat) : null, pos: catPosVal };
+          fields.hidden = !!cform.hidden;
           fields.desc = String(cform.desc || '').trim();
           fields.rows = (cform.rows || []).map((r) => ({ k: String(r.k || '').trim(), v: String(r.v || '').trim() })).filter((r) => r.k || r.v);
           if (this.state.catEdit) setOv(this.state.catEdit, fields);
@@ -3683,12 +3967,46 @@ class Component extends DCLogic {
         // ajustes
         ajRateNow: '1 US$ = ' + this._ars(rate2) + ' pesos',
         ajRate: this.state.ajRate, setAjRate: (e) => this.setState({ ajRate: e.target.value }),
+        ajRateImpact: (() => {
+          const nueva = this._num(this.state.ajRate);
+          const valida = nueva >= 100;
+          const catN = merged.filter((p) => !p.hidden && !p.deleted).length;
+          let usdVenta = 0;
+          (db.inventory || []).forEach((it) => { if (it.moneda !== 'ARS') usdVenta += this._numF(it.venta) * (it.stock || 0); });
+          const rows = [
+            { label: 'Precios del catálogo en la página', value: catN + (catN === 1 ? ' producto' : ' productos'), c: '#1D1D1F' },
+            { label: 'Stock cargado en dólares', value: this._ars(usdVenta * rate2), c: '#1D1D1F' },
+            { label: 'Cotizador, comparador y checkout', value: 'al instante', c: '#1F8A5B' }
+          ];
+          if (valida) {
+            const dif = Math.round((nueva / rate2 - 1) * 100);
+            rows.push({ label: 'Con 1 US$ = ' + this._ars(nueva) + ' el stock en dólares pasa a', value: this._ars(usdVenta * nueva), c: '#1F8A5B' });
+            rows.push({ label: 'Variación de todos los precios en pesos', value: (dif >= 0 ? '+' : '') + dif + '%', c: dif >= 0 ? '#C9502A' : '#1F8A5B' });
+          }
+          return rows;
+        })(),
+        ajRateNote: 'Los planes ya facturados no se tocan: la deuda del cliente queda fija en pesos al valor del día de la venta. El dólar sólo mueve los precios de venta.',
         ajRateSave: () => {
           const r = this._num(this.state.ajRate);
           if (r < 100) return;
           this._setSettings({ rate: r });
           this.setState({ ajRate: '' });
         },
+        ajMoraHint: this._numF(st.mora) > 0
+          ? 'Activa: ' + st.mora + '% por día de atraso, con ' + st.moraGracia + ' días de gracia y tope del ' + st.moraTope + '%. Una cuota de $100.000 con 10 días de atraso suma ' + this._fmt(this._mora(db, 100000, 10)) + '.'
+          : 'Desactivada. Poné un porcentaje diario mayor a 0 para que el sistema calcule el recargo por atraso.',
+        /* Se escribe sobre un borrador para no normalizar en cada tecla: así se
+           puede tipear "0," y llegar a "0,5" sin que el input lo pise. */
+        ajMoraFields: [
+          { label: '% POR DÍA', key: 'mora', saved: String(st.mora), hint: 'Ej: 0,5 — medio por ciento diario. 0 la apaga.' },
+          { label: 'DÍAS DE GRACIA', key: 'moraGracia', saved: String(st.moraGracia), hint: 'Días de atraso sin recargo antes de empezar a contar.' },
+          { label: 'TOPE %', key: 'moraTope', saved: String(st.moraTope), hint: 'Máximo que puede llegar a sumar. 0 = sin tope.' }
+        ].map((f) => Object.assign({}, f, {
+          value: f.saved,
+          /* Se guarda el texto tal cual se tipea ("0,5"); todos los consumidores
+             lo parsean con _numF, así el input nunca se normaliza al escribir. */
+          set: (e) => this._setSettings({ [f.key]: e.target.value.replace(/[^0-9.,]/g, '') })
+        })),
         ajPlanes: [2, 3, 4, 5, 6].map((n) => ({
           label: n + ' pagos',
           value: String(st.recargos[n]),
