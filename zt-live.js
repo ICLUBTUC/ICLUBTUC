@@ -191,6 +191,33 @@
      pesos escrito a mano. Se recalcula por TARJETA (nunca por grilla: una
      grilla tiene muchos productos y todos quedarían con el primer precio)
      desde el USD que muestra cada una, con la cotización vigente. */
+  /* "Última unidad" tomado del stock real del inventario del panel: sólo se
+     avisa cuando queda 1, para que el aviso siga significando algo. */
+  function stampUltimas(db) {
+    var norm = function (s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); };
+    var inv = (db.inventory || []).filter(function (it) { return (it.stock || 0) === 1; }).map(function (it) { return norm(it.name); }).filter(Boolean);
+    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card]');
+    Array.prototype.forEach.call(cards, function (card) {
+      var old = card.querySelector('[data-zt-ultima]');
+      if (old) old.parentNode.removeChild(old);
+      if (card.querySelector('[data-zt-nostock]')) return;
+      var txt = norm(card.textContent);
+      var hit = inv.some(function (n) { return n.length > 5 && txt.indexOf(n) >= 0; });
+      if (!hit) return;
+      var wrap = card.querySelector('[data-cc-imgwrap],[data-appl-imgwrap]') || card;
+      wrap.style.position = 'relative';
+      var chip = document.createElement('span');
+      chip.setAttribute('data-zt-ultima', '');
+      chip.textContent = 'ÚLTIMA UNIDAD';
+      chip.style.cssText = 'position:absolute;top:12px;left:12px;z-index:5;background:rgba(176,112,15,.95);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:6px 12px;border-radius:980px;font-family:inherit;';
+      wrap.appendChild(chip);
+    });
+  }
+  /* La cotización tiene que valer para TODOS los precios, no sólo para los
+     productos editados en el panel: las tarjetas nativas traen el valor en
+     pesos escrito a mano. Se recalcula por TARJETA (nunca por grilla: una
+     grilla tiene muchos productos y todos quedarían con el primer precio)
+     desde el USD que muestra cada una, con la cotización vigente. */
   function resyncArs(rate) {
     var seen = [];
     function scopeArs(scope, usdHint) {
@@ -205,21 +232,52 @@
         if (/^\s*(ARS|\$)\s*[\d.,]+\s*$/.test(t)) { arsNodes.push(node); seen.push(node); }
       }
       if (!usd || !arsNodes.length) return;
-      var want = fmtInt(usd * rate);
       arsNodes.forEach(function (n) {
-        if (n.nodeValue.indexOf(want) < 0) n.nodeValue = n.nodeValue.replace(/[\d.,]+/, want);
+        n.nodeValue = (n.nodeValue || '').replace(/[\d.,]+/, fmtInt(usd * rate));
       });
     }
-    /* Primero las tarjetas (lo más específico), después el resto de la ficha. */
-    var cards = [];
-    function push(list) { Array.prototype.forEach.call(list, function (el) { if (cards.indexOf(el) < 0) cards.push(el); }); }
-    push(document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-zt-reccustom],[data-nv-card],[data-ztc-slide]'));
-    Array.prototype.forEach.call(document.querySelectorAll('.rec-grid'), function (g) { push(g.children); });
-    cards.forEach(function (el) {
-      var attr = el.getAttribute && el.getAttribute('data-zt-usd');
-      scopeArs(el, attr ? parseFloat(attr) || 0 : 0);
-    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card]'), function (c) { scopeArs(c, 0); });
     Array.prototype.forEach.call(document.querySelectorAll('.det-section,.det-info'), function (el) { scopeArs(el, 0); });
+  }
+  /* Tarjetas que sólo traen el precio en dólares: se les agrega la línea en
+     pesos, para que todas informen lo mismo. Es idempotente. */
+  function stampArs(rate) {
+    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card]');
+    Array.prototype.forEach.call(cards, function (card) {
+      var host = null, usd = 0, hasArs = false;
+      var walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT);
+      var node;
+      while ((node = walker.nextNode())) {
+        var t = node.nodeValue || '';
+        if (/^\s*(ARS|\$)\s*[\d.,]+\s*$/.test(t) && !(node.parentNode && node.parentNode.hasAttribute && node.parentNode.hasAttribute('data-zt-ars'))) hasArs = true;
+      }
+      var all = card.querySelectorAll('*');
+      for (var i = 0; i < all.length; i++) {
+        var el = all[i];
+        if (el.children.length) continue;
+        var m = (el.textContent || '').match(/^\s*(?:USD|US\$)\s*([\d.,]+)\s*$/);
+        if (m) { host = el; usd = parseFloat(m[1].replace(/\./g, '').replace(',', '.')) || 0; break; }
+      }
+      var tag = card.querySelector('[data-zt-ars]');
+      if (hasArs || !host || !usd) { if (tag) tag.parentNode.removeChild(tag); return; }
+      if (!tag) {
+        tag = document.createElement('div');
+        tag.setAttribute('data-zt-ars', '');
+        tag.style.cssText = 'font-size:12.5px;color:#86868B;letter-spacing:-.01em;margin-top:1px;white-space:nowrap;';
+        var par = host.parentNode, dir = 'column';
+        try { var cs = getComputedStyle(par); if (cs.display.indexOf('flex') >= 0 || cs.display.indexOf('grid') >= 0) dir = cs.flexDirection; } catch (e) {}
+        if (dir === 'row' || dir === 'row-reverse') {
+          var col = document.createElement('div');
+          col.style.cssText = 'display:flex;flex-direction:column;gap:1px;min-width:0;';
+          par.insertBefore(col, host);
+          col.appendChild(host);
+          col.appendChild(tag);
+        } else {
+          par.insertBefore(tag, host.nextSibling);
+        }
+      }
+      tag.textContent = 'ARS ' + fmtInt(usd * rate);
+    });
   }
   function markSinStock(card) {
     if (card.querySelector('[data-zt-nostock]')) return;
@@ -923,6 +981,8 @@
     injectCustomDetail(db, rate);
     injectRecCards(db, rate);
     resyncArs(rate);
+    stampArs(rate);
+    stampUltimas(db);
     enhanceRecCarousels();
     capNovedades();
     sortGridsByPrice();

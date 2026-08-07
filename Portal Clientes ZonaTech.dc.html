@@ -78,8 +78,8 @@
   <sc-if value="{{ showLogin }}" hint-placeholder-val="{{ true }}">
     <span style="width:60px;"></span>
   </sc-if>
-  <sc-if value="{{ showFinan }}" hint-placeholder-val="{{ false }}">
-    <button onClick="{{ finBack }}" style="font-family:inherit; font-size:13.5px; font-weight:500; color:#6E6E73; background:transparent; border:1px solid rgba(0,0,0,.14); border-radius:980px; padding:8px 16px; cursor:pointer; transition:background .3s;" style-hover="background:rgba(0,0,0,.04);">Ir a ingresar</button>
+  <sc-if value="{{ finBackShow }}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{ finBack }}" style="font-family:inherit; font-size:13.5px; font-weight:500; color:#6E6E73; background:transparent; border:1px solid rgba(0,0,0,.14); border-radius:980px; padding:8px 16px; cursor:pointer; transition:background .3s;" style-hover="background:rgba(0,0,0,.04);">{{ finBackTxt }}</button>
   </sc-if>
 </div>
 
@@ -301,6 +301,7 @@
                   <span style="font-size:12px; font-weight:700; letter-spacing:.16em; color:rgba(255,255,255,.5);">PAGADO</span>
                   <span style="font-size:26px; font-weight:700; color:#8FD6B2;">{{ pl.paidStr }}</span>
                   <span style="font-size:13.5px; color:rgba(255,255,255,.55);">{{ pl.paidCount }}</span>
+                  <button onClick="{{ pl.planPdf }}" style="margin-top:4px; font-family:inherit; font-size:12.5px; font-weight:600; color:#1D1D1F; background:#fff; border:none; border-radius:980px; padding:9px 18px; cursor:pointer;">Contrato PDF</button>
                 </div>
               </div>
               <sc-if value="{{ pl.recAdmShow }}" hint-placeholder-val="{{ false }}">
@@ -1310,6 +1311,10 @@
   <!-- ═══════ FINANZAS ═══════ -->
   <sc-if value="{{ aTabFinanzas }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex; flex-direction:column; gap:22px; animation:ztReveal .7s .05s both;">
+      <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+        <span style="font-size:13.5px; color:#6E6E73; margin-right:auto;">Reporte del mes listo para imprimir o mandar al contador.</span>
+        <button onClick="{{ fzPdf }}" style="font-family:inherit; font-size:14px; font-weight:600; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:12px 24px; cursor:pointer;" style-hover="background:#000;">Descargar reporte PDF</button>
+      </div>
       <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px;">
         <sc-for list="{{ fzCards }}" as="c" hint-placeholder-count="4">
           <div style="background:{{ c.bg }}; border-radius:20px; padding:20px 22px; display:flex; flex-direction:column; gap:6px; box-shadow:0 12px 38px -22px rgba(0,0,0,.12);">
@@ -1338,6 +1343,28 @@
             </div>
           </sc-for>
         </div>
+      </div>
+      <div style="background:#fff; border-radius:22px; padding:26px 28px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:16px;">
+        <div style="display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;">
+          <h3 style="margin:0; font-size:17px; font-weight:700;">Qué te deja plata</h3>
+          <span style="font-size:12.5px; color:#A1A1A6; margin-left:auto;">{{ rkSub }}</span>
+        </div>
+        <sc-if value="{{ rkEmpty }}" hint-placeholder-val="{{ true }}">
+          <span style="font-size:13.5px; color:#A1A1A6;">Todavía no hay ventas registradas desde el inventario. Cada venta que cargues acá arma este ranking sola.</span>
+        </sc-if>
+        <sc-for list="{{ rkRows }}" as="r" hint-placeholder-count="0">
+          <div style="display:flex; flex-direction:column; gap:7px; border-top:1px solid rgba(0,0,0,.05); padding-top:13px;">
+            <div style="display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;">
+              <span style="font-size:14.5px; font-weight:700; color:#1D1D1F;">{{ r.name }}</span>
+              <span style="font-size:11px; font-weight:700; letter-spacing:.05em; color:{{ r.mc }}; background:{{ r.mb }}; padding:4px 10px; border-radius:980px;">{{ r.margen }}</span>
+              <span style="font-size:15px; font-weight:700; color:#1F8A5B; margin-left:auto;">{{ r.ganStr }}</span>
+            </div>
+            <div style="height:8px; border-radius:980px; background:#F0EEEA; overflow:hidden;">
+              <div style="height:100%; width:{{ r.w }}; border-radius:980px; background:{{ r.bar }}; transition:width .8s cubic-bezier(.22,1,.36,1);"></div>
+            </div>
+            <span style="font-size:12.5px; color:#A1A1A6;">{{ r.sub }}</span>
+          </div>
+        </sc-for>
       </div>
       <div style="background:#fff; border-radius:22px; padding:26px 28px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:16px;">
         <h3 style="margin:0; font-size:17px; font-weight:700;">Registro de gastos</h3>
@@ -1495,7 +1522,7 @@
   <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:6px; animation:ztReveal .8s .05s both;">
     <div style="font-size:12.5px; font-weight:600; letter-spacing:.2em; color:#C9502A;">CONSULTAR FINANCIACIÓN</div>
     <h1 style="margin:0; font-size:clamp(28px,4.5vw,40px); font-weight:700; letter-spacing:-.035em; line-height:1.05;">Simulá tu plan en cuotas</h1>
-    <p style="margin:0; font-size:15.5px; color:#6E6E73; line-height:1.5;">Elegí tu equipo y te mostramos todos los planes. Al final le mandás la consulta directo a tu asesor del club — sin necesidad de crear una cuenta.</p>
+    <p style="margin:0; font-size:15.5px; color:#6E6E73; line-height:1.5;">{{ finLeadTxt }}</p>
   </div>
 
   <!-- PASO 1 · CREAR USUARIO -->
@@ -1532,7 +1559,7 @@
       <sc-if value="{{ finStepQ1 }}" hint-placeholder-val="{{ true }}">
       <div style="display:flex; align-items:center; gap:11px; background:rgba(31,138,91,.08); border-radius:16px; padding:14px 18px; font-size:13.5px; font-weight:600; color:#1F8A5B; animation:ztReveal .6s both;">
         <span style="width:7px; height:7px; border-radius:50%; background:#1F8A5B; flex-shrink:0;"></span>
-        Simulá tu financiación en unos segundos. No necesitás registrarte.
+        {{ finBannerTxt }}
       </div>
 
       <!-- Q1 -->
@@ -1792,6 +1819,9 @@
         <span style="font-size:30px; font-weight:700; letter-spacing:-.02em; color:#1F8A5B;">{{ rAmount }}</span>
       </div>
       <div class="np" style="background:#FAFAF9; border-radius:14px; padding:14px 18px; font-size:13px; color:#6E6E73; line-height:1.6; text-align:center;">Gracias por tu pago. ICLUB valora tu confianza — este comprobante es válido como constancia de pago.</div>
+      <sc-if value="{{ rWaShow }}" hint-placeholder-val="{{ false }}">
+        <a class="np" href="{{ rWaHref }}" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; gap:9px; text-decoration:none; font-family:inherit; font-size:14.5px; font-weight:700; color:#0B2E20; background:#8FD6B2; border-radius:980px; padding:14px; transition:filter .3s;" style-hover="filter:brightness(1.05);">Avisarle al cliente por WhatsApp</a>
+      </sc-if>
       <div class="np" style="display:flex; gap:10px;">
         <button onClick="{{ downloadPDF }}" style="flex:1; font-family:inherit; font-size:14px; font-weight:600; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:13px; cursor:pointer; transition:background .3s;" style-hover="background:#000;">Descargar PDF</button>
         <button onClick="{{ printPage }}" style="flex:1; font-family:inherit; font-size:14px; font-weight:600; color:#1D1D1F; background:#F5F4F1; border:none; border-radius:980px; padding:13px; cursor:pointer; transition:background .3s;" style-hover="background:#EDEBE6;">Imprimir</button>
@@ -1832,7 +1862,9 @@ class Component extends DCLogic {
     try { user = localStorage.getItem('zt-portal-fin-user') || null; } catch (e) {}
     if (user && user !== 'admin' && !db.clients[user]) user = null;
     let screen = null;
-    try { if (!user && (location.hash || '').replace('#', '') === 'financiar') screen = 'finan'; } catch (e) {}
+    /* El link "Cotizador" del sitio entra con #financiar: se abre el cotizador
+       aunque la sesión ya esté iniciada, no el resumen de cuenta. */
+    try { if ((location.hash || '').replace('#', '') === 'financiar') screen = 'finan'; } catch (e) {}
     this.setState({ db: db, user: user, screen: screen });
     this._cloudInit();
   }
@@ -1855,6 +1887,10 @@ class Component extends DCLogic {
     sb.from('portal_state').select('data').eq('id', 'main').maybeSingle().then((res) => {
       if (res && !res.error && res.data && res.data.data && res.data.data.clients) {
         const remote = res.data.data;
+        /* Si lo local es más nuevo que lo de la nube, gana lo local y se sube:
+           un cambio hecho justo antes de recargar no se pierde. */
+        const localRev = (this.state.db && this.state.db.rev) || 0;
+        if (localRev > (remote.rev || 0)) { this._cloudPush(this.state.db); this.setState({ cloud: 'ok' }); return; }
         /* Todo lo que entra de la nube pasa por el mismo saneado que lo local,
            y si cambió se devuelve corregido para no re-servir datos viejos. */
         const clean = this._reconcileNC(remote);
@@ -1877,6 +1913,7 @@ class Component extends DCLogic {
           /* Si hay una escritura local en curso, el eco de la nube llegaría a
              pisar lo que el usuario acaba de cambiar: se ignora hasta terminar. */
           if (this._pushT || this._pushPending) return;
+          if (remote && (remote.rev || 0) < ((this.state.db && this.state.db.rev) || 0)) return;
           if (remote && remote.clients && JSON.stringify(remote) !== JSON.stringify(this.state.db)) {
             const clean = this._reconcileNC(remote);
             try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(clean)); } catch (e) {}
@@ -1886,10 +1923,23 @@ class Component extends DCLogic {
         }).subscribe();
     } catch (e) {}
   }
+  _cloudPushNow(db) {
+    const sb = this._sb(); if (!sb || !db) return;
+    try { sb.from('portal_state').upsert({ id: 'main', data: db, updated_at: new Date().toISOString() }); } catch (e) {}
+  }
   _cloudPush(db) {
     const sb = this._sb();
     if (!sb) return;
     if (this._pushT) clearTimeout(this._pushT);
+    /* Si la página se cierra durante la espera, se sube igual: si no, el cambio
+       queda sólo local y la próxima carga lo pierde. */
+    if (!this._flushBound) {
+      this._flushBound = true;
+      window.addEventListener('pagehide', () => {
+        if (this._pushT) { clearTimeout(this._pushT); this._pushT = null; this._cloudPushNow(this._pushDb); }
+      });
+    }
+    this._pushDb = db;
     this._pushT = setTimeout(() => {
       this._pushT = null;
       this._pushPending = true;
@@ -1955,6 +2005,9 @@ class Component extends DCLogic {
     return this._seed();
   }
   _save(db) {
+    /* Cada guardado lleva su versión: así la nube nunca puede devolver una
+       copia vieja y deshacer lo que se acaba de cambiar. */
+    db = Object.assign({}, db, { rev: Date.now() });
     try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(db)); } catch (e) {}
     this.setState({ db: db });
     this._cloudPush(db);
@@ -2100,7 +2153,7 @@ class Component extends DCLogic {
       let toAdd = [compra];
       if (adel > 0) {
         const rc = 'RC 0002-' + this._pad(next.nextRc || 1); next.nextRc = (next.nextRc || 1) + 1;
-        toAdd.push({ f: this._today(), tipo: 'Pago', doc: rc, imp: adel, det: 'Adelanto de compra · ' + it.name, met: 'Efectivo', grp: uid });
+        toAdd.push({ f: this._today(), tipo: 'Pago', doc: rc, imp: adel, det: 'Adelanto de compra · ' + it.name, met: 'Efectivo', grp: uid, adel: true });
       }
       next.clients[ck] = Object.assign({}, c, { movs: (c.movs || []).concat(toAdd) });
     }
@@ -2235,6 +2288,127 @@ class Component extends DCLogic {
     d.setFontSize(12); d.setTextColor(255, 255, 255); d.text(S(this._fmt(usado)), 541, y + 22, { align: 'right' });
     d.save('ICLUB Estado de cuenta.pdf');
   }
+  /* Reporte mensual del negocio: ingresos, gastos, ganancia, cobranzas y
+     ranking de productos del mes en curso. */
+  _pdfMes(data) {
+    const d = this._pdfNew('Reporte del negocio · ' + data.mes, null); if (!d) { window.print(); return; }
+    const S = (s) => String(s == null ? '' : s).replace(/\u2212/g, '-');
+    let y = 130;
+    d.setFont('helvetica', 'bold'); d.setFontSize(11); d.setTextColor(29, 29, 31);
+    d.text('Resumen del mes', 40, y); y += 10;
+    d.setDrawColor(225, 225, 225); d.line(40, y, 555, y); y += 22;
+    data.stats.forEach((s) => {
+      d.setFont('helvetica', 'normal'); d.setFontSize(9.5); d.setTextColor(110, 110, 115);
+      d.text(S(s.label), 40, y);
+      d.setFont('helvetica', 'bold'); d.setFontSize(11); d.setTextColor(29, 29, 31);
+      d.text(S(s.value), 555, y, { align: 'right' });
+      d.setDrawColor(240, 240, 240); d.line(40, y + 8, 555, y + 8);
+      y += 26;
+    });
+    y += 14;
+    d.setFont('helvetica', 'bold'); d.setFontSize(11); d.setTextColor(29, 29, 31);
+    d.text('Productos que más dejaron', 40, y); y += 10;
+    d.setDrawColor(225, 225, 225); d.line(40, y, 555, y); y += 22;
+    if (!data.rank.length) {
+      d.setFont('helvetica', 'normal'); d.setFontSize(9.5); d.setTextColor(161, 161, 166);
+      d.text('Todavía no hay ventas registradas.', 40, y); y += 26;
+    }
+    data.rank.forEach((r) => {
+      if (y > 760) { d.addPage(); y = 60; }
+      d.setFont('helvetica', 'bold'); d.setFontSize(9.5); d.setTextColor(29, 29, 31);
+      d.text(S(r.name).slice(0, 52), 40, y);
+      d.setTextColor(31, 138, 91); d.text(S(r.gan), 555, y, { align: 'right' });
+      d.setFont('helvetica', 'normal'); d.setFontSize(8); d.setTextColor(161, 161, 166);
+      d.text(S(r.sub), 40, y + 11);
+      d.setDrawColor(240, 240, 240); d.line(40, y + 18, 555, y + 18);
+      y += 30;
+    });
+    if (y > 700) { d.addPage(); y = 60; }
+    y += 10;
+    d.setFillColor(29, 29, 31); d.rect(40, y, 515, 44, 'F');
+    d.setFont('helvetica', 'bold'); d.setFontSize(8); d.setTextColor(190, 190, 190);
+    d.text('GANANCIA NETA DEL MES', 54, y + 19);
+    d.setFontSize(15); d.setTextColor(255, 255, 255);
+    d.text(S(data.neta), 541, y + 30, { align: 'right' });
+    d.save('ICLUB Reporte ' + data.mes.replace(/[^0-9A-Za-z]/g, '-') + '.pdf');
+  }
+  /* Contrato de financiación: condiciones, cronograma completo y firmas. */
+  _pdfPlan(client, pm, pc, st) {
+    const d = this._pdfNew('Contrato de financiación', client); if (!d) { window.print(); return; }
+    const S = (s) => String(s == null ? '' : s).replace(/\u2212/g, '-');
+    let y = 128;
+    const linea = (l, v, bold) => {
+      if (y > 770) { d.addPage(); y = 60; }
+      d.setFont('helvetica', 'normal'); d.setFontSize(9.5); d.setTextColor(110, 110, 115);
+      d.text(S(l), 40, y);
+      d.setFont('helvetica', bold ? 'bold' : 'normal'); d.setFontSize(bold ? 11 : 10); d.setTextColor(29, 29, 31);
+      d.text(S(v), 555, y, { align: 'right' });
+      d.setDrawColor(240, 240, 240); d.line(40, y + 8, 555, y + 8);
+      y += 25;
+    };
+    const titulo = (t) => {
+      if (y > 730) { d.addPage(); y = 60; }
+      y += 8;
+      d.setFont('helvetica', 'bold'); d.setFontSize(11); d.setTextColor(29, 29, 31);
+      d.text(S(t), 40, y); y += 10;
+      d.setDrawColor(225, 225, 225); d.line(40, y, 555, y); y += 22;
+    };
+
+    titulo('Datos de la operación');
+    linea('Comprador', client.name || '—');
+    linea('Teléfono', client.phone || client.key || '—');
+    linea('Documento de venta', pm.doc);
+    linea('Fecha de la venta', pm.f);
+    linea('Producto', this._planTitle(pm));
+
+    titulo('Condiciones de pago');
+    linea('Precio de contado', this._fmt(pc.contado));
+    if (!pc.esContado && pc.recPct > 0) linea('Recargo por financiación', pc.recPct + '%');
+    linea('Total financiado', this._fmt(pc.esContado ? pc.contado : pc.base), true);
+    linea('Cantidad de cuotas', pc.n + ' ' + (pc.freq === 'Semanal' ? 'semanales' : 'mensuales'));
+    linea('Importe de cada cuota', this._fmt(pc.esContado ? pc.capImp : pc.cuotaImp), true);
+    if (this._numF(st.mora) > 0) {
+      linea('Recargo por mora', st.mora + '% por día, con ' + st.moraGracia + ' días de gracia y tope del ' + st.moraTope + '%');
+    }
+
+    titulo('Cronograma de vencimientos');
+    d.setFont('helvetica', 'bold'); d.setFontSize(8); d.setTextColor(140, 140, 145);
+    d.text('CUOTA', 40, y); d.text('VENCIMIENTO', 150, y); d.text('IMPORTE', 340, y, { align: 'right' }); d.text('ESTADO', 555, y, { align: 'right' });
+    y += 16;
+    pc.cuotas.forEach((q) => {
+      if (y > 760) { d.addPage(); y = 60; }
+      d.setFont('helvetica', 'normal'); d.setFontSize(9.5); d.setTextColor(29, 29, 31);
+      d.text(S(q.n + ' de ' + pc.n), 40, y);
+      d.text(S(q.d), 150, y);
+      d.text(S(this._fmt(q.req)), 340, y, { align: 'right' });
+      const done = !!q.done;
+      d.setTextColor(done ? 31 : 161, done ? 138 : 161, done ? 91 : 166);
+      d.setFont('helvetica', done ? 'bold' : 'normal');
+      d.text(done ? 'PAGADA' : 'PENDIENTE', 555, y, { align: 'right' });
+      d.setDrawColor(243, 243, 243); d.line(40, y + 7, 555, y + 7);
+      y += 22;
+    });
+
+    if (y > 620) { d.addPage(); y = 60; }
+    y += 14;
+    d.setFillColor(248, 247, 245); d.rect(40, y, 515, 66, 'F');
+    d.setFont('helvetica', 'normal'); d.setFontSize(8); d.setTextColor(110, 110, 115);
+    const txt = 'El comprador se compromete a abonar las cuotas detalladas en las fechas indicadas. El total financiado queda fijo en pesos y no se actualiza por variaciones del tipo de cambio. La mercadería se entrega en el momento de la compra. El incumplimiento habilita a ICLUB a aplicar el recargo por mora informado y a reclamar el saldo total adeudado.';
+    d.text(d.splitTextToSize(S(txt), 490), 52, y + 18);
+    y += 108;
+
+    if (y > 730) { d.addPage(); y = 200; }
+    d.setDrawColor(180, 180, 180);
+    d.line(52, y, 265, y); d.line(330, y, 543, y);
+    d.setFont('helvetica', 'normal'); d.setFontSize(8.5); d.setTextColor(140, 140, 145);
+    d.text('Firma y aclaración del comprador', 52, y + 14);
+    d.text('Por ICLUB', 330, y + 14);
+    d.setFontSize(8); d.setTextColor(29, 29, 31);
+    d.text(S(client.name || ''), 52, y + 28);
+    d.text('DNI: ______________________', 52, y + 42);
+
+    d.save('ICLUB Contrato ' + String(pm.doc).replace(/[^0-9A-Za-z]/g, '-') + '.pdf');
+  }
   _pdfDocGroup(client, g) {
     const title = g.label.charAt(0) + g.label.slice(1).toLowerCase();
     const d = this._pdfNew(title, client); if (!d) { window.print(); return; }
@@ -2337,8 +2511,13 @@ class Component extends DCLogic {
        sin elegir "Aplicar a") también se imputan a ese plan — salvo el adelanto
        de la propia compra, que ya está descontado del monto financiado. */
     const planesCount = (client.movs || []).filter((x) => x.finan).length;
+    /* Un adelanto NO paga cuotas: ya está descontado del monto financiado.
+       Se reconoce por la marca, por el grupo de la compra, por el detalle, o
+       porque se cobró el mismo día de la venta (datos viejos sin marca). */
+    const esAdelanto = (x) => !!x.adel || /adelanto/i.test(String(x.det || ''))
+      || (x.grp && x.grp === pm.grp) || x.f === pm.f;
     const pagos = (client.movs || []).filter((x) => x.tipo === 'Pago' && (
-      x.plan === pm.doc || (planesCount === 1 && !x.plan && !(x.grp && x.grp === pm.grp))
+      x.plan === pm.doc || (planesCount === 1 && !x.plan && !esAdelanto(x))
     )).slice().sort((a, b) => (this._parseDate(a.f) || 0) - (this._parseDate(b.f) || 0));
     /* Plan liquidado a contado: el cliente pagó (o paga) en efectivo y se le
        saca el recargo entero, sin importar la fecha de cada cuota. */
@@ -2556,7 +2735,26 @@ class Component extends DCLogic {
         { label: 'Total pagado a la fecha', value: this._fmt(acumPago) },
         { label: 'Saldo pendiente', value: this._fmt(saldoAfter) }
       ],
-      amount: this._fmt(m.imp)
+      amount: this._fmt(m.imp),
+      /* Aviso al cliente: el mensaje sale del comprobante, así lo que le llega
+         coincide exactamente con lo que quedó registrado. */
+      wa: (() => {
+        /* La clave del cliente ES su teléfono; el objeto no siempre la trae. */
+        const cls = (this.state.db || {}).clients || {};
+        const found = Object.keys(cls).find((k) => cls[k] === c || cls[k].name === c.name);
+        const n = this._wa(c.phone || c.key || found || '');
+        const txt = 'Hola ' + (c.name || '') + '! Registramos tu pago de ' + this._fmt(m.imp) + '.'
+          + '\n\n\uD83D\uDCC4 Comprobante: ' + m.doc
+          + '\n\uD83D\uDCC5 Fecha: ' + m.f
+          + (planMov ? '\n\uD83D\uDCE6 Plan: ' + this._planTitle(planMov) + (cuotaIdx ? ' · cuota ' + cuotaIdx + ' de ' + planMov.finan.n : '') : '')
+          + '\n\uD83D\uDCB0 ' + (saldoAfter > 0
+            ? 'Saldo pendiente: ' + this._fmt(saldoAfter)
+            : saldoAfter < 0
+              ? 'Saldo a tu favor: ' + this._fmt(Math.abs(saldoAfter))
+              : 'No te queda saldo pendiente')
+          + '\n\nGracias por tu confianza!\n— ICLUB';
+        return 'https://wa.me/' + (n || '') + '?text=' + encodeURIComponent(txt);
+      })()
     };
   }
 
@@ -2693,6 +2891,7 @@ class Component extends DCLogic {
           sub: 'Factura ' + pm.doc + ' · ' + this._fmt(pc.esContado ? pc.contado : pc.base) + ' en ' + pc.n + ' cuotas ' + (pc.freq === 'Semanal' ? 'semanales' : 'mensuales') + ' de ' + this._fmt(pc.esContado ? pc.capImp : pc.cuotaImp) + (pc.esContado ? ' · precio de contado' : ''),
           paidStr: this._fmt(pc.pagadoTotal),
           paidCount: pc.pagadas + ' de ' + pc.n + ' cuotas' + (pc.ahorro > 0 ? ' · ahorró ' + this._fmt(pc.ahorro) : ''),
+          planPdf: () => this._pdfPlan(Object.assign({ key: clientKey }, client), pm, pc, this._settings(this.state.db || {})),
           recAdmShow: isAdmin,
           recEditing: this.state.recDoc === pm.doc,
           recLabel: pc.recUnset ? 'Definir el recargo de este plan' : (pc.esContado ? 'Liquidado a contado: ' + this._fmt(pc.contado) + ' · se descontó el ' + pc.recPct + '% de recargo' : 'Recargo del plan: ' + pc.recPct + '% · contado ' + this._fmt(pc.contado)),
@@ -2957,7 +3156,7 @@ class Component extends DCLogic {
           : 'Te recordamos que la cuota ' + r.q.n + ' de ' + r.pc.n + ' de tu plan de ' + prodMsg + ' vence el ' + r.q.d + '.')
           + '\n\n\uD83D\uDCB5 Importe: ' + this._fmt(r.falta)
           + (mora > 0 ? '\n\u23F0 Recargo por mora: ' + this._fmt(mora) + '\n\u2705 Total a abonar: ' + this._fmt(totalCobrar) : '')
-          + '\n\nPodés abonar por transferencia o en el local. Cualquier cosa escribinos por acá.\n\n— ICLUB';
+          + '\n\nPodés abonar por transferencia o en efectivo cuando nos juntamos. Cualquier cosa escribinos por acá.\n\n— ICLUB';
         const waN = this._wa(r.key);
         return {
           name: r.client.name,
@@ -3498,7 +3697,7 @@ class Component extends DCLogic {
             if (adel > 0) {
               const rcNum = 'RC 0002-' + this._pad(next.nextRc || 1);
               next.nextRc = (next.nextRc || 1) + 1;
-              movsToAdd.push({ f: this._today(), tipo: 'Pago', doc: rcNum, det: 'Adelanto de compra · ' + (this.state.movDet || 'Compra'), imp: adel, met: 'Efectivo', grp: grp });
+              movsToAdd.push({ f: this._today(), tipo: 'Pago', doc: rcNum, det: 'Adelanto de compra · ' + (this.state.movDet || 'Compra'), imp: adel, met: 'Efectivo', grp: grp, adel: true });
             }
             // descontar stock y registrar venta si vino del inventario
             const selProd = String(this.state.movProd || '');
@@ -3634,8 +3833,21 @@ class Component extends DCLogic {
       finSendHref = 'https://wa.me/' + finWa + '?text=' + encodeURIComponent(msg);
     }
     const finOut = {
-      showFinan: screen === 'finan' && !loggedIn,
-      finBack: () => this.setState({ screen: null }),
+      showFinan: screen === 'finan',
+      finBackShow: screen === 'finan',
+      finBackTxt: loggedIn ? 'Volver a mi cuenta' : 'Ir a ingresar',
+      finLoggedIn: loggedIn,
+      finAnon: !loggedIn,
+      finLeadTxt: loggedIn
+        ? 'Elegí tu equipo y te mostramos todos los planes. Al final le mandás la consulta directo a tu asesor del club.'
+        : 'Elegí tu equipo y te mostramos todos los planes. Al final le mandás la consulta directo a tu asesor del club — sin necesidad de crear una cuenta.',
+      finBannerTxt: loggedIn
+        ? 'Simulá tu financiación en unos segundos con la cotización del día.'
+        : 'Simulá tu financiación en unos segundos. No necesitás registrarte.',
+      finBack: () => {
+        try { if ((location.hash || '') === '#financiar') location.hash = ''; } catch (e) {}
+        this.setState({ screen: null });
+      },
       finNeedReg: false,
       finCreated: true,
       regPhone: this.state.regPhone, regPass: this.state.regPass, regPass2: this.state.regPass2,
@@ -3919,6 +4131,61 @@ class Component extends DCLogic {
             this._save(Object.assign({}, db, { pedidos: (db.pedidos || []).filter((x) => x.id !== p.id) }));
           }
         })),
+        /* Ranking por producto: qué se vendió más y cuánto dejó de verdad. */
+        ...(() => {
+          const acc = {};
+          ventasArr2.forEach((v) => {
+            const key = String(v.name || 'Sin nombre');
+            if (!acc[key]) acc[key] = { name: key, u: 0, ing: 0, gan: 0 };
+            acc[key].u++; acc[key].ing += v.ventaArs; acc[key].gan += (v.ventaArs - v.costoArs);
+          });
+          const arr = Object.keys(acc).map((k) => acc[k]).sort((a, b) => b.gan - a.gan);
+          const max = arr.length ? Math.max.apply(null, arr.map((x) => Math.abs(x.gan))) : 1;
+          const totalGan = arr.reduce((a, x) => a + x.gan, 0);
+          return {
+            rkEmpty: arr.length === 0,
+            rkSub: arr.length ? arr.length + (arr.length === 1 ? ' producto vendido · ' : ' productos vendidos · ') + this._ars(totalGan) + ' de ganancia' : '',
+            rkRows: arr.slice(0, 8).map((x) => {
+              const margen = x.ing - x.gan > 0 ? Math.round(x.gan / (x.ing - x.gan) * 100) : 0;
+              return {
+                name: x.name,
+                margen: margen + '% de margen',
+                mc: margen >= 25 ? '#1F8A5B' : margen >= 12 ? '#B0700F' : '#C9502A',
+                mb: margen >= 25 ? 'rgba(31,138,91,.1)' : margen >= 12 ? 'rgba(176,112,15,.12)' : 'rgba(201,80,42,.12)',
+                ganStr: this._ars(x.gan),
+                w: Math.max(3, Math.round(Math.abs(x.gan) / max * 100)) + '%',
+                bar: x.gan >= 0 ? '#1F8A5B' : '#C9502A',
+                sub: x.u + (x.u === 1 ? ' unidad · ' : ' unidades · ') + this._ars(x.ing) + ' facturado · ' + this._ars(Math.round(x.gan / x.u)) + ' de ganancia por unidad'
+              };
+            })
+          };
+        })(),
+        fzPdf: () => {
+          const acc = {};
+          ventasArr2.filter((v) => slotOf(v.fecha) === cur).forEach((v) => {
+            const k = String(v.name || 'Sin nombre');
+            if (!acc[k]) acc[k] = { name: k, u: 0, ing: 0, gan: 0 };
+            acc[k].u++; acc[k].ing += v.ventaArs; acc[k].gan += (v.ventaArs - v.costoArs);
+          });
+          const rank = Object.keys(acc).map((k) => acc[k]).sort((a, b) => b.gan - a.gan).slice(0, 12).map((x) => ({
+            name: x.name, gan: this._ars(x.gan),
+            sub: x.u + (x.u === 1 ? ' unidad · ' : ' unidades · ') + this._ars(x.ing) + ' facturado'
+          }));
+          this._pdfMes({
+            mes: cur.label,
+            neta: this._ars(cur.gan - cur.gas),
+            rank: rank,
+            stats: [
+              { label: 'Ingresos por ventas', value: this._ars(cur.ing) },
+              { label: 'Ventas registradas', value: String(ventasArr2.filter((v) => slotOf(v.fecha) === cur).length) },
+              { label: 'Ganancia de ventas', value: this._ars(cur.gan) },
+              { label: 'Gastos del mes', value: this._ars(cur.gas) },
+              { label: 'Cobros de cuotas', value: this._ars(cur.fin) },
+              { label: 'Pagos de cuenta corriente', value: this._ars(cur.cc) },
+              { label: 'Por cobrar (total)', value: this._ars(totCobrar) }
+            ]
+          });
+        },
         // finanzas
         fzCards: [
           { label: 'INGRESOS · ' + cur.label.toUpperCase(), value: this._ars(cur.ing), sub: ventasArr2.filter((v) => slotOf(v.fecha) === cur).length + ' ventas este mes', bg: '#1D1D1F', lc: 'rgba(255,255,255,.55)', vc: '#fff', sc: 'rgba(255,255,255,.5)' },
@@ -4032,8 +4299,8 @@ class Component extends DCLogic {
     return Object.assign({
       loggedIn: loggedIn,
       showLogin: !loggedIn && this.state.screen !== 'finan',
-      showApp: !!client,
-      showAdmin: isAdmin && !this.state.adminView,
+      showApp: !!client && this.state.screen !== 'finan',
+      showAdmin: isAdmin && !this.state.adminView && this.state.screen !== 'finan',
       openFinan: () => this.setState({ screen: 'finan' }),
       adminViewing: false,
       loginPhone: this.state.loginPhone,
@@ -4087,6 +4354,8 @@ class Component extends DCLogic {
       rNum: this.state.receipt ? this.state.receipt.num : '',
       rRows: this.state.receipt ? this.state.receipt.rows : [],
       rAmount: this.state.receipt ? this.state.receipt.amount : '',
+      rWaShow: isAdmin && !!this.state.receipt,
+      rWaHref: this.state.receipt ? this.state.receipt.wa : '#',
       closeReceipt: () => this.setState({ receipt: null }),
       printPage: () => window.print(),
       pagoEditOpen: !!this.state.pagoEdit,
