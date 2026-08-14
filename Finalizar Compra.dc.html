@@ -28,24 +28,50 @@
   </div>
 </header>
 
+<sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+  <main style="max-width:620px; margin:0 auto; padding:60px 18px 90px; display:flex; flex-direction:column; align-items:center; gap:18px; text-align:center; animation:ztReveal .6s both;">
+    <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#C4BFB5" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.3"></circle><circle cx="18" cy="20" r="1.3"></circle><path d="M2.5 3h2.2l2.1 12.3a1.5 1.5 0 0 0 1.5 1.2h8.9a1.5 1.5 0 0 0 1.5-1.2L21.5 7H6"></path></svg>
+    <span style="font-size:21px; font-weight:700; letter-spacing:-.02em;">Todavía no elegiste nada</span>
+    <span style="font-size:15px; color:#6E6E73; line-height:1.5; max-width:340px;">Agregá los equipos que te interesan y volvé acá para cerrar la compra en un solo pedido.</span>
+    <a href="Inicio ICLUB.dc.html" style="margin-top:6px; display:inline-flex; align-items:center; gap:9px; background:#1D1D1F; color:#fff; font-size:15.5px; font-weight:600; padding:14px 26px; border-radius:980px;" style-hover="color:#fff;">Ver productos<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+  </main>
+</sc-if>
+
+<sc-if value="{{ hasItems }}" hint-placeholder-val="{{ true }}">
 <main style="max-width:620px; margin:0 auto; padding:22px 18px 150px; display:flex; flex-direction:column; gap:22px; animation:ztReveal .6s both;">
   <div style="font-size:11px; font-weight:700; letter-spacing:.22em; color:#86868B;">PASO FINAL · COMPRA DE SOCIO</div>
 
-  <div style="background:#fff; border-radius:22px; padding:18px; display:flex; align-items:center; gap:16px; box-shadow:0 1px 3px rgba(0,0,0,.06);">
-    <div style="width:62px; height:82px; border-radius:16px; background:#F4F1EC; flex-shrink:0; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-      <sc-if value="{{ hasPhoto }}" hint-placeholder-val="{{ false }}">{{ photoNode }}</sc-if>
-      <sc-if value="{{ noPhoto }}" hint-placeholder-val="{{ true }}"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#B7B2A8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.6"></circle><path d="M21 15l-5-5L5 21"></path></svg></sc-if>
+  <section style="display:flex; flex-direction:column; gap:10px;">
+    <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px;">
+      <h2 style="margin:0; font-size:19px; font-weight:700; letter-spacing:-.02em;">Tu pedido</h2>
+      <span style="font-size:13px; color:#86868B;">{{ countLabel }}</span>
     </div>
-    <div style="display:flex; flex-direction:column; gap:4px; min-width:0;">
-      <span style="font-size:16.5px; font-weight:600; letter-spacing:-.01em;">{{ prodName }}</span>
-      <span style="font-size:14px; color:#6E6E73;">{{ unitLine }}</span>
-      <div style="display:inline-flex; align-items:center; gap:2px; margin-top:4px; background:#F4F1EC; border-radius:11px; padding:3px; align-self:flex-start;">
-        <button onClick="{{ decQty }}" aria-label="Quitar uno" style="width:32px; height:28px; border:none; background:transparent; border-radius:8px; font-size:17px; color:#1D1D1F; cursor:pointer;">−</button>
-        <span style="min-width:26px; text-align:center; font-size:14.5px; font-weight:600;">{{ qty }}</span>
-        <button onClick="{{ incQty }}" aria-label="Sumar uno" style="width:32px; height:28px; border:none; background:transparent; border-radius:8px; font-size:15px; color:#1D1D1F; cursor:pointer;">+</button>
+    <sc-for list="{{ items }}" as="it" hint-placeholder-count="1">
+      <div style="background:#fff; border-radius:22px; padding:16px; display:flex; align-items:center; gap:14px; box-shadow:0 1px 3px rgba(0,0,0,.06);">
+        <div style="width:58px; height:76px; border-radius:15px; background:#F4F1EC; flex-shrink:0; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+          <sc-if value="{{ it.hasPhoto }}" hint-placeholder-val="{{ false }}">{{ it.photoNode }}</sc-if>
+          <sc-if value="{{ it.noPhoto }}" hint-placeholder-val="{{ true }}"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#B7B2A8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.6"></circle><path d="M21 15l-5-5L5 21"></path></svg></sc-if>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:4px; min-width:0; flex:1;">
+          <span style="font-size:15.5px; font-weight:600; letter-spacing:-.01em;">{{ it.name }}</span>
+          <span style="font-size:13.5px; color:#6E6E73;">{{ it.unitLine }}</span>
+          <div style="display:flex; align-items:center; gap:10px; margin-top:5px;">
+            <div style="display:inline-flex; align-items:center; gap:2px; background:#F4F1EC; border-radius:11px; padding:3px;">
+              <button onClick="{{ it.dec }}" aria-label="Quitar uno" style="width:32px; height:28px; border:none; background:transparent; border-radius:8px; font-size:17px; color:#1D1D1F; cursor:pointer; font-family:inherit;">−</button>
+              <span style="min-width:26px; text-align:center; font-size:14.5px; font-weight:600;">{{ it.qty }}</span>
+              <button onClick="{{ it.inc }}" aria-label="Sumar uno" style="width:32px; height:28px; border:none; background:transparent; border-radius:8px; font-size:15px; color:#1D1D1F; cursor:pointer; font-family:inherit;">+</button>
+            </div>
+            <button onClick="{{ it.remove }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#86868B; background:transparent; border:none; padding:6px 4px; cursor:pointer;" style-hover="color:#C43D2B;">Quitar</button>
+          </div>
+        </div>
+        <span style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0;">
+          <span style="font-size:16px; font-weight:700; letter-spacing:-.015em;">{{ it.lineMain }}</span>
+          <span style="font-size:11.5px; color:#A1A1A6;">{{ it.lineSub }}</span>
+        </span>
       </div>
-    </div>
-  </div>
+    </sc-for>
+    <a href="Inicio ICLUB.dc.html" style="align-self:flex-start; font-size:13.5px; font-weight:600;">+ Agregar otro equipo</a>
+  </section>
 
   <section style="display:flex; flex-direction:column; gap:12px;">
     <h2 style="margin:0; font-size:19px; font-weight:700; letter-spacing:-.02em;">Forma de entrega</h2>
@@ -86,7 +112,7 @@
         </div>
       </div>
     </sc-if>
-    <a href="Portal Clientes ZonaTech.dc.html#financiar" style="font-size:14px; font-weight:600;">¿En cuotas? Consultá la financiación de socio →</a>
+    <a href="{{ finanHref }}" style="font-size:14px; font-weight:600;">¿En cuotas? Consultá la financiación de socio →</a>
   </section>
 
   <section style="display:flex; flex-direction:column; gap:12px;">
@@ -100,7 +126,9 @@
 
   <section style="background:#fff; border-radius:18px; padding:18px; display:flex; flex-direction:column; gap:10px; box-shadow:0 1px 3px rgba(0,0,0,.06);">
     <h2 style="margin:0 0 2px; font-size:19px; font-weight:700; letter-spacing:-.02em;">Resumen</h2>
-    <div style="display:flex; justify-content:space-between; font-size:14.5px; color:#6E6E73;"><span>{{ sumProdLabel }}</span><span style="color:#1D1D1F; font-weight:600;">{{ sumProd }}</span></div>
+    <sc-for list="{{ items }}" as="it" hint-placeholder-count="1">
+      <div style="display:flex; justify-content:space-between; gap:12px; font-size:14.5px; color:#6E6E73;"><span>{{ it.sumLabel }}</span><span style="color:#1D1D1F; font-weight:600;">{{ it.lineMain }}</span></div>
+    </sc-for>
     <div style="display:flex; justify-content:space-between; font-size:14.5px; color:#6E6E73;"><span>Envío</span><span style="color:#1D1D1F; font-weight:600;">{{ sumEnvio }}</span></div>
     <div style="display:flex; justify-content:space-between; align-items:baseline; border-top:1px solid rgba(0,0,0,.08); padding-top:12px; margin-top:2px;"><span style="font-size:16px; font-weight:700;">Total</span><span style="display:flex; flex-direction:column; align-items:flex-end;"><span style="font-size:22px; font-weight:700; letter-spacing:-.02em;">{{ totalMain }}</span><span style="font-size:13px; color:#86868B;">{{ totalSub }}</span></span></div>
   </section>
@@ -110,7 +138,7 @@
   <div style="max-width:620px; margin:0 auto; padding:12px 18px 16px; display:flex; flex-direction:column; gap:8px;">
     <sc-if value="{{ hasErr }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px; font-weight:600; color:#C43D2B;">{{ err }}</span></sc-if>
     <div style="display:flex; align-items:center; gap:16px;">
-      <div style="display:flex; flex-direction:column;"><span style="font-size:19px; font-weight:700; letter-spacing:-.02em;">{{ totalMain }}</span><span style="font-size:12px; color:#86868B;">{{ qty }} × {{ prodShort }}</span></div>
+      <div style="display:flex; flex-direction:column;"><span style="font-size:19px; font-weight:700; letter-spacing:-.02em;">{{ totalMain }}</span><span style="font-size:12px; color:#86868B;">{{ countLabel }}</span></div>
       <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
         <button onClick="{{ confirm }}" style="flex:1; height:52px; border:none; border-radius:16px; background:#1D1D1F; color:#fff; font-family:inherit; font-size:16.5px; font-weight:600; cursor:pointer; transition:transform .3s, background .3s;" style-hover="transform:translateY(-1px); background:#000;">Confirmar pedido</button>
       </sc-if>
@@ -121,6 +149,7 @@
     <span style="font-size:11.5px; color:#86868B; text-align:center;">Tu asesor del club confirma el pedido y el pago por WhatsApp.</span>
   </div>
 </div>
+</sc-if>
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
@@ -131,20 +160,35 @@ class Component extends DCLogic {
     try { prof = JSON.parse(localStorage.getItem('zt-checkout-profile-v1') || '{}') || {}; } catch (e) {}
     let db = null;
     try { db = JSON.parse(localStorage.getItem('zt-portal-fin-db-v2') || 'null'); } catch (e) {}
-    const id = q.get('id') || '';
-    let photo = '';
-    if (db && db.catalog && db.catalog[id] && db.catalog[id].photo) photo = db.catalog[id].photo;
+    /* Un solo camino de compra: el checkout SIEMPRE trabaja sobre el carrito.
+       "Comprar ahora" entra con ?id= y ese equipo se suma al carrito antes de
+       mostrar la pantalla, así el cliente que armó un carrito de tres cosas no
+       pierde dos por el camino. */
+    let items = [];
+    try { items = JSON.parse(localStorage.getItem('zt_cart') || '[]') || []; } catch (e) {}
+    items = items.filter((x) => x && x.id && x.usd > 0).map((x) => ({
+      id: String(x.id), name: String(x.name || 'Equipo'), usd: parseFloat(x.usd) || 0,
+      qty: Math.min(10, Math.max(1, parseInt(x.qty, 10) || 1))
+    }));
+    const urlId = q.get('id') || '';
+    if (urlId) {
+      const urlQty = Math.min(10, Math.max(1, parseInt(q.get('qty'), 10) || 1));
+      const ex = items.find((x) => x.id === urlId);
+      if (ex) ex.qty = Math.max(ex.qty, urlQty);
+      else items.push({ id: urlId, name: q.get('name') || 'Tu equipo', usd: parseFloat(q.get('usd')) || 0, qty: urlQty });
+    }
+    const photos = {};
+    items.forEach((it) => {
+      const ov = db && db.catalog && db.catalog[it.id];
+      if (ov && ov.photo) photos[it.id] = ov.photo;
+    });
     this.state = {
-      id, cat: q.get('cat') || '',
-      name: q.get('name') || 'Tu equipo',
-      usd: parseFloat(q.get('usd')) || 0,
-      photo,
-      rate: (db && db.settings && db.settings.rate) || 0,
-      qty: Math.min(10, Math.max(1, parseInt(q.get('qty'), 10) || 1)), entrega: 'envio', pago: 'transferencia',
+      items, photos,
+      rate: (db && db.settings && db.settings.rate) || 1520,
+      entrega: 'envio', pago: 'transferencia',
       dir: prof.dir || '', city: prof.city || '', cp: prof.cp || '',
       factName: prof.factName || '', dni: prof.dni || '',
-      copied: false,
-      err: '', sent: false
+      copied: false, err: '', sent: false
     };
   }
   _resolveSlotPhoto(j, id) {
@@ -152,64 +196,103 @@ class Component extends DCLogic {
     const pick = (v) => v ? (typeof v === 'string' ? v : v.u) : '';
     const cands = ['prod-front-' + id, 'prod-photo-' + id, 'apple-' + id, 'and-' + id, 'tv-' + id, id];
     for (const k of cands) { const u = pick(j[k]); if (u) return u; }
-    const fb = Object.keys(j).filter(k => !/back|thumb|hero|promo/i.test(k))
-      .find(k => k === id || k.endsWith('-' + id) || k.endsWith(id));
+    const fb = Object.keys(j).filter((k) => !/back|thumb|hero|promo/i.test(k))
+      .find((k) => k === id || k.endsWith('-' + id) || k.endsWith(id));
     return fb ? pick(j[fb]) : '';
   }
   componentDidMount() {
-    const id = this.state.id;
-    if (!id) return;
-    if (!this.state.photo) {
-      fetch('imageslots.state.json').then(r => r.ok ? r.json() : null).then(j => {
-        const u = this._resolveSlotPhoto(j, id);
-        if (u && !this.state.photo) this.setState({ photo: u });
-      }).catch(() => {});
-    }
+    this._saveCart();
+    if (!this.state.items.length) return;
+    fetch('imageslots.state.json').then((r) => r.ok ? r.json() : null).then((j) => {
+      if (!j) return;
+      const next = Object.assign({}, this.state.photos);
+      let touched = false;
+      this.state.items.forEach((it) => {
+        if (next[it.id]) return;
+        const u = this._resolveSlotPhoto(j, it.id);
+        if (u) { next[it.id] = u; touched = true; }
+      });
+      if (touched) this.setState({ photos: next });
+    }).catch(() => {});
     const SB_URL = 'https://pbmsymvvemvbwhxmgddg.supabase.co';
     const SB_KEY = 'sb_publishable_dt4zRwkE4_NbZrXvbpZjIw_1Uhe7pFn';
     try {
       fetch(SB_URL + '/rest/v1/portal_state?id=eq.main&select=data', {
         headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
-      }).then(r => r.json()).then(rows => {
+      }).then((r) => r.json()).then((rows) => {
         const db = rows && rows[0] && rows[0].data;
         if (!db) return;
         try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(db)); } catch (e) {}
-        const ov = db.catalog && db.catalog[id];
         const patch = {};
-        if (ov && ov.photo && ov.photo !== this.state.photo) patch.photo = ov.photo;
+        const next = Object.assign({}, this.state.photos);
+        let touched = false;
+        this.state.items.forEach((it) => {
+          const ov = db.catalog && db.catalog[it.id];
+          if (ov && ov.photo && next[it.id] !== ov.photo) { next[it.id] = ov.photo; touched = true; }
+        });
+        if (touched) patch.photos = next;
         if (db.settings && db.settings.rate && db.settings.rate !== this.state.rate) patch.rate = db.settings.rate;
         if (Object.keys(patch).length) this.setState(patch);
       }).catch(() => {});
     } catch (e) {}
+  }
+  _saveCart() {
+    try { localStorage.setItem('zt_cart', JSON.stringify(this.state.items.map((x) => ({ id: x.id, name: x.name, usd: x.usd, qty: x.qty })))); } catch (e) {}
+  }
+  _setItems(items) { this.setState({ items, err: '' }, () => this._saveCart()); }
+  _setQty(id, qty) {
+    let items = this.state.items.map((x) => Object.assign({}, x));
+    if (qty <= 0) items = items.filter((x) => x.id !== id);
+    else { const ex = items.find((x) => x.id === id); if (ex) ex.qty = Math.min(10, qty); }
+    this._setItems(items);
   }
   _persist() {
     const s = this.state;
     try { localStorage.setItem('zt-checkout-profile-v1', JSON.stringify({ dir: s.dir, city: s.city, cp: s.cp, factName: s.factName, dni: s.dni })); } catch (e) {}
   }
   _set(k) { return (e) => this.setState({ [k]: e.target.value }, () => this._persist()); }
-  _fmt(n) { return 'USD ' + Math.round(n).toLocaleString('es-AR'); }
+  /* Se paga en pesos: el peso es el número principal y el dólar queda como
+     referencia, igual que en el cotizador. */
+  _ars(n) { return 'ARS ' + Math.round(n).toLocaleString('es-AR'); }
+  _usd(n) { return 'USD ' + Math.round(n).toLocaleString('es-AR'); }
   renderVals() {
     const s = this.state;
-    const total = s.usd * s.qty;
-    const ars = s.rate ? ('ARS ' + Math.round(total * s.rate).toLocaleString('es-AR')) : '';
+    const rate = s.rate || 1520;
+    const totalUsd = s.items.reduce((n, x) => n + x.usd * x.qty, 0);
+    const units = s.items.reduce((n, x) => n + x.qty, 0);
     const optBase = 'display:flex; flex-direction:column; align-items:flex-start; gap:3px; padding:14px 16px; border-radius:16px; cursor:pointer; font-family:inherit; background:#fff; text-align:left; transition:border-color .25s, box-shadow .25s;';
     const on = ' border:2px solid #0A84FF; box-shadow:0 0 0 4px rgba(10,132,255,.08);';
     const off = ' border:2px solid rgba(0,0,0,.1);';
     const rowBase = 'display:flex; align-items:center; gap:13px; padding:14px 16px; border-radius:16px; cursor:pointer; font-family:inherit; background:#fff; width:100%; box-sizing:border-box; transition:border-color .25s;';
     const dot = (sel) => 'width:19px; height:19px; border-radius:50%; flex-shrink:0; box-sizing:border-box; ' + (sel ? 'border:6px solid #0A84FF;' : 'border:2px solid rgba(0,0,0,.25);') + ' background:#fff;';
+    const short = (n, k) => n.length > k ? n.slice(0, k) + '\u2026' : n;
     return {
-      prodName: s.name, prodShort: s.name.length > 22 ? s.name.slice(0, 22) + '…' : s.name,
-      hasPhoto: !!s.photo, noPhoto: !s.photo,
-      photoNode: s.photo ? React.createElement('img', { src: s.photo, alt: s.name, style: { width: '100%', height: '100%', objectFit: 'contain', display: 'block' } }) : null,
-      monogram: (s.name || 'I').trim().charAt(0).toUpperCase(),
-      unitLine: this._fmt(s.usd) + (s.rate ? (' · ARS ' + Math.round(s.usd * s.rate).toLocaleString('es-AR')) : '') + ' c/u',
-      qty: s.qty,
-      incQty: () => this.setState({ qty: Math.min(10, s.qty + 1) }),
-      decQty: () => this.setState({ qty: Math.max(1, s.qty - 1) }),
+      isEmpty: !s.items.length, hasItems: !!s.items.length,
+      countLabel: units === 1 ? '1 equipo' : units + ' equipos',
+      items: s.items.map((it) => {
+        const photo = s.photos[it.id] || '';
+        return {
+          name: it.name, qty: it.qty,
+          unitLine: this._ars(it.usd * rate) + ' \u00b7 ' + this._usd(it.usd) + ' c/u',
+          lineMain: this._ars(it.usd * it.qty * rate),
+          lineSub: this._usd(it.usd * it.qty),
+          sumLabel: it.qty + ' \u00d7 ' + short(it.name, 26),
+          hasPhoto: !!photo, noPhoto: !photo,
+          photoNode: photo ? React.createElement('img', { src: photo, alt: it.name, style: { width: '100%', height: '100%', objectFit: 'contain', display: 'block' } }) : null,
+          inc: () => this._setQty(it.id, it.qty + 1),
+          dec: () => this._setQty(it.id, it.qty - 1),
+          remove: () => this._setQty(it.id, 0)
+        };
+      }),
       goBack: () => {
         if (window.history.length > 1 && document.referrer) { history.back(); }
-        else { location.href = 'Hero ZonaTech.dc.html'; }
+        else { location.href = 'Inicio ICLUB.dc.html'; }
       },
+      /* Con un solo equipo el cotizador puede arrancar con ese producto ya
+         elegido; con varios no hay un único producto que preseleccionar. */
+      finanHref: s.items.length === 1
+        ? ('Portal Clientes ICLUB.dc.html?p=' + encodeURIComponent(s.items[0].id) + '#financiar')
+        : 'Portal Clientes ICLUB.dc.html#financiar',
       isEnvio: s.entrega === 'envio',
       setEnvio: () => this.setState({ entrega: 'envio' }),
       setRetiro: () => this.setState({ entrega: 'retiro' }),
@@ -233,27 +316,29 @@ class Component extends DCLogic {
       dotCash: dot(s.pago === 'efectivo'),
       dotCard: dot(s.pago === 'tarjeta'),
       factName: s.factName, dni: s.dni, setFactName: this._set('factName'), setDni: this._set('dni'),
-      sumProdLabel: s.qty + ' × ' + (s.name.length > 26 ? s.name.slice(0, 26) + '…' : s.name),
-      sumProd: this._fmt(total),
       sumEnvio: s.entrega === 'retiro' ? 'Gratis' : 'Se paga al recibir',
-      totalMain: this._fmt(total), totalSub: ars,
+      totalMain: this._ars(totalUsd * rate), totalSub: this._usd(totalUsd),
       hasErr: !!s.err, err: s.err,
       sent: s.sent, notSent: !s.sent,
       confirm: () => {
+        if (!s.items.length) return;
         if (s.entrega === 'envio' && !s.dir.trim()) { this.setState({ err: 'Completá la dirección de envío.' }); return; }
         if (!s.factName.trim() || !s.dni.trim()) { this.setState({ err: 'Completá nombre y DNI para la facturación.' }); return; }
         const pago = s.pago === 'transferencia' ? 'Transferencia al alias ICLUBTUC \u2014 te paso el comprobante por ac\u00e1'
           : s.pago === 'efectivo' ? 'Efectivo'
           : 'Tarjeta \u2014 espero el link de pago';
-        const lines = [
-          'Hola ICLUB! Quiero confirmar mi pedido:',
-          '\u2022 ' + s.qty + ' x ' + s.name + ' \u2014 ' + this._fmt(s.usd) + ' c/u',
-          'Entrega: ' + (s.entrega === 'retiro' ? 'Retiro en el local' : ('Env\u00edo a ' + s.dir + (s.city ? ', ' + s.city : '') + (s.cp ? ' (CP ' + s.cp + ')' : ''))),
-          'Pago: ' + pago,
-          'Facturaci\u00f3n: ' + s.factName + ' \u2014 DNI ' + s.dni,
-          'Total: ' + this._fmt(total) + (ars ? ' (' + ars + ')' : '')
-        ];
+        const lines = ['Hola ICLUB! Quiero confirmar mi pedido:'];
+        s.items.forEach((it) => {
+          lines.push('\u2022 ' + it.qty + ' x ' + it.name + ' \u2014 ' + this._ars(it.usd * rate) + ' c/u');
+        });
+        lines.push('Entrega: ' + (s.entrega === 'retiro' ? 'Retiro en el local' : ('Env\u00edo a ' + s.dir + (s.city ? ', ' + s.city : '') + (s.cp ? ' (CP ' + s.cp + ')' : ''))));
+        lines.push('Pago: ' + pago);
+        lines.push('Facturaci\u00f3n: ' + s.factName + ' \u2014 DNI ' + s.dni);
+        lines.push('Total: ' + this._ars(totalUsd * rate) + ' (' + this._usd(totalUsd) + ')');
         this._persist();
+        /* El pedido ya salió: el carrito se vacía para que el cliente no lo
+           mande dos veces sin darse cuenta. */
+        try { localStorage.setItem('zt_cart', '[]'); } catch (e) {}
         this.setState({ err: '', sent: true });
         window.open('https://wa.me/5493814680653?text=' + encodeURIComponent(lines.join('\n')), '_blank');
       }

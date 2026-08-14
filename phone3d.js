@@ -1,4 +1,4 @@
-// phone3d.js — shared 3D iPhone builder/viewer for ZonaTech catalog cards.
+// phone3d.js — shared 3D iPhone builder/viewer for ICLUB catalog cards.
 // Reused by Apple, Producto (and later other categories).
 
 const THREE_URL = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
