@@ -15,6 +15,7 @@ export async function ensureThree(){
 /* ---------- model presets ---------- */
 export const MODELS = {
   iphone13:   { body:0x3E6187, frame:0x5D86AC, finish:'gloss',    cameras:'dual',   wallpaper:'ios15', name:'iPhone 13' },
+  iphone14:   { body:0x2C2C31, frame:0x4A4A50, finish:'gloss',    cameras:'dual',   name:'iPhone 14' },
   iphone15:   { body:0x1B1B1E, frame:0x2A2A2E, finish:'gloss',    cameras:'dual',   name:'iPhone 15' },
   iphone16pro:{ body:0x37363C, frame:0x6E6B73, finish:'titanium', cameras:'triple', name:'iPhone 16 Pro' },
   iphone17promax:{ body:0xCB4F27, frame:0xB8471F, finish:'gloss', cameras:'triple', name:'iPhone 17 Pro Max' }

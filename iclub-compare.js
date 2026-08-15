@@ -30,7 +30,8 @@
   }
   var CATALOG = {
     // iPhone — specs reales
-    'iphone13':    phone('iPhone 13', 400,     { screen:6.1, panel:'OLED Super Retina XDR', chip:'A15 Bionic', ram:4, storage:128, camera:12, battery:3240 }),
+    'iphone14':    phone('iPhone 14', 400,     { screen:6.1, panel:'OLED Super Retina XDR', chip:'A15 Bionic', ram:6, storage:128, camera:12, battery:3279 }),
+    'iphone13':    phone('iPhone 13', 380,     { screen:6.1, panel:'OLED Super Retina XDR', chip:'A15 Bionic', ram:4, storage:128, camera:12, battery:3240 }),
     'iphone15':    phone('iPhone 15', 500,     { screen:6.1, panel:'OLED Super Retina XDR', chip:'A16 Bionic', ram:6, storage:128, camera:48, battery:3349 }),
     'iphone16pro': phone('iPhone 16 Pro', 820, { screen:6.3, panel:'OLED ProMotion 120Hz', chip:'A18 Pro', ram:8, storage:128, camera:48, battery:3582 }),
 

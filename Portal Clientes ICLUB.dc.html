@@ -1136,6 +1136,7 @@
               <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:2px;">
                 <button onClick="{{ p.visToggle }}" style="font-family:inherit; font-size:10.5px; font-weight:700; letter-spacing:.05em; color:{{ p.visC }}; background:{{ p.visB }}; border:none; border-radius:980px; padding:5px 12px; cursor:pointer;">{{ p.visLabel }}</button>
                 <button onClick="{{ p.stkToggle }}" style="font-family:inherit; font-size:10.5px; font-weight:700; letter-spacing:.05em; color:{{ p.stkC }}; background:{{ p.stkB }}; border:none; border-radius:980px; padding:5px 12px; cursor:pointer;">{{ p.stkLabel }}</button>
+                <span style="font-size:10.5px; font-weight:700; letter-spacing:.05em; color:{{ p.condC }}; background:{{ p.condB }}; padding:5px 12px; border-radius:980px;">{{ p.condLabel }}</span>
                 <sc-if value="{{ p.invShow }}" hint-placeholder-val="{{ false }}">
                   <span style="font-size:10.5px; font-weight:700; letter-spacing:.05em; color:{{ p.invC }}; background:{{ p.invB }}; padding:5px 12px; border-radius:980px;">{{ p.invLabel }}</span>
                 </sc-if>
@@ -1213,6 +1214,17 @@
               <option value="Otro">Otro</option>
             </select>
           </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:7px;">
+          <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">CONDICIÓN — ES LO QUE SE LE PROMETE AL CLIENTE</label>
+          <select value="{{ catCond }}" onChange="{{ setCatCond }}" style="font-family:inherit; font-size:15px; font-weight:600; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:13px; padding:13px 16px; outline:none; cursor:pointer; width:100%; box-sizing:border-box;">
+            <option value="nuevo">Nuevo · sellado de fábrica</option>
+            <option value="a1">Seminuevo · grado A1 (como nuevo)</option>
+            <option value="impecable">Seminuevo · impecable</option>
+            <option value="muybueno">Seminuevo · muy bueno</option>
+            <option value="bueno">Seminuevo · bueno</option>
+          </select>
+          <span style="font-size:12.5px; color:#86868B; line-height:1.45;">{{ catCondHint }}</span>
         </div>
         <div style="display:flex; flex-direction:column; gap:7px;">
           <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">DESCRIPCIÓN (debajo del título en la ficha)</label>
@@ -2630,7 +2642,8 @@ class Component extends DCLogic {
      la carga de compras, que se evalúa antes de la sección de financiación. */
   _baseProducts() {
     return [
-      { id: 'iphone13', name: 'iPhone 13', spec: '128 GB · seminuevo', usd: 400, cat: 'Apple' },
+      { id: 'iphone13', name: 'iPhone 13', spec: '128 GB · grado A1', usd: 380, cat: 'Apple' },
+      { id: 'iphone14', name: 'iPhone 14', spec: '128 GB · grado A1', usd: 400, cat: 'Apple' },
       { id: 'iphone15', name: 'iPhone 15', spec: '128 GB · seminuevo', usd: 500, cat: 'Apple' },
       { id: 'iphone16pro', name: 'iPhone 16 Pro', spec: '128 GB · Batería 99% · seminuevo', usd: 820, cat: 'Apple' },
       { id: 'ipad11', name: 'iPad 11.ª generación', spec: '128 GB', usd: 519, cat: 'Apple' },
@@ -4076,9 +4089,14 @@ class Component extends DCLogic {
           stkC: p.sinStock ? '#C9502A' : '#1F8A5B',
           stkB: p.sinStock ? 'rgba(201,80,42,.12)' : 'rgba(31,138,91,.1)',
           stkToggle: () => setOv(p.id, { sinStock: !p.sinStock }),
+          /* Aviso: sin condición definida, la tienda muestra un default. Es el
+             agujero por donde antes se coló "nuevo sellado" sobre un usado. */
+          condLabel: { nuevo: 'NUEVO', a1: 'GRADO A1', impecable: 'IMPECABLE', muybueno: 'MUY BUENO', bueno: 'BUENO' }[p.cond] || 'CONDICIÓN SIN DEFINIR',
+          condC: p.cond ? (p.cond === 'nuevo' ? '#1F8A5B' : '#C9502A') : '#B0700F',
+          condB: p.cond ? (p.cond === 'nuevo' ? 'rgba(31,138,91,.1)' : 'rgba(201,80,42,.12)') : 'rgba(176,112,15,.14)',
           setPhoto: (e) => this._readImg(e, (url) => setOv(p.id, { photo: url })),
           clearPhoto: () => setOv(p.id, { photo: null }),
-          edit: () => this.setState({ catMode: 'form', catEdit: p.id, catError: '', catForm: { desc: p.desc || '', rows: (p.rows || []).map((r) => ({ k: r.k, v: r.v })), name: p.name, spec: p.spec || '', cat: p.cat || 'Celulares', usd: String(p.usd || ''), photo: p.photo || null, bat: p.bat ? String(p.bat) : '', pos: p.pos != null ? p.pos : null, hidden: !!p.hidden, usdNew: p.usdNew || '' } }),
+          edit: () => this.setState({ catMode: 'form', catEdit: p.id, catError: '', catForm: { desc: p.desc || '', rows: (p.rows || []).map((r) => ({ k: r.k, v: r.v })), name: p.name, spec: p.spec || '', cat: p.cat || 'Celulares', usd: String(p.usd || ''), photo: p.photo || null, bat: p.bat ? String(p.bat) : '', pos: p.pos != null ? p.pos : null, hidden: !!p.hidden, usdNew: p.usdNew || '', cond: p.cond || '' } }),
           canDel: true,
           del: () => {
             if (!window.confirm('¿Eliminar "' + p.name + '" del catálogo? Se saca de la tienda y de esta lista.')) return;
@@ -4088,7 +4106,7 @@ class Component extends DCLogic {
             this._save(Object.assign({}, db, { catalog: cat }));
           }
         })),
-        catNew: () => this.setState({ catMode: 'form', catEdit: null, catError: '', catForm: { name: '', spec: '', cat: 'Celulares', usd: '', photo: null, desc: '', rows: [], hidden: false, usdNew: '' } }),
+        catNew: () => this.setState({ catMode: 'form', catEdit: null, catError: '', catForm: { name: '', spec: '', cat: 'Celulares', usd: '', photo: null, desc: '', rows: [], hidden: false, usdNew: '', cond: 'nuevo' } }),
         catVisible: !cform.hidden,
         catVisTxt: cform.hidden ? 'Oculto — no aparece en la tienda' : 'Visible en la tienda',
         catVisSub: cform.hidden ? 'Lo seguís viendo acá y lo podés vender, pero nadie lo ve en la página.' : 'Aparece en su categoría y en el buscador de la página.',
@@ -4117,6 +4135,17 @@ class Component extends DCLogic {
         })),
         catRowAdd: () => this.setState({ catForm: Object.assign({}, cform, { rows: (cform.rows || []).map((x) => ({ k: x.k, v: x.v })).concat([{ k: '', v: '' }]) }) }),
         catCat: cform.cat, setCatCat: setCf('cat'),
+        catCond: cform.cond || (cform.cat === 'Apple' ? 'impecable' : 'nuevo'), setCatCond: setCf('cond'),
+        catCondHint: (() => {
+          const k = cform.cond || (cform.cat === 'Apple' ? 'impecable' : 'nuevo');
+          return {
+            nuevo: 'Se publica como nuevo sellado. Usá esto sólo si el equipo viene cerrado de fábrica.',
+            a1: 'Grado A1: como nuevo, sin una sola marca. Es el grado más alto de un usado.',
+            impecable: 'Seminuevo sin marcas de uso. Es el grado que justifica el precio más alto.',
+            muybueno: 'Seminuevo con micro-marcas que no se ven con la pantalla encendida.',
+            bueno: 'Seminuevo con marcas visibles y funcionamiento perfecto. Es el que justifica el precio más bajo.'
+          }[k];
+        })(),
         catUsd: cform.usd, setCatUsd: setCf('usd'),
         catUsdNew: cform.usdNew || '', setCatUsdNew: setCf('usdNew'),
         catAhorroHint: (() => {
@@ -4138,6 +4167,10 @@ class Component extends DCLogic {
           const usd = this._numF(cform.usd);
           if (usd <= 0) { this.setState({ catError: 'Ingresá el precio en US$.' }); return; }
           const fields = { name: String(cform.name).trim(), spec: String(cform.spec || '').trim(), cat: cform.cat || 'Otro', usd: usd, photo: cform.photo || null, bat: cform.cat === 'Apple' ? this._num(cform.bat) : null, pos: catPosVal };
+          /* Condición del equipo: la promesa que ve el cliente sale de acá y de
+             ningún otro lugar. Sin esto, un usado heredó el "nuevo sellado"
+             escrito a mano en la página. */
+          fields.cond = cform.cond || (cform.cat === 'Apple' ? 'impecable' : 'nuevo');
           fields.hidden = !!cform.hidden;
           fields.usdNew = this._numF(cform.usdNew) || null;
           fields.desc = String(cform.desc || '').trim();

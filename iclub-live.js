@@ -9,6 +9,89 @@
   var ZT_RATE_DEFAULT = 1520;
   var ZT_RATE = ZT_RATE_DEFAULT;
 
+  /* ---- CONDICIÓN DEL EQUIPO ----------------------------------------------
+     Única fuente de verdad de lo que se le promete al cliente sobre el estado
+     de un equipo. Antes cada tarjeta tenía el cartel escrito a mano en el HTML
+     ("NUEVO · SELLADO") y la ficha lo deducía de la categoría: un usado cargado
+     como Android juró ser nuevo de fábrica. Ahora el cartel, su color y la línea
+     de garantía salen SIEMPRE de acá, con la condición que se elige por producto
+     en el panel. Agregar un estado nuevo = una entrada en esta tabla. */
+  var CONDS = {
+    nuevo:     { label: 'NUEVO · SELLADO',       color: '#1F8A5B', row: 'Nuevo, sellado de fábrica', war: 'Garantía de fábrica' },
+    a1:        { label: 'SEMINUEVO · GRADO A1',  color: '#C9502A', row: 'Grado A1 — como nuevo, sin marcas de uso', war: 'Garantía ICLUB 30 días' },
+    impecable: { label: 'SEMINUEVO · IMPECABLE', color: '#C9502A', row: 'Seminuevo impecable — sin marcas de uso', war: 'Garantía ICLUB 30 días' },
+    muybueno:  { label: 'SEMINUEVO · MUY BUENO', color: '#C9502A', row: 'Seminuevo — micro-marcas que no se ven encendido', war: 'Garantía ICLUB 30 días' },
+    bueno:     { label: 'SEMINUEVO · BUENO',     color: '#C9502A', row: 'Seminuevo — marcas de uso visibles, funciona perfecto', war: 'Garantía ICLUB 30 días' }
+  };
+  /* Por categoría, sólo para productos que nadie clasificó todavía. Deliberadamente
+     conservador: ante la duda NO se promete "nuevo". Sin condición conocida se
+     muestra "SEMINUEVO", que a lo sumo subestima el equipo — el error inverso
+     (publicar un usado como sellado de fábrica) es el que genera reclamos. */
+  var COND_DEFAULT = { 'Apple': 'impecable', 'Celulares': 'nuevo', 'Smart TV': 'nuevo', 'Accesorios': 'nuevo' };
+  var COND_UNKNOWN = 'impecable';
+  /* La categoría se deduce del contexto — el link de la tarjeta o la página en la
+     que estamos — y no sólo del panel: las tarjetas nativas no tienen override,
+     y son justamente las que tenían el cartel equivocado. */
+  function catFromContext(el) {
+    var card = el && el.closest && el.closest('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card]');
+    var href = (card && card.getAttribute && card.getAttribute('href')) || '';
+    if (!href) { try { href = location.pathname + location.search; } catch (e) {} }
+    href = decodeURIComponent(href);
+    if (href.indexOf('Producto Apple') >= 0 || href.indexOf('Apple ICLUB') >= 0) return 'Apple';
+    if (href.indexOf('Producto Android') >= 0 || href.indexOf('Android ICLUB') >= 0) return 'Celulares';
+    if (href.indexOf('Producto Smart TV') >= 0 || href.indexOf('Smart TV ICLUB') >= 0) return 'Smart TV';
+    return '';
+  }
+  function condOf(ov, el, cat, attr) {
+    var k = (ov && ov.cond) || (el && el.getAttribute && el.getAttribute(attr || 'data-zt-cond')) || '';
+    if (!k) k = COND_DEFAULT[cat || catFromContext(el)] || COND_UNKNOWN;
+    if (!CONDS[k]) k = COND_UNKNOWN;
+    /* Devuelve también la clave resuelta: quien inyecta una tarjeta la escribe en
+       el atributo, así el cartel no depende de adivinar la categoría por el link. */
+    return { key: k, label: CONDS[k].label, color: CONDS[k].color, row: CONDS[k].row, war: CONDS[k].war };
+  }
+  /* Reescribe el cartel de condición de cada tarjeta y ficha desde los datos.
+     Corre en cada pasada, así nunca queda un cartel viejo pegado. */
+  function stampCondicion(cat) {
+    cat = cat || {};
+    var eyes = document.querySelectorAll('[data-zt-cond]');
+    Array.prototype.forEach.call(eyes, function (el) {
+      var card = el.closest('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-detail]');
+      var id = '';
+      if (card) {
+        id = card.getAttribute('data-zt-custom') || '';
+        if (!id) {
+          var href = card.getAttribute('href') || '';
+          var m = href.match(/[?&](?:id|m)=([^&#]+)/);
+          if (m) id = decodeURIComponent(m[1]);
+        }
+      }
+      if (!id) { try { id = new URLSearchParams(location.search).get('id') || new URLSearchParams(location.search).get('m') || ''; } catch (e) {} }
+      var ov = id ? cat[id] : null;
+      if (ov && ov.sinStock) { el.textContent = 'SIN STOCK'; el.style.color = '#C9502A'; return; }
+      var c = condOf(ov, el, (ov && ov.cat) || '');
+      el.textContent = c.label;
+      el.style.color = c.color;
+    });
+    /* La garantía es parte de la misma promesa: si el equipo es seminuevo, no
+       puede decir "garantía de fábrica". */
+    var rows = document.querySelectorAll('[data-zt-condrow]');
+    Array.prototype.forEach.call(rows, function (el) {
+      var id = '';
+      try { id = new URLSearchParams(location.search).get('id') || new URLSearchParams(location.search).get('m') || ''; } catch (e) {}
+      var ov = id ? cat[id] : null;
+      el.textContent = condOf(ov, el, (ov && ov.cat) || '', 'data-zt-condrow').row;
+    });
+    /* La garantía es la otra mitad de la promesa: "garantía de fábrica" no puede
+       sobrevivir a un equipo seminuevo. Sale de la misma tabla. */
+    var wars = document.querySelectorAll('[data-zt-warrow]');
+    Array.prototype.forEach.call(wars, function (el) {
+      var id = '';
+      try { id = new URLSearchParams(location.search).get('id') || new URLSearchParams(location.search).get('m') || ''; } catch (e) {}
+      var ov = id ? cat[id] : null;
+      el.textContent = condOf(ov, el, (ov && ov.cat) || '', 'data-zt-warrow').war;
+    });  }
+
   function fmtInt(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
   function getLocal() {
     try { var raw = localStorage.getItem(LS); if (raw) { var db = JSON.parse(raw); if (db && db.clients) return db; } } catch (e) {}
@@ -203,6 +286,9 @@
     var inv = (db.inventory || []).filter(function (it) { return (it.stock || 0) === 1; }).map(function (it) { return norm(it.name); }).filter(Boolean);
     var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card]');
     Array.prototype.forEach.call(cards, function (card) {
+      /* Un aviso escrito a mano en la página gana: es una decisión comercial
+         explícita, no una deducción del inventario. */
+      if (card.querySelector('[data-zt-ultima][data-zt-fixed]')) return;
       var old = card.querySelector('[data-zt-ultima]');
       if (old) old.parentNode.removeChild(old);
       if (card.querySelector('[data-zt-nostock]')) return;
@@ -231,6 +317,12 @@
       var node;
       while ((node = walker.nextNode())) {
         if (seen.indexOf(node) >= 0) continue;
+        /* Los precios de un detalle inyectado los mantiene ztApplyCur (con la
+           misma cotizaci\u00f3n): si adem\u00e1s los tocara resyncArs, habr\u00eda dos due\u00f1os
+           del mismo n\u00famero \u2014 y el principal en pesos terminaba recalculado
+           contra el d\u00f3lar de otro producto y achicado a 12.5px. */
+        var own = node.parentNode;
+        if (own && own.closest && own.closest('[data-zt-price],[data-zt-price-alt]')) { seen.push(node); continue; }
         var t = node.nodeValue || '';
         var mUsd = t.match(/^\s*(USD|US\$)\s*([\d.,]+)\s*$/);
         if (mUsd) { seen.push(node); if (!usd) usd = parseFloat(mUsd[2].replace(/\./g, '').replace(',', '.')) || 0; continue; }
@@ -246,6 +338,18 @@
         var p = n.parentNode;
         var card = p && p.closest && p.closest('[data-zt-arsfirst="1"]');
         if (card) return;
+        /* No se re-estiliza nunca un nodo que ya vive en un slot de precio
+           principal. En las fichas el precio grande sale por una interpolación
+           anidada dentro del contenedor de 30px: ese span interno no tiene hijos
+           y caía en la heurística de "línea secundaria", quedando más chico que
+           su propia referencia en dólares. Se mide el contexto real en vez de
+           enumerar atributos, así cubre también los casos que no conozco. */
+        var anc = p;
+        for (var k = 0; k < 4 && anc && anc.nodeType === 1; k++) {
+          var fs = parseFloat(getComputedStyle(anc).fontSize) || 0;
+          if (fs >= 20) return;
+          anc = anc.parentNode;
+        }
         if (p && p.style && p.children && p.children.length === 0) {
           p.style.fontSize = '12.5px';
           p.style.color = '#6E6E73';
@@ -325,15 +429,26 @@
       if (!tag) {
         tag = document.createElement('div');
         tag.setAttribute('data-zt-cuota', '');
-        tag.style.cssText = 'font-size:12px;font-weight:600;color:#0A84FF;letter-spacing:-.01em;margin-top:3px;white-space:nowrap;';
-        var anchor = card.querySelector('[data-zt-ars]') || host;
-        anchor.parentNode.insertBefore(tag, anchor.nextSibling);
+        tag.style.cssText = 'font-size:12px;font-weight:600;color:#0A84FF;letter-spacing:-.01em;margin-top:3px;white-space:nowrap;order:2;';
       }
-      /* La cuota se lee en la misma moneda que el precio de la tarjeta: en pesos
-         donde el peso manda, en dólares en Apple. */
-      var href = (card.getAttribute && card.getAttribute('href')) || '';
-      if (!href) { var a0 = card.querySelector('a[href]'); href = (a0 && a0.getAttribute('href')) || ''; }
-      var pesos = href.indexOf('Producto Apple') < 0;
+      /* La cuota va SIEMPRE al final del bloque de precio. Antes se anclaba en
+         [data-zt-ars] cuando ese atributo existía y en el nodo USD cuando no, y
+         como sólo lo llevan las tarjetas que estampa stampArs, la línea caía
+         arriba del precio en pesos en unas y abajo en otras. El nodo de pesos se
+         resuelve igual que el de dólares: por su texto, no por un atributo.
+         Se inserta UNA sola vez: mover el nodo en cada pasada rompía el
+         re-render de React (la grilla quedaba en blanco). El puesto lo fija
+         `order`, no la posición en el DOM. */
+      var arsEl = null;
+      for (var j = 0; j < all.length; j++) {
+        var e2 = all[j];
+        if (e2.children.length || e2 === tag) continue;
+        if (/^\s*(?:ARS|\$)\s*[\d.,]+\s*$/.test(e2.textContent || '')) { arsEl = e2; break; }
+      }
+      var slot = (arsEl && arsEl.parentNode) ? arsEl.parentNode : host.parentNode;
+      if (!tag.parentNode) slot.appendChild(tag);
+      /* La cuota se lee en la misma moneda que el precio de la tarjeta. */
+      var pesos = !usdFirst(card);
       tag.textContent = pesos
         ? (N + ' cuotas de ARS ' + fmtInt(per * ZT_RATE))
         : (N + ' cuotas de USD ' + fmtInt(per));
@@ -427,9 +542,29 @@
     if (!ok) return null;
     return card.parentElement;
   }
+  function nativeDupe(name) {
+    var norm = function (s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); };
+    var n = norm(name);
+    if (n.length < 5) return false;
+    var natives = document.querySelectorAll('[data-appl-card]:not([data-zt-custom]),[data-nv-card]:not([data-zt-custom]),[data-cat-card]:not([data-zt-custom]),[data-cc-card]:not([data-zt-custom])');
+    return Array.prototype.some.call(natives, function (k) {
+      var h = k.querySelector('h2,h3,h4');
+      if (!h) return false;
+      var base = norm(h.textContent);
+      if (base.length < 5 || n.indexOf(base) !== 0) return false;
+      /* Lo único que puede sobrar es la capacidad ("iPhone 14" vs "IPHONE 14
+         128GB"). Cualquier otra cosa es OTRO equipo: "iPhone 14 Pro" y
+         "iPhone 13 Pro Max" tienen que seguir publicándose. */
+      var rest = n.slice(base.length);
+      return rest === '' || /^\d+(gb|tb)$/.test(rest);
+    });
+  }
   function injectCustomCard(id, ov, rate) {
     var existing = document.querySelector('[data-zt-custom="' + id + '"]');
     if (ov.hidden) { if (existing) existing.remove(); return; }
+    /* El mismo equipo publicado dos veces con dos precios distintos es peor que
+       no publicarlo: manda la tarjeta de la página, que es la que lleva la oferta. */
+    if (nativeDupe(ov.name)) { if (existing) existing.remove(); return; }
     var sig = [ov.name, ov.spec, ov.usd, ov.sinStock ? 1 : 0, (ov.photo || '').length, rate, ov.bat || '', ov.pos != null ? ov.pos : '', ov.cat || '', (ov.px || 0).toFixed ? (ov.px || 0).toFixed(1) : 0, (ov.py || 0).toFixed ? (ov.py || 0).toFixed(1) : 0, ov.pz || 1].join('|');
     if (existing && existing.getAttribute('data-zt-sig') === sig) return;
     var grid = gridFor(ov.cat || 'Celulares');
@@ -444,6 +579,7 @@
       nv.id = 'zt-custom-' + id;
       nv.setAttribute('data-zt-sig', sig);
       nv.href = detailHrefFor(ov.cat, id);
+      if (ov.cat === 'Apple') nv.setAttribute('data-zt-cur', 'usd');
       nv.style.cssText = 'text-decoration:none;color:#1D1D1F;display:flex;flex-direction:column;gap:13px;padding:20px;background:#fff;border-radius:24px;border:1px solid rgba(0,0,0,.05);box-shadow:0 12px 40px -18px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.03);font-family:inherit;' + (ov.sinStock ? 'opacity:.62;' : '');
       var nvi = document.createElement('div');
       nvi.setAttribute('data-nv-img', '');
@@ -452,10 +588,11 @@
       else { var nph = document.createElement('span'); nph.textContent = (ov.name || '?').charAt(0).toUpperCase(); nph.style.cssText = 'font-size:40px;font-weight:700;color:#C9BFB2;'; nvi.appendChild(nph); }
       nv.appendChild(nvi);
       makePhotoEditable(nvi, id);
-      var nvEye = ov.sinStock ? 'SIN STOCK' : (ov.cat === 'Apple' ? 'SEMINUEVO CERTIFICADO' : 'DISPONIBLE');
-      var nvEyeCol = ov.sinStock ? '#C9502A' : (ov.cat === 'Apple' ? '#C9502A' : '#1F8A5B');
+      var nvCond = condOf(ov, null, ov.cat);
+      var nvEye = ov.sinStock ? 'SIN STOCK' : nvCond.label;
+      var nvEyeCol = ov.sinStock ? '#C9502A' : nvCond.color;
       var nvb = document.createElement('div');
-      nvb.innerHTML = '<div data-nv-eyebrow style="font-size:11px;font-weight:700;letter-spacing:.16em;color:' + nvEyeCol + ';">' + nvEye + '</div>'
+      nvb.innerHTML = '<div data-nv-eyebrow data-zt-cond="' + nvCond.key + '" style="font-size:11px;font-weight:700;letter-spacing:.16em;color:' + nvEyeCol + ';">' + nvEye + '</div>'
         + '<div style="display:flex;flex-direction:column;gap:3px;margin-top:13px;"><h4 style="margin:0;font-size:17px;font-weight:600;letter-spacing:-.01em;color:#1D1D1F;"></h4><div data-zt-nvspec style="font-size:13px;color:#6E6E73;"></div></div>'
         + '<div data-nv-foot style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:13px;"><div style="display:flex;flex-direction:column;gap:1px;"><div style="font-size:20px;font-weight:600;letter-spacing:-.01em;color:#1D1D1F;">USD ' + fmtInt(ov.usd || 0) + '</div><div style="font-size:12px;color:#A1A1A6;">ARS ' + fmtInt((ov.usd || 0) * rate) + '</div></div><div style="display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:980px;background:#F5F1EC;font-size:13px;font-weight:600;color:#1D1D1F;white-space:nowrap;">Más info <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></div></div>';
       nvb.style.cssText = 'display:contents;';
@@ -476,6 +613,7 @@
       row.id = 'zt-custom-' + id;
       row.setAttribute('data-zt-sig', sig);
       row.href = detailHrefFor(ov.cat, id);
+      if (ov.cat === 'Apple') row.setAttribute('data-zt-cur', 'usd');
       row.style.cssText = 'display:flex;flex-direction:column;gap:16px;padding:22px;background:#fff;border-radius:24px;text-decoration:none;color:#1D1D1F;box-shadow:0 12px 40px -18px rgba(0,0,0,.14), 0 2px 6px rgba(0,0,0,.03);transition:box-shadow .4s, transform .4s;will-change:transform;' + (ov.sinStock ? 'opacity:.62;' : '');
       var rw = document.createElement('div');
       rw.setAttribute('data-appl-imgwrap', '');
@@ -487,7 +625,8 @@
       makePhotoEditable(rw, id);
       var rb = document.createElement('div');
       rb.style.cssText = 'display:flex;flex-direction:column;gap:9px;';
-      rb.innerHTML = '<div style="font-size:10.5px;font-weight:700;letter-spacing:.18em;color:#C9502A;">SEMINUEVO CERTIFICADO</div>'
+      var rCond = condOf(ov, null, ov.cat);
+      rb.innerHTML = '<div data-zt-cond="' + rCond.key + '" style="font-size:10.5px;font-weight:700;letter-spacing:.18em;color:' + (ov.sinStock ? '#C9502A' : rCond.color) + ';">' + (ov.sinStock ? 'SIN STOCK' : rCond.label) + '</div>'
         + '<h2 style="margin:0;font-size:19px;font-weight:600;letter-spacing:-.015em;"></h2>'
         + '<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#6E6E73;"></div>';
       rb.children[1].textContent = ov.name || '';
@@ -511,6 +650,7 @@
     }
     var card = document.createElement('a');
     card.href = detailHrefFor(ov.cat, id);
+    if (ov.cat === 'Apple') card.setAttribute('data-zt-cur', 'usd');
     card.setAttribute('data-zt-custom', id);
     card.id = 'zt-custom-' + id;
     card.setAttribute('data-zt-sig', sig);
@@ -539,7 +679,14 @@
     makePhotoEditable(wrap, id);
     var body = document.createElement('div');
     body.style.cssText = 'display:flex;flex-direction:column;gap:6px;flex:1;';
-    body.innerHTML = '<div style="font-size:11px;font-weight:700;letter-spacing:.16em;color:#1F8A5B;">DISPONIBLE</div>'
+    /* Tercera rama de inyección de tarjetas. Tenía "DISPONIBLE" escrito a mano en
+       el verde del "nuevo": un dato de stock ocupando el lugar de la condición,
+       y leído por el cliente como una promesa de estado mejor que la del
+       seminuevo de al lado. Ahora sale del mismo dato que las otras dos. */
+    var gCond = condOf(ov, null, ov.cat);
+    var gEye = ov.sinStock ? 'SIN STOCK' : gCond.label;
+    var gEyeCol = ov.sinStock ? '#C9502A' : gCond.color;
+    body.innerHTML = '<div data-zt-cond="' + gCond.key + '" style="font-size:11px;font-weight:700;letter-spacing:.16em;color:' + gEyeCol + ';">' + gEye + '</div>'
       + '<h3 style="margin:0;font-size:21px;font-weight:600;letter-spacing:-.02em;color:#1D1D1F;"></h3>'
       + '<div style="font-size:14px;color:#6E6E73;"></div>'
       + '<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:auto;padding-top:10px;"><div style="display:flex;flex-direction:column;gap:2px;"><div style="font-size:26px;font-weight:600;letter-spacing:-.02em;color:#1D1D1F;">USD ' + fmtInt(ov.usd || 0) + '</div><div style="font-size:12px;color:#A1A1A6;">ARS ' + fmtInt((ov.usd || 0) * rate) + '</div></div><div style="width:44px;height:44px;border-radius:50%;background:#F5F1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></div></div>';
@@ -595,9 +742,9 @@
     Array.prototype.forEach.call(sec.children, function (el) { if (el.id !== 'zt-custom-detail') el.style.setProperty('display', 'none', 'important'); });
     var defRowsByCat = {
       'Smart TV': [{ k: 'Marca', v: 'A completar' }, { k: 'Tamaño', v: 'A completar' }, { k: 'Resolución', v: 'Ultra HD (4K)' }],
-      'Celulares': [{ k: 'Almacenamiento', v: ov.spec || '128 GB' }, { k: 'RAM', v: 'A completar' }, { k: 'Garantía', v: '30 días' }],
-      'Apple': [{ k: 'Almacenamiento', v: ov.spec || '128 GB' }, { k: 'Garantía', v: '30 días' }, { k: 'Color', v: 'A completar' }],
-      'Accesorios': [{ k: 'Condición', v: 'Nuevo · sellado' }, { k: 'Garantía', v: '30 días' }]
+      'Celulares': [{ k: 'Almacenamiento', v: ov.spec || '128 GB' }, { k: 'RAM', v: 'A completar' }, { k: 'Condición', v: condOf(ov, null, ov.cat).row }, { k: 'Garantía', v: '30 días' }],
+      'Apple': [{ k: 'Almacenamiento', v: ov.spec || '128 GB' }, { k: 'Condición', v: condOf(ov, null, ov.cat).row }, { k: 'Garantía', v: '30 días' }],
+      'Accesorios': [{ k: 'Condición', v: condOf(ov, null, ov.cat).row }, { k: 'Garantía', v: '30 días' }]
     };
     var rows = (ov.rows && ov.rows.length) ? ov.rows : (defRowsByCat[ov.cat] || [{ k: 'Detalle', v: ov.spec || 'A completar' }, { k: 'Garantía', v: '30 días' }]);
     var sig = [ov.name, ov.spec, ov.usd, ov.bat || '', (ov.photo || '').length, rate, ov.sinStock ? 1 : 0, ov.cat || '', (ov.px || 0).toFixed ? (ov.px || 0).toFixed(1) : 0, (ov.py || 0).toFixed ? (ov.py || 0).toFixed(1) : 0, ov.pz || 1, JSON.stringify(rows), ov.desc || ''].join('|');
@@ -622,15 +769,17 @@
     var cmpBtn = (ov.cat === 'Accesorios') ? '' : '<button data-compare="' + pid + '" aria-pressed="false" aria-label="Comparar" title="Comparar equipos" style="width:50px;height:50px;flex-shrink:0;border:1.5px solid rgba(0,0,0,.16);background:#fff;border-radius:16px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#1D1D1F;font-family:inherit;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8h14M5 8l-3 6a3 3 0 0 0 6 0zM19 8l-3 6a3 3 0 0 0 6 0z"></path></svg></button>';
     var info = document.createElement('div');
     info.className = 'det-info';
+    info.setAttribute('data-zt-detail', '');
     info.style.cssText = 'display:flex;flex-direction:column;gap:11px;min-width:0;';
-    var eyeTxt = ov.sinStock ? 'SIN STOCK' : (ov.cat === 'Apple' ? 'SEMINUEVO CERTIFICADO' : 'NUEVO · DISPONIBLE');
-    var eyeCol = ov.sinStock ? '#C9502A' : (ov.cat === 'Apple' ? '#C9502A' : '#1F8A5B');
+    var dCond = condOf(ov, null, ov.cat);
+    var eyeTxt = ov.sinStock ? 'SIN STOCK' : dCond.label;
+    var eyeCol = ov.sinStock ? '#C9502A' : dCond.color;
     var dotCol = ov.sinStock ? '#C9502A' : '#1F8A5B';
     var rowsHtml = '';
     rows.forEach(function (r, i) {
       rowsHtml += '<div style="display:flex;justify-content:space-between;align-items:center;gap:18px;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.08);font-size:14px;"><span data-zt-row-k="' + i + '" style="color:#86868B;"></span><span data-zt-row-v="' + i + '" style="font-weight:500;color:#1D1D1F;text-align:right;"></span></div>';
     });
-    info.innerHTML = '<div style="font-size:12px;font-weight:700;letter-spacing:.24em;color:' + eyeCol + ';">' + eyeTxt + '</div>'
+    info.innerHTML = '<div data-zt-cond="' + dCond.key + '" style="font-size:12px;font-weight:700;letter-spacing:.24em;color:' + eyeCol + ';">' + eyeTxt + '</div>'
       + '<h1 data-zt-edit-name style="margin:0;font-size:clamp(28px,3.4vw,42px);font-weight:700;letter-spacing:-.04em;line-height:.98;color:#1D1D1F;"></h1>'
       + '<div data-zt-edit-desc style="font-size:16.5px;color:#6E6E73;"></div>'
       + '<div data-zd="bat" style="display:none;align-items:center;gap:16px;margin-top:2px;"><span style="width:52px;height:19px;border:1.5px solid rgba(0,0,0,.32);border-radius:5px;display:inline-flex;align-items:center;padding:2px;box-sizing:border-box;"><span data-zd="batfill" style="height:100%;width:0;background:#1D1D1F;border-radius:2.5px;transition:width 1.1s cubic-bezier(.22,1,.36,1);"></span></span><span data-zd="battxt" style="font-size:16px;color:#6E6E73;"></span></div>'
@@ -643,7 +792,7 @@
           + '<button data-zt-cur="USD" style="padding:7px 16px;border:none;background:transparent;border-radius:9px;font-family:inherit;font-size:13.5px;font-weight:600;color:#86868B;cursor:pointer;">USD</button>'
           + '<button data-zt-cur="ARS" style="padding:7px 16px;border:none;background:transparent;border-radius:9px;font-family:inherit;font-size:13.5px;font-weight:600;color:#86868B;cursor:pointer;">ARS</button>'
         + '</div>'
-        + '<div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;"><span data-zt-price data-usd-val="' + (ov.usd || 0) + '" style="font-size:30px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;color:#1D1D1F;">USD ' + fmtInt(ov.usd || 0) + '</span><span data-zt-price-alt style="font-size:15px;color:#A1A1A6;white-space:nowrap;"></span></div>'
+        + '<div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;"><span data-zt-price data-usd-val="' + (ov.usd || 0) + '" style="font-size:30px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;color:#1D1D1F;">' + ((ov.cat === 'Apple') ? ('USD ' + fmtInt(ov.usd || 0)) : ('ARS ' + fmtInt((ov.usd || 0) * rate))) + '</span><span data-zt-price-alt style="font-size:15px;color:#A1A1A6;white-space:nowrap;"></span></div>'
       + '</div>'
       + '<div style="display:flex;flex-direction:column;gap:9px;margin-top:8px;max-width:430px;">'
         + '<div style="display:flex;align-items:stretch;gap:12px;">'
@@ -725,8 +874,14 @@
     });
 
     var qin = info.querySelector('[data-zt-qty]');
+    /* Misma regla que en las tarjetas (curMark): el dólar es principal sólo en
+       Apple. La preferencia guardada pesa únicamente si el cliente usó el switch.
+       Antes arrancaba siempre en USD y el detalle de un accesorio contradecía a
+       su propia tarjeta. */
+    var curDefault = (ov.cat === 'Apple') ? 'USD' : 'ARS';
     function ztApplyCur() {
-      var c = 'USD'; try { c = localStorage.getItem('zt_cur') || 'USD'; } catch (e) {}
+      var c = curDefault;
+      try { if (localStorage.getItem('zt_cur_manual') === '1') c = localStorage.getItem('zt_cur') || curDefault; } catch (e) {}
       var sp = info.querySelector('[data-zt-price]');
       if (sp) {
         var usd = parseFloat(sp.getAttribute('data-usd-val')) || 0;
@@ -951,11 +1106,21 @@
         var n = m ? parseInt(m[1].replace(/[^0-9]/g, ''), 10) : 0;
         k.setAttribute('data-zt-usd', isNaN(n) ? 0 : n);
       });
-      cards.sort(function (a, b) {
-        return (+b.getAttribute('data-zt-usd') || 0) - (+a.getAttribute('data-zt-usd') || 0);
-      });
+      cards.sort(byPrio);
       cards.forEach(function (k, i) { k.style.order = i; });
     });
+  }
+
+  /* Un destacado es una decisión comercial: gana al orden por precio, que es
+     sólo un default. data-zt-first="0" va primero, "1" segundo, etc. */
+  function prioOf(k) {
+    var v = k.getAttribute && k.getAttribute('data-zt-first');
+    return (v == null || v === '') ? 9999 : (parseInt(v, 10) || 0);
+  }
+  function byPrio(a, b) {
+    var d = prioOf(a) - prioOf(b);
+    if (d) return d;
+    return (+b.getAttribute('data-zt-usd') || 0) - (+a.getAttribute('data-zt-usd') || 0);
   }
 
   function capNovedades() {
@@ -969,9 +1134,7 @@
         var n = m ? parseInt(m[1].replace(/[^0-9]/g, ''), 10) : 0;
         k.setAttribute('data-zt-usd', isNaN(n) ? 0 : n);
       });
-      cards.sort(function (a, b) {
-        return (+b.getAttribute('data-zt-usd') || 0) - (+a.getAttribute('data-zt-usd') || 0);
-      });
+      cards.sort(byPrio);
       cards.forEach(function (k, i) {
         k.style.order = i;
         if (i < 3) k.removeAttribute('data-zt-navcap');
@@ -1076,12 +1239,24 @@
      así que ahí el USD manda. En Android, Smart TV y el resto el cliente
      compara en pesos, así que el peso va grande y el dólar de referencia
      abajo. No se recalcula nada acá — sólo se cambia qué se lee primero. */
+  /* ¿El dólar es el precio principal? SÓLO en Apple. Se decide por un marcador
+     explícito en la tarjeta — nunca por el href de la ficha: 'Accesorios' (PS5,
+     iPad, AirPods) se renderiza con la plantilla de Apple, así que el link dice
+     qué plantilla lo muestra, no si el producto es un iPhone. Sin marcador, pesos
+     primero, que es lo que corresponde a Android, Smart TV y el resto. */
+  function usdFirst(card) {
+    return !!(card && card.getAttribute && card.getAttribute('data-zt-cur') === 'usd');
+  }
+  function curMark(ov) {
+    return (ov && ov.cat === 'Apple') ? ' data-zt-cur="usd"' : '';
+  }
+
   function orderPrices() {
     var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card]');
     Array.prototype.forEach.call(cards, function (card) {
       var href = (card.getAttribute && card.getAttribute('href')) || '';
       if (!href) { var a = card.querySelector('a[href]'); href = (a && a.getAttribute('href')) || ''; }
-      if (href.indexOf('Producto Apple') >= 0) return;
+      if (usdFirst(card)) return;
       var usdEl = null, arsEl = null;
       var all = card.querySelectorAll('*');
       for (var i = 0; i < all.length; i++) {
@@ -1102,7 +1277,20 @@
       usdEl.style.fontWeight = '400';
       usdEl.style.color = '#6E6E73';
       usdEl.style.letterSpacing = '-.01em';
-      if (arsEl.nextSibling !== usdEl) arsEl.parentNode.insertBefore(arsEl, usdEl);
+      /* El orden visual se cambia con CSS, NO moviendo nodos: este bloque lo
+         renderiza React, y reordenar sus hijos hacía que al re-renderizar no los
+         encontrara donde los dejó (removeChild fallaba y la página quedaba en
+         blanco). Con `order` el DOM queda intacto y reafirmar en cada pasada es
+         inofensivo por construcción. */
+      var slot = arsEl.parentNode;
+      if (slot && slot.style) {
+        var disp = getComputedStyle(slot).display;
+        if (disp !== 'flex' && disp !== 'inline-flex') { slot.style.display = 'flex'; slot.style.flexDirection = 'column'; }
+        else if (getComputedStyle(slot).flexDirection.indexOf('column') < 0) { slot.style.flexDirection = 'column'; }
+        slot.style.alignItems = slot.style.alignItems || 'flex-start';
+      }
+      arsEl.style.order = '0';
+      usdEl.style.order = '1';
       card.setAttribute('data-zt-arsfirst', '1');
     });
   }
@@ -1114,6 +1302,7 @@
      (por eso convivían dos dólares distintos en la misma página). */
   function baseApply(rate) {
     carryProduct();
+    stampCondicion({});
     resyncArs(rate);
     stampArs(rate);
     stampCuota(null, 0);
@@ -1162,6 +1351,7 @@
     injectCustomDetail(db, rate);
     injectRecCards(db, rate);
     carryProduct();
+    stampCondicion(cat);
     resyncArs(rate);
     stampArs(rate);
     stampCuota(st.recargos, st.finMin);
@@ -1381,7 +1571,7 @@
   });
 
   /* ===== Búsqueda global (lupa) ===== */
-  var ZT_SEARCH_INDEX = [{"n":"iPhone 13","h":"Producto Apple.dc.html?m=iphone13","s":"iPhone · USD 400"},{"n":"iPhone 15","h":"Producto Apple.dc.html?m=iphone15","s":"iPhone · USD 500"},{"n":"iPhone 16 Pro","h":"Producto Apple.dc.html?m=iphone16pro","s":"iPhone · USD 820"},{"n":"AirPods Max","h":"Producto Apple.dc.html?m=airpodsmax","s":"Accesorio Apple · USD 350"},{"n":"iPad 11ª gen","h":"Producto Apple.dc.html?m=ipad11","s":"Accesorio Apple · USD 519"},{"n":"Samsung A07","h":"Producto Android.dc.html?id=and-samsung-a07","s":"Celular · 128 GB · 4 GB · USD 186"},{"n":"Samsung A17","h":"Producto Android.dc.html?id=and-samsung-a17","s":"Celular · 128 GB · 4 GB · USD 259"},{"n":"Samsung A26 5G","h":"Producto Android.dc.html?id=and-samsung-a26","s":"Celular · 256 GB · 8 GB · USD 393"},{"n":"Samsung A36 5G","h":"Producto Android.dc.html?id=and-samsung-a36","s":"Celular · 256 GB · 8 GB · USD 434"},{"n":"Redmi A5","h":"Producto Android.dc.html?id=and-redmi-a5","s":"Celular · 128 GB · 4 GB · USD 186"},{"n":"Xiaomi 15c","h":"Producto Android.dc.html?id=and-xiaomi-15c-4","s":"Celular · 256 GB · 4 GB · USD 205"},{"n":"Xiaomi 15c","h":"Producto Android.dc.html?id=and-xiaomi-15c-8","s":"Celular · 256 GB · 8 GB · USD 229"},{"n":"Xiaomi Note 14","h":"Producto Android.dc.html?id=and-xiaomi-note14","s":"Celular · 256 GB · 8 GB · USD 252"},{"n":"Xiaomi Note 14 Pro 5G","h":"Producto Android.dc.html?id=and-xiaomi-note14pro","s":"Celular · 256 GB · 8 GB · USD 381"},{"n":"Xiaomi Note 15","h":"Producto Android.dc.html?id=and-xiaomi-note15-128","s":"Celular · 128 GB · 6 GB · USD 252"},{"n":"Xiaomi Note 15","h":"Producto Android.dc.html?id=and-xiaomi-note15-256","s":"Celular · 256 GB · 8 GB · USD 300"},{"n":"Xiaomi Note 15 5G","h":"Producto Android.dc.html?id=and-xiaomi-note15-5g","s":"Celular · 256 GB · 8 GB · USD 355"},{"n":"Xiaomi Note 15 Pro","h":"Producto Android.dc.html?id=and-xiaomi-note15pro","s":"Celular · 512 GB · 12 GB · USD 435"},{"n":"Xiaomi Note 15 Pro Plus 5G","h":"Producto Android.dc.html?id=and-xiaomi-note15proplus","s":"Celular · 512 GB · 12 GB · USD 573"},{"n":"Poco C71","h":"Producto Android.dc.html?id=and-poco-c71-64","s":"Celular · 64 GB · 3 GB · USD 152"},{"n":"Poco C71","h":"Producto Android.dc.html?id=and-poco-c71-128","s":"Celular · 128 GB · 4 GB · USD 173"},{"n":"Poco C85","h":"Producto Android.dc.html?id=and-poco-c85","s":"Celular · 256 GB · 8 GB · USD 230"},{"n":"Poco X7 Pro 5G","h":"Producto Android.dc.html?id=and-poco-x7pro-256","s":"Celular · 256 GB · 12 GB · USD 420"},{"n":"Poco X7 Pro 5G","h":"Producto Android.dc.html?id=and-poco-x7pro-512","s":"Celular · 512 GB · 12 GB · USD 507"},{"n":"Motorola G06","h":"Producto Android.dc.html?id=and-moto-g06","s":"Celular · 128 GB · 4 GB · USD 180"},{"n":"Motorola G15","h":"Producto Android.dc.html?id=and-moto-g15","s":"Celular · 256 GB · 4 GB · USD 241"},{"n":"Infinix Smart 10","h":"Producto Android.dc.html?id=and-infinix-smart10","s":"Celular · 128 GB · 4 GB · USD 176"},{"n":"Infinix Hot 60i","h":"Producto Android.dc.html?id=and-infinix-hot60i-4","s":"Celular · 256 GB · 4 GB · USD 214"},{"n":"Infinix Hot 60i","h":"Producto Android.dc.html?id=and-infinix-hot60i-8","s":"Celular · 256 GB · 8 GB · USD 239"},{"n":"Infinix Hot 60 Pro","h":"Producto Android.dc.html?id=and-infinix-hot60pro","s":"Celular · 256 GB · 8 GB · USD 300"},{"n":"Infinix Hot 60 Pro Plus","h":"Producto Android.dc.html?id=and-infinix-hot60proplus","s":"Celular · 256 GB · 8 GB · USD 316"},{"n":"Smart TV EcoPower","h":"Producto Smart TV.dc.html?id=tv-ecopower","s":"Smart TV · 32\" · Full HD · USD 182"},{"n":"Smart TV RCA 40\"","h":"Producto Smart TV.dc.html?id=tv-rca-40","s":"Smart TV · 40\" · Full HD · USD 300"},{"n":"Smart TV Philco 58\"","h":"Producto Smart TV.dc.html?id=tv-philco-58","s":"Smart TV · 58\" · Ultra HD (4K) · USD 490"}];
+  var ZT_SEARCH_INDEX = [{"n":"iPhone 13","h":"Producto Apple.dc.html?m=iphone13","s":"iPhone · OFERTA USD 380"},{"n":"iPhone 14","h":"Producto Apple.dc.html?m=iphone14","s":"iPhone · OFERTA USD 400"},{"n":"iPhone 15","h":"Producto Apple.dc.html?m=iphone15","s":"iPhone · USD 500"},{"n":"iPhone 16 Pro","h":"Producto Apple.dc.html?m=iphone16pro","s":"iPhone · USD 820"},{"n":"AirPods Max","h":"Producto Apple.dc.html?m=airpodsmax","s":"Accesorio Apple · USD 350"},{"n":"iPad 11ª gen","h":"Producto Apple.dc.html?m=ipad11","s":"Accesorio Apple · USD 519"},{"n":"Samsung A07","h":"Producto Android.dc.html?id=and-samsung-a07","s":"Celular · 128 GB · 4 GB · USD 186"},{"n":"Samsung A17","h":"Producto Android.dc.html?id=and-samsung-a17","s":"Celular · 128 GB · 4 GB · USD 259"},{"n":"Samsung A26 5G","h":"Producto Android.dc.html?id=and-samsung-a26","s":"Celular · 256 GB · 8 GB · USD 393"},{"n":"Samsung A36 5G","h":"Producto Android.dc.html?id=and-samsung-a36","s":"Celular · 256 GB · 8 GB · USD 434"},{"n":"Redmi A5","h":"Producto Android.dc.html?id=and-redmi-a5","s":"Celular · 128 GB · 4 GB · USD 186"},{"n":"Xiaomi 15c","h":"Producto Android.dc.html?id=and-xiaomi-15c-4","s":"Celular · 256 GB · 4 GB · USD 205"},{"n":"Xiaomi 15c","h":"Producto Android.dc.html?id=and-xiaomi-15c-8","s":"Celular · 256 GB · 8 GB · USD 229"},{"n":"Xiaomi Note 14","h":"Producto Android.dc.html?id=and-xiaomi-note14","s":"Celular · 256 GB · 8 GB · USD 252"},{"n":"Xiaomi Note 14 Pro 5G","h":"Producto Android.dc.html?id=and-xiaomi-note14pro","s":"Celular · 256 GB · 8 GB · USD 381"},{"n":"Xiaomi Note 15","h":"Producto Android.dc.html?id=and-xiaomi-note15-128","s":"Celular · 128 GB · 6 GB · USD 252"},{"n":"Xiaomi Note 15","h":"Producto Android.dc.html?id=and-xiaomi-note15-256","s":"Celular · 256 GB · 8 GB · USD 300"},{"n":"Xiaomi Note 15 5G","h":"Producto Android.dc.html?id=and-xiaomi-note15-5g","s":"Celular · 256 GB · 8 GB · USD 355"},{"n":"Xiaomi Note 15 Pro","h":"Producto Android.dc.html?id=and-xiaomi-note15pro","s":"Celular · 512 GB · 12 GB · USD 435"},{"n":"Xiaomi Note 15 Pro Plus 5G","h":"Producto Android.dc.html?id=and-xiaomi-note15proplus","s":"Celular · 512 GB · 12 GB · USD 573"},{"n":"Poco C71","h":"Producto Android.dc.html?id=and-poco-c71-64","s":"Celular · 64 GB · 3 GB · USD 152"},{"n":"Poco C71","h":"Producto Android.dc.html?id=and-poco-c71-128","s":"Celular · 128 GB · 4 GB · USD 173"},{"n":"Poco C85","h":"Producto Android.dc.html?id=and-poco-c85","s":"Celular · 256 GB · 8 GB · USD 230"},{"n":"Poco X7 Pro 5G","h":"Producto Android.dc.html?id=and-poco-x7pro-256","s":"Celular · 256 GB · 12 GB · USD 420"},{"n":"Poco X7 Pro 5G","h":"Producto Android.dc.html?id=and-poco-x7pro-512","s":"Celular · 512 GB · 12 GB · USD 507"},{"n":"Motorola G06","h":"Producto Android.dc.html?id=and-moto-g06","s":"Celular · 128 GB · 4 GB · USD 180"},{"n":"Motorola G15","h":"Producto Android.dc.html?id=and-moto-g15","s":"Celular · 256 GB · 4 GB · USD 241"},{"n":"Infinix Smart 10","h":"Producto Android.dc.html?id=and-infinix-smart10","s":"Celular · 128 GB · 4 GB · USD 176"},{"n":"Infinix Hot 60i","h":"Producto Android.dc.html?id=and-infinix-hot60i-4","s":"Celular · 256 GB · 4 GB · USD 214"},{"n":"Infinix Hot 60i","h":"Producto Android.dc.html?id=and-infinix-hot60i-8","s":"Celular · 256 GB · 8 GB · USD 239"},{"n":"Infinix Hot 60 Pro","h":"Producto Android.dc.html?id=and-infinix-hot60pro","s":"Celular · 256 GB · 8 GB · USD 300"},{"n":"Infinix Hot 60 Pro Plus","h":"Producto Android.dc.html?id=and-infinix-hot60proplus","s":"Celular · 256 GB · 8 GB · USD 316"},{"n":"Smart TV EcoPower","h":"Producto Smart TV.dc.html?id=tv-ecopower","s":"Smart TV · 32\" · Full HD · USD 182"},{"n":"Smart TV RCA 40\"","h":"Producto Smart TV.dc.html?id=tv-rca-40","s":"Smart TV · 40\" · Full HD · USD 300"},{"n":"Smart TV Philco 58\"","h":"Producto Smart TV.dc.html?id=tv-philco-58","s":"Smart TV · 58\" · Ultra HD (4K) · USD 490"}];
   function ztBuildIndex() {
     var list = ZT_SEARCH_INDEX.slice();
     try {
