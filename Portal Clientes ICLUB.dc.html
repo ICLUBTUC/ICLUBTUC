@@ -3,6 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portal de clientes · ICLUB</title>
+<meta name="description" content="Consultá tu plan de cuotas, vencimientos y comprobantes de pago.">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0A84FF">
+<meta property="og:site_name" content="ICLUB">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_AR">
+<meta property="og:title" content="Portal de clientes · ICLUB">
+<meta property="og:description" content="Consultá tu plan de cuotas, vencimientos y comprobantes de pago.">
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:url" content="https://iclub-blue.vercel.app/portal">
+<meta property="og:image" content="https://iclub-blue.vercel.app/og-iclub.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<link rel="canonical" href="https://iclub-blue.vercel.app/portal">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%230A84FF'/%3E%3Crect x='27' y='16' width='10' height='32' rx='3' fill='%23fff'/%3E%3C/svg%3E">
+<script src="./analytics.js" defer></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -26,7 +43,7 @@
   body{margin:0;background:#FAFAF9;color:#1D1D1F;font-family:'Plus Jakarta Sans',-apple-system,system-ui,'Helvetica Neue',sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(760px circle at 88% 8%, rgba(120,120,120,.07), transparent 62%),radial-gradient(820px circle at 8% 92%, rgba(120,120,120,.06), transparent 62%);}
   a{color:#1D1D1F}
-  a:hover{color:#C9502A}
+  a:hover{color:#0A84FF}
   @keyframes ztReveal{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
   input::placeholder{color:#A1A1A6}
   select{appearance:none;-webkit-appearance:none}
@@ -100,7 +117,7 @@
     <label style="font-size:12.5px; font-weight:600; letter-spacing:.08em; color:#86868B; margin-top:4px;">CONTRASEÑA</label>
     <input value="{{ loginPass }}" onChange="{{ setLoginPass }}" onKeyDown="{{ onKey }}" type="password" placeholder="••••••••" autocomplete="off" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:17px; font-weight:500; color:#1D1D1F; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:14px; padding:14px 18px; outline:none; transition:border-color .3s, background .3s;" style-focus="border-color:#1D1D1F; background:#fff;">
     <sc-if value="{{ loginError }}" hint-placeholder-val="{{ false }}">
-      <div style="font-size:13.5px; color:#C9502A; font-weight:500;">{{ loginErrorMsg }}</div>
+      <div style="font-size:13.5px; color:#D93025; font-weight:500;">{{ loginErrorMsg }}</div>
     </sc-if>
     <button onClick="{{ doLogin }}" style="margin-top:6px; width:100%; font-family:inherit; font-size:16px; font-weight:600; letter-spacing:-.01em; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:16px; cursor:pointer; transition:transform .35s cubic-bezier(.22,1,.36,1), background .3s;" style-hover="background:#000; transform:translateY(-2px);">Ingresar</button>
   </div>
@@ -123,11 +140,11 @@
 
   <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:26px; animation:ztReveal .8s .05s both;">
     <div style="display:flex; flex-direction:column; gap:4px;">
-      <div style="font-size:12.5px; font-weight:600; letter-spacing:.2em; color:#C9502A;">HOLA</div>
+      <div style="font-size:12.5px; font-weight:600; letter-spacing:.2em; color:#0A84FF;">HOLA</div>
       <h1 style="margin:0; font-size:clamp(28px,4.5vw,40px); font-weight:700; letter-spacing:-.035em; line-height:1.05;">{{ clientName }}</h1>
       <div style="font-size:13px; color:#A1A1A6; margin-top:2px;">{{ lastAccessLine }}</div>
     </div>
-    <button onClick="{{ openPay }}" style="display:inline-flex; align-items:center; gap:9px; font-family:inherit; font-size:15px; font-weight:600; color:#fff; background:#C9502A; border:none; border-radius:980px; padding:13px 26px; cursor:pointer; transition:transform .35s cubic-bezier(.22,1,.36,1), background .3s;" style-hover="background:#B04523; transform:translateY(-2px);">
+    <button onClick="{{ openPay }}" style="display:inline-flex; align-items:center; gap:9px; font-family:inherit; font-size:15px; font-weight:600; color:#fff; background:#0A84FF; border:none; border-radius:980px; padding:13px 26px; cursor:pointer; transition:transform .35s cubic-bezier(.22,1,.36,1), background .3s;" style-hover="background:#B04523; transform:translateY(-2px);">
       Pagar
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
     </button>
@@ -169,7 +186,7 @@
                 <span style="font-size:13.5px; font-weight:700; color:#EBD8A0;">{{ pctLabel }}</span>
               </div>
               <div style="height:9px; border-radius:980px; background:rgba(255,255,255,.1); overflow:hidden;">
-                <div style="height:100%; width:{{ pctWidth }}; border-radius:980px; background:linear-gradient(90deg,#EBD8A0,#C9502A); transition:width .8s cubic-bezier(.22,1,.36,1);"></div>
+                <div style="height:100%; width:{{ pctWidth }}; border-radius:980px; background:linear-gradient(90deg,#EBD8A0,#0A84FF); transition:width .8s cubic-bezier(.22,1,.36,1);"></div>
               </div>
             </div>
             <div style="display:flex; align-items:center; gap:9px; font-size:13px; color:rgba(255,255,255,.45); line-height:1.5;">
@@ -191,7 +208,7 @@
               <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
                 <span style="font-size:12px; font-weight:700; letter-spacing:.16em; color:#86868B;">ÚLTIMO PAGO</span>
                 <sc-if value="{{ hasPago }}" hint-placeholder-val="{{ true }}">
-                  <span style="font-size:12.5px; font-weight:600; color:#C9502A;">Ver comprobante →</span>
+                  <span style="font-size:12.5px; font-weight:600; color:#0A84FF;">Ver comprobante →</span>
                 </sc-if>
               </div>
               <div style="font-size:32px; font-weight:700; letter-spacing:-.02em; color:#1F8A5B;">{{ lastPayImp }}</div>
@@ -274,7 +291,7 @@
               <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 <button onClick="{{ printPage }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#6E6E73; background:#F5F4F1; border:none; border-radius:980px; padding:8px 16px; cursor:pointer; transition:background .3s;" style-hover="background:#EDEBE6;">Descargar factura</button>
                 <sc-if value="{{ c.undoShow }}" hint-placeholder-val="{{ false }}">
-                  <button onClick="{{ c.undo }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#C9502A; background:rgba(201,80,42,.1); border:none; border-radius:980px; padding:8px 16px; cursor:pointer; transition:background .3s;" style-hover="background:rgba(201,80,42,.18);">Deshacer compra</button>
+                  <button onClick="{{ c.undo }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#D93025; background:rgba(217,48,37,.1); border:none; border-radius:980px; padding:8px 16px; cursor:pointer; transition:background .3s;" style-hover="background:rgba(10,132,255,.18);">Deshacer compra</button>
                 </sc-if>
               </div>
             </div>
@@ -375,7 +392,7 @@
                   <button onClick="{{ p.open }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#6E6E73; background:#F5F4F1; border:none; border-radius:980px; padding:8px 16px; cursor:pointer; transition:background .3s;" style-hover="background:#EDEBE6;">Comprobante</button>
                   <sc-if value="{{ p.adminShow }}" hint-placeholder-val="{{ false }}">
                     <button onClick="{{ p.edit }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#1D1D1F; background:#F0EEEA; border:none; border-radius:980px; padding:8px 14px; cursor:pointer;">Editar</button>
-                    <button onClick="{{ p.del }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#C9502A; background:rgba(201,80,42,.1); border:none; border-radius:980px; padding:8px 14px; cursor:pointer;">Eliminar</button>
+                    <button onClick="{{ p.del }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#D93025; background:rgba(217,48,37,.1); border:none; border-radius:980px; padding:8px 14px; cursor:pointer;">Eliminar</button>
                   </sc-if>
                 </div>
               </div>
@@ -480,7 +497,7 @@
 
   <div style="position:relative; z-index:40; display:flex; align-items:flex-end; justify-content:space-between; gap:16px 20px; flex-wrap:wrap; margin-bottom:24px; animation:ztReveal .8s .05s both;">
     <div style="display:flex; flex-direction:column; gap:12px;">
-      <div style="font-size:12.5px; font-weight:600; letter-spacing:.2em; color:#C9502A;">PANEL ADMINISTRATIVO</div>
+      <div style="font-size:12.5px; font-weight:600; letter-spacing:.2em; color:#0A84FF;">PANEL ADMINISTRATIVO</div>
       <div style="display:inline-flex; flex-wrap:wrap; background:#EAE8E3; border-radius:22px; padding:4px; align-self:flex-start; gap:2px;">
         <sc-for list="{{ aTabs }}" as="t" hint-placeholder-count="6">
           <button onClick="{{ t.pick }}" style="font-family:inherit; font-size:14px; font-weight:600; border:none; border-radius:980px; padding:10px 18px; cursor:pointer; background:{{ t.bg }}; color:{{ t.color }}; transition:background .25s, color .25s;">{{ t.label }}</button>
@@ -588,12 +605,12 @@
             <span style="font-size:13px; color:#A1A1A6;">Tel {{ c.phone }} · Saldo {{ c.saldoStr }} · Pagado {{ c.pagadoStr }} · {{ c.lastAcc }}</span>
           </div>
           <div data-adm-actions style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-            <button onClick="{{ c.view }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#fff; background:#C9502A; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Ver cuenta</button>
+            <button onClick="{{ c.view }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#fff; background:#0A84FF; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Ver cuenta</button>
             <button onClick="{{ c.pay }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#fff; background:#1F8A5B; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Registrar pago</button>
             <button onClick="{{ c.buy }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Registrar compra</button>
             <button onClick="{{ c.edit }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#6E6E73; background:#F5F4F1; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Editar</button>
             <button onClick="{{ c.block }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#B0700F; background:rgba(176,112,15,.1); border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">{{ c.blockLabel }}</button>
-            <button onClick="{{ c.del }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#C9502A; background:rgba(201,80,42,.1); border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Eliminar</button>
+            <button onClick="{{ c.del }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#D93025; background:rgba(217,48,37,.1); border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Eliminar</button>
           </div>
         </div>
       </sc-for>
@@ -655,7 +672,7 @@
         </sc-if>
       </div>
       <sc-if value="{{ aFormError }}" hint-placeholder-val="{{ false }}">
-        <div style="font-size:13.5px; color:#C9502A; font-weight:500;">{{ aFormErrorMsg }}</div>
+        <div style="font-size:13.5px; color:#D93025; font-weight:500;">{{ aFormErrorMsg }}</div>
       </sc-if>
       <div style="display:flex; gap:10px;">
         <button onClick="{{ aSave }}" style="font-family:inherit; font-size:15px; font-weight:600; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:14px 30px; cursor:pointer; transition:background .3s;" style-hover="background:#000;">Guardar cliente</button>
@@ -827,7 +844,7 @@
         </sc-if>
       </sc-if>
       <sc-if value="{{ aFormError }}" hint-placeholder-val="{{ false }}">
-        <div style="font-size:13.5px; color:#C9502A; font-weight:500;">{{ aFormErrorMsg }}</div>
+        <div style="font-size:13.5px; color:#D93025; font-weight:500;">{{ aFormErrorMsg }}</div>
       </sc-if>
       <div style="display:flex; gap:10px;">
         <button onClick="{{ aSaveMov }}" style="font-family:inherit; font-size:15px; font-weight:600; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:14px 30px; cursor:pointer; transition:background .3s;" style-hover="background:#000;">{{ aMovBtn }}</button>
@@ -887,7 +904,7 @@
               </div>
               <button onClick="{{ p.sell }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#fff; background:#1F8A5B; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Vender</button>
               <button onClick="{{ p.edit }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#6E6E73; background:#F5F4F1; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Editar</button>
-              <button onClick="{{ p.del }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#C9502A; background:rgba(201,80,42,.1); border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Eliminar</button>
+              <button onClick="{{ p.del }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#D93025; background:rgba(217,48,37,.1); border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Eliminar</button>
             </div>
           </div>
         </sc-for>
@@ -922,7 +939,7 @@
             </div>
             <div style="display:flex; gap:8px;">
               <button onClick="{{ v.edit }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#6E6E73; background:#F5F4F1; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Editar</button>
-              <button onClick="{{ v.del }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#C9502A; background:rgba(201,80,42,.1); border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Eliminar</button>
+              <button onClick="{{ v.del }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#D93025; background:rgba(217,48,37,.1); border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Eliminar</button>
             </div>
           </div>
         </sc-for>
@@ -975,7 +992,7 @@
           <div style="background:rgba(31,138,91,.08); border-radius:14px; padding:13px 18px; font-size:14px; font-weight:600; color:#1F8A5B;">{{ invPrevStr }}</div>
         </sc-if>
         <sc-if value="{{ invError }}" hint-placeholder-val="{{ false }}">
-          <div style="font-size:13.5px; color:#C9502A; font-weight:500;">{{ invErrorMsg }}</div>
+          <div style="font-size:13.5px; color:#D93025; font-weight:500;">{{ invErrorMsg }}</div>
         </sc-if>
         <div style="display:flex; gap:10px;">
           <button onClick="{{ invSave }}" style="font-family:inherit; font-size:15px; font-weight:600; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:14px 30px; cursor:pointer; transition:background .3s;" style-hover="background:#000;">Guardar producto</button>
@@ -1044,7 +1061,7 @@
             </sc-for>
           </div>
           <sc-if value="{{ sellError }}" hint-placeholder-val="{{ false }}">
-            <div style="font-size:13.5px; color:#C9502A; font-weight:500;">{{ sellErrorMsg }}</div>
+            <div style="font-size:13.5px; color:#D93025; font-weight:500;">{{ sellErrorMsg }}</div>
           </sc-if>
           <div style="display:flex; gap:10px;">
             <button onClick="{{ sellConfirm }}" style="flex:1; font-family:inherit; font-size:15px; font-weight:600; color:#fff; background:#1F8A5B; border:none; border-radius:980px; padding:14px; cursor:pointer; transition:background .3s;" style-hover="background:#1A784E;">Confirmar venta</button>
@@ -1125,7 +1142,9 @@
         <sc-for list="{{ catItems }}" as="p" hint-placeholder-count="0">
           <div data-cat-row style="background:#fff; border-radius:20px; padding:16px 20px; box-shadow:0 12px 38px -22px rgba(0,0,0,.12); display:grid; grid-template-columns:56px 1fr auto; gap:16px; align-items:center;">
             <sc-if value="{{ p.hasPhoto }}" hint-placeholder-val="{{ false }}">
-              <span style="width:56px; height:56px; border-radius:14px; background-color:#F5F4F1; background-image:url({{ p.photoCss }}); background-size:cover; background-position:center; display:block;"></span>
+              <span onClick="{{ p.frameEdit }}" title="Ajustar cómo se ve en la página" style="position:relative; width:56px; height:56px; border-radius:14px; overflow:hidden; background:linear-gradient(160deg,#F2F3F4,#E7EAEC); display:block; cursor:pointer;">
+                {{ p.thumb }}
+              </span>
             </sc-if>
             <sc-if value="{{ p.hasPhotoNot }}" hint-placeholder-val="{{ true }}">
               <span style="width:56px; height:56px; border-radius:14px; background:#F0EEEA; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:700; color:#B9B4AC;">{{ p.initial }}</span>
@@ -1137,6 +1156,9 @@
                 <button onClick="{{ p.visToggle }}" style="font-family:inherit; font-size:10.5px; font-weight:700; letter-spacing:.05em; color:{{ p.visC }}; background:{{ p.visB }}; border:none; border-radius:980px; padding:5px 12px; cursor:pointer;">{{ p.visLabel }}</button>
                 <button onClick="{{ p.stkToggle }}" style="font-family:inherit; font-size:10.5px; font-weight:700; letter-spacing:.05em; color:{{ p.stkC }}; background:{{ p.stkB }}; border:none; border-radius:980px; padding:5px 12px; cursor:pointer;">{{ p.stkLabel }}</button>
                 <span style="font-size:10.5px; font-weight:700; letter-spacing:.05em; color:{{ p.condC }}; background:{{ p.condB }}; padding:5px 12px; border-radius:980px;">{{ p.condLabel }}</span>
+                <sc-if value="{{ p.faltaShow }}" hint-placeholder-val="{{ false }}">
+                  <span title="Un producto incompleto se publica igual, pero se ve peor que los demás." style="font-size:10.5px; font-weight:700; letter-spacing:.05em; color:#B0700F; background:rgba(176,112,15,.14); padding:5px 12px; border-radius:980px;">FALTA {{ p.faltaTxt }}</span>
+                </sc-if>
                 <sc-if value="{{ p.invShow }}" hint-placeholder-val="{{ false }}">
                   <span style="font-size:10.5px; font-weight:700; letter-spacing:.05em; color:{{ p.invC }}; background:{{ p.invB }}; padding:5px 12px; border-radius:980px;">{{ p.invLabel }}</span>
                 </sc-if>
@@ -1146,7 +1168,7 @@
               <label style="font-family:inherit; font-size:12.5px; font-weight:600; color:#1D1D1F; background:#F0EEEA; border-radius:980px; padding:9px 16px; cursor:pointer;">Foto<input type="file" accept="image/*" onChange="{{ p.setPhoto }}" style="display:none;"></label>
               <button onClick="{{ p.edit }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#6E6E73; background:#F5F4F1; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Editar</button>
               <sc-if value="{{ p.canDel }}" hint-placeholder-val="{{ false }}">
-                <button onClick="{{ p.del }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#C9502A; background:rgba(201,80,42,.1); border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Eliminar</button>
+                <button onClick="{{ p.del }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#D93025; background:rgba(217,48,37,.1); border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Eliminar</button>
               </sc-if>
             </div>
           </div>
@@ -1162,8 +1184,9 @@
         <div style="background:#F3F0EB; border-radius:30px; padding:22px; display:flex; flex-direction:column; gap:12px;">
           <div style="display:flex; align-items:center; gap:34px; flex-wrap:wrap; padding:30px; background:#fff; border-radius:28px; box-shadow:0 18px 60px -30px rgba(0,0,0,.18);">
             <sc-if value="{{ catHasPhoto }}" hint-placeholder-val="{{ false }}">
-              <label title="Cambiar foto" style="flex:0 0 auto; width:230px; max-width:100%; height:200px; border-radius:22px; overflow:hidden; background-color:#F1EDE7; background-image:url({{ catPhotoCss }}); background-size:cover; background-position:center; display:flex; align-items:flex-end; justify-content:center; cursor:pointer;">
-                <span style="margin-bottom:10px; background:rgba(29,29,31,.75); color:#fff; font-size:11.5px; font-weight:600; border-radius:980px; padding:6px 13px;">Cambiar foto</span>
+              <label title="Cambiar foto" style="position:relative; flex:0 0 auto; width:230px; max-width:100%; height:200px; border-radius:22px; overflow:hidden; background-color:#F1EDE7; display:flex; align-items:flex-end; justify-content:center; cursor:pointer;">
+                {{ catPhotoImg }}
+                <span style="position:relative; z-index:2; margin-bottom:10px; background:rgba(29,29,31,.75); color:#fff; font-size:11.5px; font-weight:600; border-radius:980px; padding:6px 13px;">Cambiar foto</span>
                 <input type="file" accept="image/*" onChange="{{ catFormPhoto }}" style="display:none;">
               </label>
             </sc-if>
@@ -1195,7 +1218,7 @@
             </div>
           </div>
           <sc-if value="{{ catHasPhoto }}" hint-placeholder-val="{{ false }}">
-            <button onClick="{{ catFormPhotoClear }}" style="align-self:flex-start; font-family:inherit; font-size:12.5px; font-weight:600; color:#C9502A; background:rgba(201,80,42,.1); border:none; border-radius:980px; padding:8px 15px; cursor:pointer;">Quitar foto</button>
+            <button onClick="{{ catFormPhotoClear }}" style="align-self:flex-start; font-family:inherit; font-size:12.5px; font-weight:600; color:#D93025; background:rgba(217,48,37,.1); border:none; border-radius:980px; padding:8px 15px; cursor:pointer;">Quitar foto</button>
           </sc-if>
         </div>
         <div style="background:#fff; border-radius:26px; padding:28px 30px; box-shadow:0 18px 60px -24px rgba(0,0,0,.16); display:flex; flex-direction:column; gap:18px;">
@@ -1239,7 +1262,7 @@
             <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:8px; align-items:center;">
               <input value="{{ r.k }}" onChange="{{ r.setK }}" type="text" placeholder="Almacenamiento" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:14px; font-weight:500; color:#6E6E73; background:#fff; border:1.5px solid rgba(0,0,0,.06); border-radius:11px; padding:10px 13px; outline:none;" style-focus="border-color:#1D1D1F;">
               <input value="{{ r.v }}" onChange="{{ r.setV }}" type="text" placeholder="128 GB" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:14px; font-weight:600; color:#1D1D1F; background:#fff; border:1.5px solid rgba(0,0,0,.06); border-radius:11px; padding:10px 13px; outline:none;" style-focus="border-color:#1D1D1F;">
-              <button onClick="{{ r.del }}" aria-label="Quitar fila" style="font-family:inherit; font-size:15px; font-weight:700; color:#C9502A; background:rgba(201,80,42,.1); border:none; border-radius:11px; padding:10px 14px; cursor:pointer;">×</button>
+              <button onClick="{{ r.del }}" aria-label="Quitar fila" style="font-family:inherit; font-size:15px; font-weight:700; color:#D93025; background:rgba(217,48,37,.1); border:none; border-radius:11px; padding:10px 14px; cursor:pointer;">×</button>
             </div>
           </sc-for>
           <span style="font-size:12px; color:#A1A1A6;">Estas filas son las que ve el cliente en la ficha del producto. Si no cargás ninguna, se usan las de la categoría.</span>
@@ -1279,6 +1302,33 @@
             <span style="font-size:12.5px; color:#A1A1A6; line-height:1.45; flex:1; min-width:180px;">{{ catAhorroHint }}</span>
           </div>
         </div>
+        <div style="display:flex; flex-direction:column; gap:14px; background:#FBF6F2; border:1.5px solid rgba(10,132,255,.16); border-radius:16px; padding:16px 18px;">
+          <span style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#D93025;">OFERTA</span>
+          <div style="display:flex; flex-direction:column; gap:7px;">
+            <label style="font-size:12.5px; font-weight:600; color:#6E6E73;">Precio anterior (USD)</label>
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+              <input value="{{ catUsdAntes }}" onChange="{{ setCatUsdAntes }}" type="text" inputMode="numeric" placeholder="Ej: 470" style="width:130px; box-sizing:border-box; font-family:inherit; font-size:15px; font-weight:600; color:#1D1D1F; background:#fff; border:1.5px solid rgba(0,0,0,.08); border-radius:12px; padding:11px 14px; outline:none;" style-focus="border-color:#D93025;">
+              <span style="font-size:12.5px; color:#A1A1A6; line-height:1.45; flex:1; min-width:180px;">{{ catOfertaHint }}</span>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:7px;">
+            <label style="font-size:12.5px; font-weight:600; color:#6E6E73;">Aviso de stock</label>
+            <select value="{{ catAviso }}" onChange="{{ setCatAviso }}" style="font-family:inherit; font-size:15px; font-weight:600; color:#1D1D1F; background:#fff; border:1.5px solid rgba(0,0,0,.08); border-radius:12px; padding:11px 14px; outline:none;">
+              <option value="">Sin aviso</option>
+              <option value="ultima">Última unidad</option>
+              <option value="ultimas">Últimas unidades</option>
+            </select>
+          </div>
+          <div onClick="{{ catDestToggle }}" style="display:flex; align-items:center; gap:16px; cursor:pointer;">
+            <div style="display:flex; flex-direction:column; gap:3px; margin-right:auto;">
+              <span style="font-size:14px; font-weight:600; color:#1D1D1F;">{{ catDestTxt }}</span>
+              <span style="font-size:12.5px; color:#6E6E73; line-height:1.45;">Un destacado va primero en su categoría y en la portada.</span>
+            </div>
+            <span style="position:relative; flex:0 0 auto; width:50px; height:28px; border-radius:980px; background:{{ catDestBg }}; transition:background .25s;">
+              <span style="position:absolute; top:3px; left:{{ catDestKnob }}; width:22px; height:22px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.2); transition:left .25s cubic-bezier(.22,1,.36,1);"></span>
+            </span>
+          </div>
+        </div>
         <div onClick="{{ catVisToggle }}" style="display:flex; align-items:center; gap:16px; background:#F8F7F5; border-radius:16px; padding:16px 18px; cursor:pointer;">
           <div style="display:flex; flex-direction:column; gap:3px; margin-right:auto;">
             <span style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">VISIBILIDAD</span>
@@ -1290,7 +1340,7 @@
           </span>
         </div>
         <sc-if value="{{ catError }}" hint-placeholder-val="{{ false }}">
-          <div style="font-size:13.5px; color:#C9502A; font-weight:500;">{{ catErrorMsg }}</div>
+          <div style="font-size:13.5px; color:#D93025; font-weight:500;">{{ catErrorMsg }}</div>
         </sc-if>
         <div style="display:flex; gap:10px;">
           <button onClick="{{ catSave }}" style="font-family:inherit; font-size:15px; font-weight:600; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:14px 30px; cursor:pointer;" style-hover="background:#000;">Guardar producto</button>
@@ -1320,7 +1370,7 @@
                 <button onClick="{{ es.pick }}" style="font-family:inherit; font-size:11px; font-weight:700; letter-spacing:.04em; border:none; border-radius:980px; padding:7px 13px; cursor:pointer; background:{{ es.bg }}; color:{{ es.color }};">{{ es.txt }}</button>
               </sc-for>
             </div>
-            <button onClick="{{ p.del }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#C9502A; background:rgba(201,80,42,.1); border:none; border-radius:980px; padding:8px 15px; cursor:pointer; margin-left:auto;">Eliminar</button>
+            <button onClick="{{ p.del }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#D93025; background:rgba(217,48,37,.1); border:none; border-radius:980px; padding:8px 15px; cursor:pointer; margin-left:auto;">Eliminar</button>
           </div>
         </div>
       </sc-for>
@@ -1348,7 +1398,7 @@
           <h3 style="margin:0; font-size:17px; font-weight:700;">Ingresos y gastos · últimos 6 meses</h3>
           <div style="display:flex; gap:14px; margin-left:auto; font-size:11.5px; font-weight:600; color:#6E6E73;">
             <span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:10px; height:10px; border-radius:3px; background:#1D1D1F;"></span>Ingresos</span>
-            <span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:10px; height:10px; border-radius:3px; background:#C9502A;"></span>Gastos</span>
+            <span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:10px; height:10px; border-radius:3px; background:#0A84FF;"></span>Gastos</span>
           </div>
         </div>
         <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:14px; align-items:end; height:140px;">
@@ -1356,7 +1406,7 @@
             <div style="display:flex; flex-direction:column; align-items:center; gap:8px; height:100%; justify-content:flex-end;">
               <div style="display:flex; gap:5px; align-items:flex-end; height:100%; width:100%; justify-content:center;">
                 <div title="{{ m.cTitle }}" style="width:34%; max-width:26px; height:{{ m.hc }}; background:#1D1D1F; border-radius:6px 6px 3px 3px;"></div>
-                <div title="{{ m.pTitle }}" style="width:34%; max-width:26px; height:{{ m.hp }}; background:#C9502A; border-radius:6px 6px 3px 3px;"></div>
+                <div title="{{ m.pTitle }}" style="width:34%; max-width:26px; height:{{ m.hp }}; background:#0A84FF; border-radius:6px 6px 3px 3px;"></div>
               </div>
               <span style="font-size:11.5px; font-weight:600; color:#A1A1A6;">{{ m.label }}</span>
             </div>
@@ -1417,8 +1467,8 @@
               <span style="font-size:14px; font-weight:600;">{{ g.concepto }}</span>
               <span style="font-size:12px; color:#A1A1A6;">{{ g.sub }}</span>
             </div>
-            <span style="margin-left:auto; font-size:14.5px; font-weight:700; color:#C9502A; white-space:nowrap;">{{ g.montoStr }}</span>
-            <button onClick="{{ g.del }}" style="font-family:inherit; font-size:12px; font-weight:600; color:#C9502A; background:rgba(201,80,42,.1); border:none; border-radius:980px; padding:7px 13px; cursor:pointer;">✕</button>
+            <span style="margin-left:auto; font-size:14.5px; font-weight:700; color:#D93025; white-space:nowrap;">{{ g.montoStr }}</span>
+            <button onClick="{{ g.del }}" style="font-family:inherit; font-size:12px; font-weight:600; color:#D93025; background:rgba(217,48,37,.1); border:none; border-radius:980px; padding:7px 13px; cursor:pointer;">✕</button>
           </div>
         </sc-for>
       </div>
@@ -1437,7 +1487,7 @@
               <span style="font-size:15px; font-weight:700; color:#B0700F;">{{ c.cobroStr }}</span>
               <span style="font-size:11px; color:#A1A1A6;">{{ c.cobroSub }}</span>
             </div>
-            <button onClick="{{ c.view }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#fff; background:#C9502A; border:none; border-radius:980px; padding:8px 15px; cursor:pointer;">Ver cuenta</button>
+            <button onClick="{{ c.view }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#fff; background:#0A84FF; border:none; border-radius:980px; padding:8px 15px; cursor:pointer;">Ver cuenta</button>
           </div>
         </sc-for>
         <div style="display:flex; align-items:baseline; gap:14px; border-top:1.5px solid rgba(0,0,0,.1); padding-top:14px; margin-top:2px;">
@@ -1502,7 +1552,7 @@
         <span style="font-size:13.5px; color:#6E6E73;">Título, bajada y destino de cada diapositiva de la página de inicio. Las fotos se cambian arrastrándolas directo sobre el carrusel.</span>
         <sc-for list="{{ ajHero }}" as="h" hint-placeholder-count="3">
           <div style="display:flex; flex-direction:column; gap:10px; border-top:1px solid rgba(0,0,0,.05); padding-top:14px;">
-            <span style="font-size:11px; font-weight:700; letter-spacing:.14em; color:#C9502A;">{{ h.label }}</span>
+            <span style="font-size:11px; font-weight:700; letter-spacing:.14em; color:#0A84FF;">{{ h.label }}</span>
             <div data-adm-form style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
               <input value="{{ h.t }}" onChange="{{ h.setT }}" type="text" placeholder="Título" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:14px; font-weight:600; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:12px; padding:11px 14px; outline:none;" style-focus="border-color:#1D1D1F; background:#fff;">
               <input value="{{ h.s }}" onChange="{{ h.setS }}" type="text" placeholder="Bajada" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:14px; font-weight:500; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:12px; padding:11px 14px; outline:none;" style-focus="border-color:#1D1D1F; background:#fff;">
@@ -1522,7 +1572,7 @@
         </sc-if>
         <sc-for list="{{ statsList }}" as="s" hint-placeholder-count="3">
           <div style="display:flex; align-items:center; gap:12px; border-top:1px solid rgba(0,0,0,.05); padding-top:10px;">
-            <span style="font-size:12px; font-weight:700; color:#C9502A; width:28px;">{{ s.pos }}</span>
+            <span style="font-size:12px; font-weight:700; color:#0A84FF; width:28px;">{{ s.pos }}</span>
             <span style="font-size:14px; font-weight:600;">{{ s.name }}</span>
             <span style="margin-left:auto; font-size:12.5px; color:#A1A1A6;">{{ s.views }}</span>
           </div>
@@ -1539,7 +1589,7 @@
 <section class="np" style="position:relative; z-index:2; max-width:660px; margin:0 auto; padding:6px 24px 100px; display:flex; flex-direction:column; gap:18px;">
 
   <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:6px; animation:ztReveal .8s .05s both;">
-    <div style="font-size:12.5px; font-weight:600; letter-spacing:.2em; color:#C9502A;">CONSULTAR FINANCIACIÓN</div>
+    <div style="font-size:12.5px; font-weight:600; letter-spacing:.2em; color:#0A84FF;">CONSULTAR FINANCIACIÓN</div>
     <h1 style="margin:0; font-size:clamp(28px,4.5vw,40px); font-weight:700; letter-spacing:-.035em; line-height:1.05;">Simulá tu plan en cuotas</h1>
     <p style="margin:0; font-size:15.5px; color:#6E6E73; line-height:1.5;">{{ finLeadTxt }}</p>
   </div>
@@ -1556,7 +1606,7 @@
       </span>
       <span style="display:flex; flex-direction:column; align-items:flex-end; gap:7px; flex-shrink:0;">
         <span style="display:flex; flex-direction:column; align-items:flex-end; gap:1px;"><span style="font-size:17px; font-weight:700; letter-spacing:-.02em;">{{ finProdPriceStr }}</span><span style="font-size:11.5px; color:#A1A1A6;">{{ finProdPriceSub }}</span></span>
-        <button onClick="{{ finProdClear }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#C9502A; background:rgba(201,80,42,.08); border:none; border-radius:980px; padding:7px 14px; cursor:pointer; transition:background .25s;" style-hover="background:rgba(201,80,42,.16);">Cambiar</button>
+        <button onClick="{{ finProdClear }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#D93025; background:rgba(217,48,37,.08); border:none; border-radius:980px; padding:7px 14px; cursor:pointer; transition:background .25s;" style-hover="background:rgba(10,132,255,.16);">Cambiar</button>
       </span>
     </div>
   </sc-if>
@@ -1630,7 +1680,7 @@
                 </button>
               </sc-for>
             </div>
-            <button onClick="{{ finManualStart }}" style="align-self:flex-start; font-family:inherit; font-size:13.5px; font-weight:600; color:#C9502A; background:rgba(201,80,42,.08); border:none; border-radius:980px; padding:10px 18px; cursor:pointer;">¿No está en la lista? Cargalo manualmente →</button>
+            <button onClick="{{ finManualStart }}" style="align-self:flex-start; font-family:inherit; font-size:13.5px; font-weight:600; color:#0A84FF; background:rgba(10,132,255,.08); border:none; border-radius:980px; padding:10px 18px; cursor:pointer;">¿No está en la lista? Cargalo manualmente →</button>
           </sc-if>
 
         </div>
@@ -1851,6 +1901,28 @@
 </div>
 </sc-if>
 
+<sc-if value="{{ frameOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed; inset:0; z-index:80; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; padding:24px;">
+    <div style="background:#fff; border-radius:28px; padding:26px; width:min(420px,100%); max-height:calc(100dvh - 48px); overflow:auto; display:flex; flex-direction:column; gap:16px; box-shadow:0 30px 90px -30px rgba(0,0,0,.5);">
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <span style="font-size:18px; font-weight:700; letter-spacing:-.02em;">{{ frameName }}</span>
+        <span style="font-size:13px; color:#6E6E73; line-height:1.45;">La foto entera. El recuadro marca lo que se ve en la tienda: arrastrala para moverla y usá el zoom para agrandarla.</span>
+      </div>
+      <div onPointerDown="{{ frameDown }}" onPointerMove="{{ frameMove }}" onPointerUp="{{ frameUp }}" onPointerLeave="{{ frameUp }}" style="position:relative; width:100%; max-width:min(368px, 46dvh); align-self:center; flex:0 0 auto; aspect-ratio:1/1; border-radius:22px; overflow:hidden; background:linear-gradient(160deg,#F2F3F4,#E7EAEC); cursor:grab; touch-action:none; user-select:none;">
+        {{ frameImgBig }}
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:12.5px; font-weight:700; letter-spacing:.08em; color:#86868B;">ZOOM</span>
+        <input type="range" min="1" max="3" step="0.05" value="{{ frameZoom }}" onChange="{{ setFrameZoom }}" style="flex:1; accent-color:#0A84FF;">
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button onClick="{{ frameSave }}" style="font-family:inherit; font-size:15px; font-weight:600; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:13px 26px; cursor:pointer;">Guardar encuadre</button>
+        <button onClick="{{ frameReset }}" style="font-family:inherit; font-size:15px; font-weight:600; color:#6E6E73; background:#F5F4F1; border:none; border-radius:980px; padding:13px 20px; cursor:pointer;">Centrar</button>
+        <button onClick="{{ frameCancel }}" style="font-family:inherit; font-size:15px; font-weight:600; color:#6E6E73; background:transparent; border:none; padding:13px 12px; cursor:pointer;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900},&quot;sesionIniciada&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Demo&quot;}}">
 class Component extends DCLogic {
@@ -1875,8 +1947,30 @@ class Component extends DCLogic {
     db: null
   };
 
+  /* El iPhone 14 quedó guardado con datos de una versión anterior (impecable,
+     sin oferta). Se corrige una sola vez, para que el panel y la página digan
+     lo mismo desde el arranque. */
+  _fix14(db) {
+    const ov = (db.catalog || {})['iphone14'];
+    if (db.mig14 || !ov) return db;
+    const next = Object.assign({}, db.catalog, {
+      iphone14: Object.assign({}, ov, {
+        name: 'iPhone 14', cat: 'Apple', usd: 400, cond: 'a1', spec: '128 GB · grado A1',
+        usdAntes: 470, aviso: 'ultimas', destacado: true, hidden: false
+      })
+    });
+    const fixed = Object.assign({}, db, { catalog: next, mig14: true });
+    try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(fixed)); } catch (e) {}
+    return fixed;
+  }
+
   componentDidMount() {
-    const db = this._reconcileNC(this._load());
+    try {
+      fetch('imageslots.state.json').then((r) => (r.ok ? r.json() : null)).then((j) => {
+        if (j && typeof j === 'object') this.setState({ slotPhotos: j });
+      }).catch(() => {});
+    } catch (e) {}
+    const db = this._fix14(this._reconcileNC(this._load()));
     let user = null;
     try { user = localStorage.getItem('zt-portal-fin-user') || null; } catch (e) {}
     if (user && user !== 'admin' && !db.clients[user]) user = null;
@@ -2024,6 +2118,30 @@ class Component extends DCLogic {
       try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(db)); } catch (e) {}
     }
     return db;
+  }
+
+  _slotView(id) {
+    const s = this.state.slotPhotos || {};
+    const keys = ['apple-' + id, 'and-' + id, 'acc-' + id, 'prod-front-' + id, id];
+    for (let i = 0; i < keys.length; i++) {
+      const v = s[keys[i]];
+      if (!v) continue;
+      if (typeof v === 'string') return { u: v, s: 1, x: 0, y: 0 };
+      if (v.u) return { u: v.u, s: v.s || 1, x: v.x || 0, y: v.y || 0 };
+    }
+    return null;
+  }
+
+  _slotPhoto(id) {
+    const s = this.state.slotPhotos || {};
+    const keys = ['apple-' + id, 'and-' + id, 'acc-' + id, 'prod-front-' + id, id];
+    for (let i = 0; i < keys.length; i++) {
+      const v = s[keys[i]];
+      if (!v) continue;
+      const u = typeof v === 'string' ? v : v.u;
+      if (u) return u;
+    }
+    return '';
   }
 
   _load() {
@@ -2734,10 +2852,22 @@ class Component extends DCLogic {
     const raw = String(this.state.loginPhone).trim().toLowerCase();
     const ph = raw.replace(/[^0-9]/g, '');
     if (raw === 'admin') {
-      if (this.state.loginPass === 'zonatech') {
-        try { localStorage.setItem('zt-portal-fin-user', 'admin'); } catch (e) {}
-        this.setState({ user: 'admin', error: false, amode: 'list', adminView: null });
-      } else this.setState({ error: true, errorMsg: 'Contraseña de administrador incorrecta.' });
+      /* La contraseña ya no está escrita en el código: se guarda sólo su huella
+         SHA-256, que no se puede revertir. Quien lea el sitio publicado no puede
+         sacar la clave de acá. Para cambiarla: reemplazar esta huella. */
+      const HUELLA = 'e5779aff7fd1dd339c621d316a7c77410f4c5d32e0b8083a08ab167f54b9b330';
+      const pass = this.state.loginPass;
+      (async () => {
+        let hex = '';
+        try {
+          const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pass));
+          hex = Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+        } catch (e) {}
+        if (hex && hex === HUELLA) {
+          try { localStorage.setItem('zt-portal-fin-user', 'admin'); } catch (e) {}
+          this.setState({ user: 'admin', error: false, amode: 'list', adminView: null });
+        } else this.setState({ error: true, errorMsg: 'Contraseña de administrador incorrecta.' });
+      })();
       return;
     }
     const c = db.clients[ph];
@@ -2838,7 +2968,7 @@ class Component extends DCLogic {
       const tipoStyle = {
         'Compra': { c: '#1D1D1F', b: '#F0EBE4' },
         'Pago': { c: '#1F8A5B', b: 'rgba(31,138,91,.1)' },
-        'Nota de Crédito': { c: '#C9502A', b: 'rgba(201,80,42,.1)' },
+        'Nota de Crédito': { c: '#0A84FF', b: 'rgba(10,132,255,.1)' },
         'Saldo anterior': { c: '#86868B', b: '#F5F4F1' }
       };
       const newest = rich.slice().reverse();
@@ -2858,7 +2988,7 @@ class Component extends DCLogic {
       const estadoStyle = {
         'PAGADA': { c: '#1F8A5B', b: 'rgba(31,138,91,.1)' },
         'FINANCIADA': { c: '#B0700F', b: 'rgba(176,112,15,.1)' },
-        'PENDIENTE': { c: '#C9502A', b: 'rgba(201,80,42,.1)' },
+        'PENDIENTE': { c: '#0A84FF', b: 'rgba(10,132,255,.1)' },
         'EN CUENTA': { c: '#86868B', b: '#F5F4F1' }
       };
       const comprasRich = newest.filter((m) => m.tipo === 'Compra');
@@ -2895,8 +3025,8 @@ class Component extends DCLogic {
           const parcial = !q.done && q.paid > 0;
           const proxima = !q.done && !vencida && !parcial && pc.prox && pc.prox.i === q.i;
           const est = q.done ? 'PAGADA' : parcial ? 'PARCIAL' : vencida ? 'VENCIDA' : proxima ? 'PRÓXIMA' : 'PENDIENTE';
-          const col = q.done ? '#1F8A5B' : parcial ? '#B0700F' : vencida ? '#C9502A' : proxima ? '#B0700F' : '#86868B';
-          const bgc = q.done ? 'rgba(31,138,91,.1)' : parcial ? 'rgba(176,112,15,.1)' : vencida ? 'rgba(201,80,42,.12)' : proxima ? 'rgba(176,112,15,.1)' : '#F5F4F1';
+          const col = q.done ? '#1F8A5B' : parcial ? '#B0700F' : vencida ? '#D93025' : proxima ? '#B0700F' : '#86868B';
+          const bgc = q.done ? 'rgba(31,138,91,.1)' : parcial ? 'rgba(176,112,15,.1)' : vencida ? 'rgba(217,48,37,.12)' : proxima ? 'rgba(176,112,15,.1)' : '#F5F4F1';
           let sub;
           if (q.done) sub = 'Pagada el ' + q.pay.f + ' · ' + this._fmt(q.paid) + ' aplicados · ' + q.pay.doc + (q.sinInt ? ' · adelantada sin interés' : '');
           else if (parcial) sub = this._fmt(q.paid) + ' aplicados · faltan ' + this._fmt(q.req - q.paid);
@@ -3017,7 +3147,7 @@ class Component extends DCLogic {
       ];
 
       const alerts = [];
-      if (atrasado) alerts.push({ text: 'Tenés un vencimiento atrasado (' + this._fmt(client.proxImp) + ', venció el ' + effProxFecha + '). Regularizalo para evitar recargos.', color: '#C9502A', bg: 'rgba(201,80,42,.09)' });
+      if (atrasado) alerts.push({ text: 'Tenés un vencimiento atrasado (' + this._fmt(client.proxImp) + ', venció el ' + effProxFecha + '). Regularizalo para evitar recargos.', color: '#D93025', bg: 'rgba(217,48,37,.09)' });
       else if (hasProx && dias !== null && dias >= 0 && dias <= 10) alerts.push({ text: 'Tu próximo vencimiento es en ' + dias + (dias === 1 ? ' día' : ' días') + ' (' + effProxFecha + ' · ' + this._fmt(client.proxImp) + ').', color: '#B0700F', bg: 'rgba(176,112,15,.08)' });
       if (pct >= 60) alerts.push({ text: 'Tu línea de crédito está al ' + pct + '% de uso.', color: '#6E6E73', bg: '#F0EBE4' });
       if (lastPay) alerts.push({ text: 'Nuevo comprobante disponible: ' + lastPay.doc + '.', color: '#1F8A5B', bg: 'rgba(31,138,91,.08)' });
@@ -3040,8 +3170,8 @@ class Component extends DCLogic {
         proxImpStr: hasProx ? this._fmt(client.proxImp) : '—',
         proxSub: hasProx ? (esSemanal ? 'Todos los ' + dowNamesC[client.proxDow != null ? client.proxDow : 0] + ' · próximo ' + effProxFecha : effProxFecha + ' · Pago mensual') + (client.proxDet ? ' · ' + client.proxDet : '') : 'Sin vencimientos programados',
         proxChip: hasProx ? (atrasado ? 'VENCIDO' : dias === 0 ? 'HOY' : 'EN ' + dias + (dias === 1 ? ' DÍA' : ' DÍAS')) : '—',
-        proxChipColor: atrasado ? '#C9502A' : '#B0700F',
-        proxChipBg: atrasado ? 'rgba(201,80,42,.12)' : 'rgba(176,112,15,.1)',
+        proxChipColor: atrasado ? '#D93025' : '#B0700F',
+        proxChipBg: atrasado ? 'rgba(217,48,37,.12)' : 'rgba(176,112,15,.1)',
         hasPago: !!lastPay, noPago: !lastPay,
         lastPayImp: lastPay ? this._fmt(lastPay.imp) : '—',
         lastPaySub: lastPay ? lastPay.f + ' · ' + (lastPay.met || '—') + ' · ' + lastPay.doc : 'Todavía no registramos pagos',
@@ -3127,7 +3257,7 @@ class Component extends DCLogic {
       if (gsRes.open) {
         const hit = (s) => String(s || '').toLowerCase().indexOf(gsQ) >= 0;
         const kinds = {
-          cliente: { c: '#C9502A', b: 'rgba(201,80,42,.12)' },
+          cliente: { c: '#0A84FF', b: 'rgba(10,132,255,.12)' },
           documento: { c: '#1D1D1F', b: '#F0EEEA' },
           catálogo: { c: '#1F8A5B', b: 'rgba(31,138,91,.1)' },
           stock: { c: '#B0700F', b: 'rgba(176,112,15,.12)' }
@@ -3196,9 +3326,9 @@ class Component extends DCLogic {
           moraShow: mora > 0,
           moraStr: '+ ' + this._fmt(mora) + ' de mora · total ' + this._fmt(totalCobrar),
           eL: venc ? 'VENCIDA' : hoyEs ? 'HOY' : 'POR VENCER',
-          eC: venc ? '#C9502A' : hoyEs ? '#B0700F' : '#6E6E73',
-          eB: venc ? 'rgba(201,80,42,.12)' : hoyEs ? 'rgba(176,112,15,.12)' : '#F5F4F1',
-          bd: venc ? 'rgba(201,80,42,.28)' : 'rgba(0,0,0,.05)',
+          eC: venc ? '#D93025' : hoyEs ? '#B0700F' : '#6E6E73',
+          eB: venc ? 'rgba(217,48,37,.12)' : hoyEs ? 'rgba(176,112,15,.12)' : '#F5F4F1',
+          bd: venc ? 'rgba(217,48,37,.28)' : 'rgba(0,0,0,.05)',
           waHref: waN ? 'https://wa.me/' + waN + '?text=' + encodeURIComponent(msg) : 'https://wa.me/?text=' + encodeURIComponent(msg),
           pay: () => this.setState({ amode: 'pago', editKey: r.key, movAmount: String(r.falta), movDet: '', movMet: 'Transferencia', movPlan: r.pm.doc, movEfec: '', movTransf: '', formError: '' }),
           view: () => this.setState({ adminView: r.key, view: 'cuotas' })
@@ -3211,8 +3341,8 @@ class Component extends DCLogic {
         aNotList: amode !== 'list',
         aEmpty: keys.length === 0,
         cloudLabel: (this.state.cloud === 'ok' ? 'En la nube' : this.state.cloud === 'sync' ? 'Guardando…' : this.state.cloud === 'err' ? 'Sin conexión' : 'Solo este equipo'),
-        cloudColor: (this.state.cloud === 'ok' ? '#1F8A5B' : this.state.cloud === 'sync' ? '#B0700F' : this.state.cloud === 'err' ? '#C9502A' : '#86868B'),
-        cloudBg: (this.state.cloud === 'ok' ? 'rgba(31,138,91,.1)' : this.state.cloud === 'sync' ? 'rgba(176,112,15,.1)' : this.state.cloud === 'err' ? 'rgba(201,80,42,.1)' : 'rgba(0,0,0,.05)'),
+        cloudColor: (this.state.cloud === 'ok' ? '#1F8A5B' : this.state.cloud === 'sync' ? '#B0700F' : this.state.cloud === 'err' ? '#D93025' : '#86868B'),
+        cloudBg: (this.state.cloud === 'ok' ? 'rgba(31,138,91,.1)' : this.state.cloud === 'sync' ? 'rgba(176,112,15,.1)' : this.state.cloud === 'err' ? 'rgba(217,48,37,.1)' : 'rgba(0,0,0,.05)'),
         cloudDesc: (this.state.cloud === 'ok' ? 'Todo se guarda en la nube y se sincroniza entre tus dispositivos automáticamente.' : this.state.cloud === 'sync' ? 'Guardando cambios en la nube…' : this.state.cloud === 'err' ? 'No se pudo conectar a la nube. Tus datos siguen guardados en este equipo; se subirán al reconectar.' : 'Tus datos se guardan en este dispositivo. Descargá una copia por seguridad.'),
         aExport: () => {
           try {
@@ -3328,7 +3458,7 @@ class Component extends DCLogic {
         invCards2: [
           { label: 'INGRESOS POR VENTAS', value: this._ars(vIngresos), sub: ventasArr.length + ' unidades vendidas', vc: '#1D1D1F', bd: 'rgba(0,0,0,.06)', cursor: 'default', subc: '#A1A1A6' },
           { label: 'GANANCIA REALIZADA', value: this._ars(vGan), sub: '≈ ' + this._usd(vGan / invRate), vc: '#1F8A5B', bd: 'rgba(0,0,0,.06)', cursor: 'default', subc: '#A1A1A6' },
-          { label: 'UNIDADES VENDIDAS', value: String(ventasArr.length), sub: 'Ver detalle →', vc: '#1D1D1F', bd: 'rgba(201,80,42,.3)', cursor: 'pointer', subc: '#C9502A', go: () => this.setState({ invMode: 'ventas' }) }
+          { label: 'UNIDADES VENDIDAS', value: String(ventasArr.length), sub: 'Ver detalle →', vc: '#1D1D1F', bd: 'rgba(10,132,255,.3)', cursor: 'pointer', subc: '#0A84FF', go: () => this.setState({ invMode: 'ventas' }) }
         ],
         invVentas: invMode === 'ventas',
         ventasBack: () => this.setState({ invMode: 'list' }),
@@ -3361,8 +3491,8 @@ class Component extends DCLogic {
             name: it.name, cat: it.cat, stock: st,
             costoStr: fmt(it.costo), ventaStr: fmt(it.venta), gananciaStr: fmt(it.venta - it.costo), margenStr: margen + '%',
             stkL: st <= 0 ? 'SIN STOCK' : st <= 2 ? 'STOCK BAJO' : 'EN STOCK',
-            stkC: st <= 0 ? '#C9502A' : st <= 2 ? '#B0700F' : '#1F8A5B',
-            stkB: st <= 0 ? 'rgba(201,80,42,.12)' : st <= 2 ? 'rgba(176,112,15,.1)' : 'rgba(31,138,91,.1)',
+            stkC: st <= 0 ? '#0A84FF' : st <= 2 ? '#B0700F' : '#1F8A5B',
+            stkB: st <= 0 ? 'rgba(10,132,255,.12)' : st <= 2 ? 'rgba(176,112,15,.1)' : 'rgba(31,138,91,.1)',
             minus: () => this._invStock(idx, -1), plus: () => this._invStock(idx, 1),
             sell: () => this.setState({ sellOpen: true, sellIdx: idx, sellClient: '', sellFin: 'contado', sellPrice: String(Math.round(it.moneda === 'ARS' ? it.venta : it.venta * invRate)), sellAdel: '', sellCuota: '', sellN: '', sellFreq: 'Mensual', sellError: '' }),
             edit: () => this.setState({ invMode: 'form', invEdit: idx, invError: '', invFormData: { name: it.name, cat: it.cat, moneda: it.moneda, costo: String(it.costo), venta: String(it.venta), stock: String(it.stock) } }),
@@ -3403,8 +3533,8 @@ class Component extends DCLogic {
             saldoStr: this._fmt(saldo), limStr: this._fmt(c.lim || 0), pagadoStr: this._fmt(pagadoTot),
             lastAcc: c.accesos && c.accesos[0] ? 'Último acceso ' + c.accesos[0].fecha : 'Nunca ingresó',
             stL: c.blocked ? 'BLOQUEADO' : saldo <= 0 ? 'SIN DEUDA' : 'ACTIVO',
-            stC: c.blocked ? '#C9502A' : saldo <= 0 ? '#1F8A5B' : '#B0700F',
-            stB: c.blocked ? 'rgba(201,80,42,.12)' : saldo <= 0 ? 'rgba(31,138,91,.1)' : 'rgba(176,112,15,.1)',
+            stC: c.blocked ? '#0A84FF' : saldo <= 0 ? '#1F8A5B' : '#B0700F',
+            stB: c.blocked ? 'rgba(10,132,255,.12)' : saldo <= 0 ? 'rgba(31,138,91,.1)' : 'rgba(176,112,15,.1)',
             blockLabel: c.blocked ? 'Desbloquear' : 'Bloquear',
             view: () => this.setState({ adminView: k, view: 'dash' }),
             pay: () => {
@@ -3498,7 +3628,7 @@ class Component extends DCLogic {
         aMovEfec: this.state.movEfec, setAMovEfec: (e) => this.setState({ movEfec: e.target.value }),
         aMovTransf: this.state.movTransf, setAMovTransf: (e) => this.setState({ movTransf: e.target.value }),
         aMovCombHint: (() => { const ef = this._num(this.state.movEfec), tr = this._num(this.state.movTransf), tot = this._num(this.state.movAmount); const suma = ef + tr; if (suma === 0) return 'Repartí el importe entre efectivo y transferencia.'; if (suma === tot) return '✓ Suma ' + this._fmt(suma) + ', coincide con el importe.'; return 'Suma ' + this._fmt(suma) + ' · el importe es ' + this._fmt(tot) + ' (diferencia ' + this._fmt(Math.abs(tot - suma)) + ')'; })(),
-        aMovCombColor: (() => { const s = this._num(this.state.movEfec) + this._num(this.state.movTransf); return s > 0 && s === this._num(this.state.movAmount) ? '#1F8A5B' : '#C9502A'; })(),
+        aMovCombColor: (() => { const s = this._num(this.state.movEfec) + this._num(this.state.movTransf); return s > 0 && s === this._num(this.state.movAmount) ? '#1F8A5B' : '#0A84FF'; })(),
         aMovPlan: this.state.movPlan, aMovFin: this.state.movFin, aMovFreq: this.state.movFreq, aMovN: this.state.movN,
         aMovFinCuotas: this.state.movFin === 'cuotas',
         aStockOpts: invArr.map((it, idx) => ({ value: 'inv:' + idx, label: 'STOCK · ' + it.name + ' — ' + (it.moneda === 'ARS' ? this._ars(it.venta) : this._usd(it.venta)) + ' · ' + (it.stock || 0) + ' u.' }))
@@ -3924,7 +4054,7 @@ class Component extends DCLogic {
           name: p.name, spec: p.cat + ' · ' + p.spec, priceStr: this._ars(p.usd * finRate) + ' · ' + this._usd(p.usd),
           pick: () => { setFin({ prodId: p.id, planN: null }); this._finScroll(); },
           bg: active ? '#1D1D1F' : '#fff', color: active ? '#fff' : '#1D1D1F',
-          sub: active ? 'rgba(255,255,255,.55)' : '#A1A1A6', price: active ? '#fff' : '#C9502A', border: active ? '#1D1D1F' : 'rgba(0,0,0,.07)'
+          sub: active ? 'rgba(255,255,255,.55)' : '#A1A1A6', price: active ? '#fff' : '#0A84FF', border: active ? '#1D1D1F' : 'rgba(0,0,0,.07)'
         };
       }),
       finShowQ3: fin.elegido === 'si' && !!finProdChosen,
@@ -4011,8 +4141,8 @@ class Component extends DCLogic {
       const catMode = this.state.catMode || 'list';
       const pedidos = (db.pedidos || []).slice().reverse();
       const pedEstados = ['nueva', 'respondida', 'vendida', 'perdida'];
-      const pedColor = { nueva: '#C9502A', respondida: '#B0700F', vendida: '#1F8A5B', perdida: '#86868B' };
-      const pedBg = { nueva: 'rgba(201,80,42,.1)', respondida: 'rgba(176,112,15,.1)', vendida: 'rgba(31,138,91,.1)', perdida: '#F5F4F1' };
+      const pedColor = { nueva: '#0A84FF', respondida: '#B0700F', vendida: '#1F8A5B', perdida: '#86868B' };
+      const pedBg = { nueva: 'rgba(10,132,255,.1)', respondida: 'rgba(176,112,15,.1)', vendida: 'rgba(31,138,91,.1)', perdida: '#F5F4F1' };
       // finanzas
       const gastos = db.gastos || [];
       const ventasArr2 = db.ventas || [];
@@ -4079,24 +4209,67 @@ class Component extends DCLogic {
             if (Math.abs(dif) <= 2) return { invShow: true, invLabel: 'EN STOCK · ' + (it.stock || 0) + ' U', invC: '#1F8A5B', invB: 'rgba(31,138,91,.1)' };
             return { invShow: true, invLabel: 'STOCK ' + (dif > 0 ? '+' : '') + dif + '% · ' + this._ars(ventaArs), invC: '#B0700F', invB: 'rgba(176,112,15,.12)' };
           })(),
-          hasPhoto: !!p.photo, hasPhotoNot: !p.photo, photo: p.photo || '', photoCss: '"' + (p.photo || '') + '"',
+          ...(() => {
+            /* Foto efectiva: la del panel si hay, si no la que ya está publicada
+               en la tienda, con su mismo encuadre. Una sola cuenta, tres claves. */
+            const sv = p.photo ? null : this._slotView(p.id);
+            const ph = p.photo || (sv && sv.u) || '';
+            return {
+              hasPhoto: !!ph, hasPhotoNot: !ph, photo: ph, photoCss: '"' + ph + '"',
+              thumb: ph ? React.createElement('span', { style: {
+                position: 'absolute', inset: 0,
+                backgroundImage: 'url("' + ph + '")',
+                backgroundSize: p.custom ? 'contain' : 'cover',
+                backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
+                transform: sv ? 'translate(' + sv.x + '%,' + sv.y + '%) scale(' + sv.s + ')'
+                              : 'translate(' + (p.px || 0) + '%,' + (p.py || 0) + '%) scale(' + (p.pz || 1) + ')'
+              } }) : null,
+              frameFit: p.custom ? 'contain' : 'cover',
+              frameCss: sv
+                ? 'translate(' + sv.x + '%,' + sv.y + '%) scale(' + sv.s + ')'
+                : 'translate(' + (p.px || 0) + '%,' + (p.py || 0) + '%) scale(' + (p.pz || 1) + ')'
+            };
+          })(),
           initial: String(p.name || '?').charAt(0).toUpperCase(),
+          ...(() => {
+            /* Un producto cargado a medias no debería descubrirse mirando la
+               tienda: acá se dice de una qué le falta para publicarse bien. */
+            const falta = [];
+            if (!(p.photo || this._slotPhoto(p.id))) falta.push('foto');
+            if (!(parseFloat(p.usd) > 0)) falta.push('precio');
+            if (!p.cond) falta.push('condición');
+            if (!String(p.spec || '').trim()) falta.push('detalle');
+            if (p.custom && !((p.rows || []).length)) falta.push('ficha técnica');
+            return { faltaShow: falta.length > 0, faltaTxt: falta.join(' · ') };
+          })(),
           visLabel: p.hidden ? 'OCULTO' : 'VISIBLE',
-          visC: p.hidden ? '#C9502A' : '#1F8A5B',
-          visB: p.hidden ? 'rgba(201,80,42,.12)' : 'rgba(31,138,91,.1)',
+          visC: p.hidden ? '#0A84FF' : '#1F8A5B',
+          visB: p.hidden ? 'rgba(10,132,255,.12)' : 'rgba(31,138,91,.1)',
           visToggle: () => setOv(p.id, { hidden: !p.hidden }),
           stkLabel: p.sinStock ? 'SIN STOCK' : 'EN STOCK',
-          stkC: p.sinStock ? '#C9502A' : '#1F8A5B',
-          stkB: p.sinStock ? 'rgba(201,80,42,.12)' : 'rgba(31,138,91,.1)',
+          stkC: p.sinStock ? '#0A84FF' : '#1F8A5B',
+          stkB: p.sinStock ? 'rgba(10,132,255,.12)' : 'rgba(31,138,91,.1)',
           stkToggle: () => setOv(p.id, { sinStock: !p.sinStock }),
           /* Aviso: sin condición definida, la tienda muestra un default. Es el
              agujero por donde antes se coló "nuevo sellado" sobre un usado. */
           condLabel: { nuevo: 'NUEVO', a1: 'GRADO A1', impecable: 'IMPECABLE', muybueno: 'MUY BUENO', bueno: 'BUENO' }[p.cond] || 'CONDICIÓN SIN DEFINIR',
-          condC: p.cond ? (p.cond === 'nuevo' ? '#1F8A5B' : '#C9502A') : '#B0700F',
-          condB: p.cond ? (p.cond === 'nuevo' ? 'rgba(31,138,91,.1)' : 'rgba(201,80,42,.12)') : 'rgba(176,112,15,.14)',
+          condC: p.cond ? (p.cond === 'nuevo' ? '#1F8A5B' : '#0A84FF') : '#B0700F',
+          condB: p.cond ? (p.cond === 'nuevo' ? 'rgba(31,138,91,.1)' : 'rgba(10,132,255,.12)') : 'rgba(176,112,15,.14)',
           setPhoto: (e) => this._readImg(e, (url) => setOv(p.id, { photo: url })),
           clearPhoto: () => setOv(p.id, { photo: null }),
-          edit: () => this.setState({ catMode: 'form', catEdit: p.id, catError: '', catForm: { desc: p.desc || '', rows: (p.rows || []).map((r) => ({ k: r.k, v: r.v })), name: p.name, spec: p.spec || '', cat: p.cat || 'Celulares', usd: String(p.usd || ''), photo: p.photo || null, bat: p.bat ? String(p.bat) : '', pos: p.pos != null ? p.pos : null, hidden: !!p.hidden, usdNew: p.usdNew || '', cond: p.cond || '' } }),
+          edit: () => this.setState({ catMode: 'form', catEdit: p.id, catError: '', catForm: { desc: p.desc || '', rows: (p.rows || []).map((r) => ({ k: r.k, v: r.v })), name: p.name, spec: p.spec || '', cat: p.cat || 'Celulares', usd: String(p.usd || ''), photo: p.photo || this._slotPhoto(p.id) || null, bat: p.bat ? String(p.bat) : '', pos: p.pos != null ? p.pos : null, hidden: !!p.hidden, usdNew: p.usdNew || '', cond: p.cond || '', usdAntes: p.usdAntes || '', aviso: p.aviso || '', destacado: !!p.destacado } }),
+          /* El encuadre es el mismo dato que usa la tienda (px/py/pz): lo que se
+             ve acá es literalmente lo que se publica. */
+          frameEdit: () => {
+            const sv = p.photo ? null : this._slotView(p.id);
+            this.setState({
+              frameId: p.id, frameName: p.name, framePhoto: p.photo || (sv && sv.u) || '',
+              frameV: (sv && !p.px && !p.py) ? { px: sv.x, py: sv.y, pz: sv.s } : { px: p.px || 0, py: p.py || 0, pz: p.pz || 1 },
+              frameFit: p.custom ? 'contain' : 'cover', frameAR: 1
+            });
+            const src = p.photo || (sv && sv.u) || '';
+            if (src) { const im = new Image(); im.onload = () => this.setState({ frameAR: (im.naturalWidth || 1) / (im.naturalHeight || 1) }); im.src = src; }
+          },
           canDel: true,
           del: () => {
             if (!window.confirm('¿Eliminar "' + p.name + '" del catálogo? Se saca de la tienda y de esta lista.')) return;
@@ -4106,7 +4279,86 @@ class Component extends DCLogic {
             this._save(Object.assign({}, db, { catalog: cat }));
           }
         })),
-        catNew: () => this.setState({ catMode: 'form', catEdit: null, catError: '', catForm: { name: '', spec: '', cat: 'Celulares', usd: '', photo: null, desc: '', rows: [], hidden: false, usdNew: '', cond: 'nuevo' } }),
+        catNew: () => this.setState({ catMode: 'form', catEdit: null, catError: '', catForm: { name: '', spec: '', cat: 'Celulares', usd: '', photo: null, desc: '', rows: [], hidden: false, usdNew: '', cond: 'nuevo', usdAntes: '', aviso: '', destacado: false } }),
+        catUsdAntes: cform.usdAntes || '', setCatUsdAntes: setCf('usdAntes'),
+        catAviso: cform.aviso || '', setCatAviso: setCf('aviso'),
+        catOfertaHint: (() => {
+          const a = this._numF(cform.usdAntes), u = this._numF(cform.usd);
+          if (!(a > 0)) return 'Opcional. Si lo cargás, la tienda muestra el cartel OFERTA y el precio anterior tachado.';
+          if (!(u > 0) || a <= u) return 'Tiene que ser mayor al precio de venta: si no, no hay oferta que mostrar.';
+          return 'En la tienda: cartel OFERTA, USD ' + u + ' y "antes U$S ' + a + '" tachado.';
+        })(),
+        catDest: !!cform.destacado,
+        catDestTxt: cform.destacado ? 'Destacado — va primero' : 'Sin destacar',
+        catDestBg: cform.destacado ? '#0A84FF' : '#E5E3DF',
+        catDestKnob: cform.destacado ? '25px' : '3px',
+        catDestToggle: () => this.setState({ catForm: Object.assign({}, cform, { destacado: !cform.destacado }) }),
+        frameOpen: !!this.state.frameId,
+        frameName: this.state.frameName || '',
+        frameFitBig: this.state.frameFit || 'contain',
+        frameImgBig: (() => {
+          const src = this.state.framePhoto;
+          if (!src) return null;
+          const v = this.state.frameV || { px: 0, py: 0, pz: 1 };
+          const ar = this.state.frameAR || 1;
+          const cover = (this.state.frameFit || 'contain') === 'cover';
+          const foto = React.createElement('span', { key: 'f', style: {
+            position: 'absolute', inset: 0, pointerEvents: 'none',
+            backgroundImage: 'url("' + src + '")', backgroundSize: 'contain',
+            backgroundPosition: 'center', backgroundRepeat: 'no-repeat'
+          } });
+          if (!cover) {
+            /* Estas fichas muestran la foto entera también en la tienda: no hay
+               recorte que marcar, sólo mover y agrandar. */
+            return React.createElement('span', { style: {
+              position: 'absolute', inset: 0, pointerEvents: 'none',
+              backgroundImage: 'url("' + src + '")', backgroundSize: 'contain',
+              backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
+              transform: 'translate(' + (v.px || 0) + '%,' + (v.py || 0) + '%) scale(' + (v.pz || 1) + ')'
+            } });
+          }
+          const m = 100 * Math.min(ar, 1 / ar);
+          const lado = m / (v.pz || 1);
+          const cx = 50 - ((v.px || 0) / 100) * m;
+          const cy = 50 - ((v.py || 0) / 100) * m;
+          const marco = React.createElement('span', { key: 'm', style: {
+            position: 'absolute', pointerEvents: 'none',
+            left: (cx - lado / 2) + '%', top: (cy - lado / 2) + '%',
+            width: lado + '%', height: lado + '%',
+            border: '2px solid #fff', borderRadius: '10px',
+            boxShadow: '0 0 0 9999px rgba(255,255,255,.72), 0 2px 10px rgba(0,0,0,.25)'
+          } });
+          return [foto, marco];
+        })(),
+        framePhoto: this.state.framePhoto || '', framePhotoCss: '"' + (this.state.framePhoto || '') + '"',
+        frameZoom: String((this.state.frameV || {}).pz || 1),
+        frameCssBig: 'translate(' + ((this.state.frameV || {}).px || 0) + '%,' + ((this.state.frameV || {}).py || 0) + '%) scale(' + ((this.state.frameV || {}).pz || 1) + ')',
+        setFrameZoom: (e) => this.setState({ frameV: Object.assign({}, this.state.frameV, { pz: parseFloat(e.target.value) || 1 }) }),
+        frameDown: (e) => {
+          const v = this.state.frameV || { px: 0, py: 0, pz: 1 };
+          this._drag = { x: e.clientX, y: e.clientY, px: v.px || 0, py: v.py || 0, w: e.currentTarget.getBoundingClientRect().width || 1 };
+          try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+        },
+        frameMove: (e) => {
+          if (!this._drag) return;
+          const d = this._drag;
+          this.setState({ frameV: Object.assign({}, this.state.frameV, {
+            px: Math.max(-60, Math.min(60, d.px + ((e.clientX - d.x) / d.w) * 100)),
+            py: Math.max(-60, Math.min(60, d.py + ((e.clientY - d.y) / d.w) * 100))
+          }) });
+        },
+        frameUp: () => { this._drag = null; },
+        frameAR: this.state.frameAR || 1,
+        frameReset: () => this.setState({ frameV: { px: 0, py: 0, pz: 1 } }),
+        frameCancel: () => this.setState({ frameId: null, frameV: null }),
+        frameSave: () => {
+          const v = this.state.frameV || { px: 0, py: 0, pz: 1 };
+          const patch = { px: Math.round(v.px * 10) / 10, py: Math.round(v.py * 10) / 10, pz: Math.round(v.pz * 100) / 100 };
+          const actual = ((db.catalog || {})[this.state.frameId] || {}).photo;
+          if (!actual && this.state.framePhoto) patch.photo = this.state.framePhoto;
+          setOv(this.state.frameId, patch);
+          this.setState({ frameId: null, frameV: null });
+        },
         catVisible: !cform.hidden,
         catVisTxt: cform.hidden ? 'Oculto — no aparece en la tienda' : 'Visible en la tienda',
         catVisSub: cform.hidden ? 'Lo seguís viendo acá y lo podés vender, pero nadie lo ve en la página.' : 'Aparece en su categoría y en el buscador de la página.',
@@ -4154,6 +4406,11 @@ class Component extends DCLogic {
           if (!(u > 0) || n <= u) return 'Tiene que ser mayor al precio de venta para que el ahorro tenga sentido.';
           return 'Ahorra ' + this._usd(n - u) + ' · ' + Math.round((1 - u / n) * 100) + '% menos que uno nuevo.';
         })(),
+        catPhotoImg: cform.photo ? React.createElement('span', { style: {
+          position: 'absolute', inset: 0,
+          backgroundImage: 'url("' + cform.photo + '")',
+          backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'
+        } }) : null,
         catHasPhoto: !!cform.photo, catNoPhoto: !cform.photo, catPhoto: cform.photo || '', catPhotoCss: '"' + (cform.photo || '') + '"',
         catInitial: String(cform.name || '?').trim().charAt(0).toUpperCase() || '?',
         catBatFill: Math.max(8, Math.min(100, this._num(cform.bat) || 0)) + '%',
@@ -4173,6 +4430,11 @@ class Component extends DCLogic {
           fields.cond = cform.cond || (cform.cat === 'Apple' ? 'impecable' : 'nuevo');
           fields.hidden = !!cform.hidden;
           fields.usdNew = this._numF(cform.usdNew) || null;
+          /* La oferta es un dato del producto, no un cartel suelto: precio
+             anterior, aviso de stock y destacado viajan con él. */
+          fields.usdAntes = this._numF(cform.usdAntes) || null;
+          fields.aviso = String(cform.aviso || '');
+          fields.destacado = !!cform.destacado;
           fields.desc = String(cform.desc || '').trim();
           fields.rows = (cform.rows || []).map((r) => ({ k: String(r.k || '').trim(), v: String(r.v || '').trim() })).filter((r) => r.k || r.v);
           if (this.state.catEdit) setOv(this.state.catEdit, fields);
@@ -4219,11 +4481,11 @@ class Component extends DCLogic {
               return {
                 name: x.name,
                 margen: margen + '% de margen',
-                mc: margen >= 25 ? '#1F8A5B' : margen >= 12 ? '#B0700F' : '#C9502A',
-                mb: margen >= 25 ? 'rgba(31,138,91,.1)' : margen >= 12 ? 'rgba(176,112,15,.12)' : 'rgba(201,80,42,.12)',
+                mc: margen >= 25 ? '#1F8A5B' : margen >= 12 ? '#B0700F' : '#0A84FF',
+                mb: margen >= 25 ? 'rgba(31,138,91,.1)' : margen >= 12 ? 'rgba(176,112,15,.12)' : 'rgba(10,132,255,.12)',
                 ganStr: this._ars(x.gan),
                 w: Math.max(3, Math.round(Math.abs(x.gan) / max * 100)) + '%',
-                bar: x.gan >= 0 ? '#1F8A5B' : '#C9502A',
+                bar: x.gan >= 0 ? '#1F8A5B' : '#0A84FF',
                 sub: x.u + (x.u === 1 ? ' unidad · ' : ' unidades · ') + this._ars(x.ing) + ' facturado · ' + this._ars(Math.round(x.gan / x.u)) + ' de ganancia por unidad'
               };
             })
@@ -4258,7 +4520,7 @@ class Component extends DCLogic {
         // finanzas
         fzCards: [
           { label: 'INGRESOS · ' + cur.label.toUpperCase(), value: this._ars(cur.ing), sub: ventasArr2.filter((v) => slotOf(v.fecha) === cur).length + ' ventas este mes', bg: '#1D1D1F', lc: 'rgba(255,255,255,.55)', vc: '#fff', sc: 'rgba(255,255,255,.5)' },
-          { label: 'GASTOS · ' + cur.label.toUpperCase(), value: this._ars(cur.gas), sub: gastos.filter((g) => slotOf(g.f) === cur).length + ' gastos registrados', bg: '#fff', lc: '#86868B', vc: '#C9502A', sc: '#A1A1A6' },
+          { label: 'GASTOS · ' + cur.label.toUpperCase(), value: this._ars(cur.gas), sub: gastos.filter((g) => slotOf(g.f) === cur).length + ' gastos registrados', bg: '#fff', lc: '#86868B', vc: '#0A84FF', sc: '#A1A1A6' },
           { label: 'GANANCIA NETA · ' + cur.label.toUpperCase(), value: this._ars(cur.gan - cur.gas), sub: 'ganancia de ventas menos gastos', bg: 'rgba(31,138,91,.08)', lc: '#1F8A5B', vc: '#1F8A5B', sc: '#5FA98A' },
           { label: 'COBROS DE CUOTAS · ' + cur.label.toUpperCase(), value: this._ars(cur.fin), sub: finCuotas + (finCuotas === 1 ? ' cuota cobrada · ya contada en la venta' : ' cuotas cobradas · ya contadas en la venta'), bg: '#fff', lc: '#86868B', vc: '#1F8A5B', sc: '#A1A1A6' },
           { label: 'PAGOS DE CUENTA · ' + cur.label.toUpperCase(), value: this._ars(cur.cc), sub: 'pagos sin plan de financiación', bg: '#fff', lc: '#86868B', vc: '#1F8A5B', sc: '#A1A1A6' },
@@ -4317,7 +4579,7 @@ class Component extends DCLogic {
           if (valida) {
             const dif = Math.round((nueva / rate2 - 1) * 100);
             rows.push({ label: 'Con 1 US$ = ' + this._ars(nueva) + ' el stock en dólares pasa a', value: this._ars(usdVenta * nueva), c: '#1F8A5B' });
-            rows.push({ label: 'Variación de todos los precios en pesos', value: (dif >= 0 ? '+' : '') + dif + '%', c: dif >= 0 ? '#C9502A' : '#1F8A5B' });
+            rows.push({ label: 'Variación de todos los precios en pesos', value: (dif >= 0 ? '+' : '') + dif + '%', c: dif >= 0 ? '#0A84FF' : '#1F8A5B' });
           }
           return rows;
         })(),
@@ -4380,7 +4642,6 @@ class Component extends DCLogic {
       setLoginPass: (e) => this.setState({ loginPass: e.target.value, error: false }),
       onKey: (e) => { if (e.key === 'Enter') this._login(); },
       doLogin: () => this._login(),
-      demoAdmin: () => this.setState({ loginPhone: 'admin', loginPass: 'zonatech', error: false }),
       doLogout: () => { try { localStorage.removeItem('zt-portal-fin-user'); } catch (e) {} this.setState({ user: null, view: 'dash', loginPhone: '', loginPass: '', receipt: null, payOpen: false, amode: 'list', adminView: null, screen: null, regPhone: '', regPass: '', regPass2: '', regError: '', fin: { created: false, elegido: null, prodId: null, prodSearch: '', medio: null, adelanto: null, adelMonto: '', planN: null } }); },
 
       navItems: [

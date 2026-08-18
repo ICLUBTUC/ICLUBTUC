@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /portal
+Disallow: /comprar
+Disallow: /Plantillas
+Disallow: /Logo
+
+Sitemap: https://iclub-blue.vercel.app/sitemap.xml

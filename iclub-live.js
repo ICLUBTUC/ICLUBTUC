@@ -18,10 +18,10 @@
      en el panel. Agregar un estado nuevo = una entrada en esta tabla. */
   var CONDS = {
     nuevo:     { label: 'NUEVO · SELLADO',       color: '#1F8A5B', row: 'Nuevo, sellado de fábrica', war: 'Garantía de fábrica' },
-    a1:        { label: 'SEMINUEVO · GRADO A1',  color: '#C9502A', row: 'Grado A1 — como nuevo, sin marcas de uso', war: 'Garantía ICLUB 30 días' },
-    impecable: { label: 'SEMINUEVO · IMPECABLE', color: '#C9502A', row: 'Seminuevo impecable — sin marcas de uso', war: 'Garantía ICLUB 30 días' },
-    muybueno:  { label: 'SEMINUEVO · MUY BUENO', color: '#C9502A', row: 'Seminuevo — micro-marcas que no se ven encendido', war: 'Garantía ICLUB 30 días' },
-    bueno:     { label: 'SEMINUEVO · BUENO',     color: '#C9502A', row: 'Seminuevo — marcas de uso visibles, funciona perfecto', war: 'Garantía ICLUB 30 días' }
+    a1:        { label: 'SEMINUEVO · GRADO A1',  color: '#0A84FF', row: 'Grado A1 — como nuevo, sin marcas de uso', war: 'Garantía ICLUB 30 días' },
+    impecable: { label: 'SEMINUEVO · IMPECABLE', color: '#0A84FF', row: 'Seminuevo impecable — sin marcas de uso', war: 'Garantía ICLUB 30 días' },
+    muybueno:  { label: 'SEMINUEVO · MUY BUENO', color: '#0A84FF', row: 'Seminuevo — micro-marcas que no se ven encendido', war: 'Garantía ICLUB 30 días' },
+    bueno:     { label: 'SEMINUEVO · BUENO',     color: '#0A84FF', row: 'Seminuevo — marcas de uso visibles, funciona perfecto', war: 'Garantía ICLUB 30 días' }
   };
   /* Por categoría, sólo para productos que nadie clasificó todavía. Deliberadamente
      conservador: ante la duda NO se promete "nuevo". Sin condición conocida se
@@ -68,7 +68,7 @@
       }
       if (!id) { try { id = new URLSearchParams(location.search).get('id') || new URLSearchParams(location.search).get('m') || ''; } catch (e) {} }
       var ov = id ? cat[id] : null;
-      if (ov && ov.sinStock) { el.textContent = 'SIN STOCK'; el.style.color = '#C9502A'; return; }
+      if (ov && ov.sinStock) { el.textContent = 'SIN STOCK'; el.style.color = '#0A84FF'; return; }
       var c = condOf(ov, el, (ov && ov.cat) || '');
       el.textContent = c.label;
       el.style.color = c.color;
@@ -166,14 +166,33 @@
   function frameCss(ov) {
     return 'translate(' + (ov.px || 0) + '%,' + (ov.py || 0) + '%) scale(' + (ov.pz || 1) + ')';
   }
+  /* Aviso corto: el doble clic sin sesión de admin no hacía nada y parecía roto. */
+  function ztHint(msg) {
+    var t = document.getElementById('zt-hint');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'zt-hint';
+      t.style.cssText = 'position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:99999;background:#1D1D1F;color:#fff;font:600 14px/1.35 inherit;padding:13px 20px;border-radius:14px;box-shadow:0 18px 44px -18px rgba(0,0,0,.5);max-width:min(92vw,420px);text-align:center;opacity:0;transition:opacity .25s;pointer-events:none;';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    requestAnimationFrame(function () { t.style.opacity = '1'; });
+    clearTimeout(t._h);
+    t._h = setTimeout(function () { t.style.opacity = '0'; }, 3800);
+  }
   function makePhotoEditable(wrap, pid) {
-    if (!isAdmin()) return;
+    if (wrap.getAttribute('data-zt-editable')) return;
+    wrap.setAttribute('data-zt-editable', '');
     wrap.title = 'Doble clic para editar la foto';
     wrap.addEventListener('dblclick', function (e) {
       e.preventDefault(); e.stopPropagation();
+      if (!isAdmin()) { ztHint('Para cambiar fotos entrá en Mi cuenta con el usuario admin.'); return; }
       var img = wrap.querySelector('img');
       if (!img) { pickPhoto(pid); return; }
       if (wrap.getAttribute('data-zt-editing')) return;
+      /* Reencuadrar sólo tiene sentido sobre la foto grande: en una
+         miniatura el ajuste no se vería y descolocaría la ficha. */
+      if ((wrap.getBoundingClientRect().height || 0) < 340) { ztHint('Abrí el producto para cambiar o reencuadrar su foto.'); return; }
       startFrameEdit(wrap, img, pid);
     });
   }
@@ -508,19 +527,43 @@
     var chip = document.createElement('span');
     chip.setAttribute('data-zt-nostock', '');
     chip.textContent = 'SIN STOCK';
-    chip.style.cssText = 'position:absolute;top:12px;left:12px;z-index:5;background:rgba(201,80,42,.95);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:6px 12px;border-radius:980px;font-family:inherit;';
+    chip.style.cssText = 'position:absolute;top:12px;left:12px;z-index:5;background:rgba(10,132,255,.95);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:6px 12px;border-radius:980px;font-family:inherit;';
     wrap.appendChild(chip);
     card.style.opacity = '.62';
   }
-  function setPhoto(slot, url) {
+  function setPhoto(slot, url, ov) {
     var wrap = slot.parentElement || slot;
+    /* El encuadre guardado se autoró contra la foto grande de la ficha
+       (>=340px). En las miniaturas de tarjeta el mismo desplazamiento
+       empujaba el equipo fuera del recuadro, así que van sin transformar. */
+    var big = (wrap.getBoundingClientRect().height || wrap.offsetHeight || 0) >= 340;
+    var fc = big ? frameCss(ov || {}) : 'none';
     var old = wrap.querySelector('[data-zt-photo]');
-    if (old) { if (old.getAttribute('src') === url) return; old.remove(); }
+    /* Se MUTA el nodo existente en vez de sacarlo y volver a ponerlo: este
+       contenedor lo administra React y quitarle un hijo en cada pasada lo
+       hacía explotar. El encuadre se compara contra un atributo propio, nunca
+       contra cssText (el navegador lo reescribe y la comparación no cerraba). */
+    if (old) {
+      if (old.getAttribute('src') === url && old.getAttribute('data-zt-frame') === fc) return;
+      if (old.getAttribute('src') !== url) old.src = url;
+      old.style.transform = fc;
+      old.setAttribute('data-zt-frame', fc);
+      return;
+    }
     wrap.style.position = 'relative';
+    /* El recorte se clava al recuadro: con overflow visible el encuadre
+       guardado se derramaba sobre el título y el precio de la tarjeta. */
+    wrap.style.overflow = 'hidden';
     var img = document.createElement('img');
     img.setAttribute('data-zt-photo', '');
+    img.setAttribute('data-zt-frame', fc);
     img.src = url;
-    img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:4;border-radius:inherit;';
+    /* contain, igual que el resto de las tarjetas: cover recortaba los
+       equipos verticales dentro de un recuadro horizontal. */
+    /* inset:0 ignora el padding del recuadro: se lo copia para que la foto
+       reemplazada respire igual que las demás miniaturas. */
+    var cs = getComputedStyle(wrap);
+    img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;box-sizing:border-box;padding:' + (cs.padding || '0') + ';object-fit:contain;z-index:4;border-radius:inherit;transform:' + fc + ';';
     wrap.appendChild(img);
   }
 
@@ -584,13 +627,13 @@
       var nvi = document.createElement('div');
       nvi.setAttribute('data-nv-img', '');
       nvi.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#F2F3F4,#E7EAEC);position:relative;display:flex;align-items:center;justify-content:center;';
-      if (ov.photo) { var nim = document.createElement('img'); nim.src = ov.photo; nim.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;transform:' + frameCss(ov) + ';'; nvi.appendChild(nim); }
+      if (ov.photo) { var nim = document.createElement('img'); nim.src = ov.photo; nim.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;'; nvi.appendChild(nim); }
       else { var nph = document.createElement('span'); nph.textContent = (ov.name || '?').charAt(0).toUpperCase(); nph.style.cssText = 'font-size:40px;font-weight:700;color:#C9BFB2;'; nvi.appendChild(nph); }
       nv.appendChild(nvi);
       makePhotoEditable(nvi, id);
       var nvCond = condOf(ov, null, ov.cat);
       var nvEye = ov.sinStock ? 'SIN STOCK' : nvCond.label;
-      var nvEyeCol = ov.sinStock ? '#C9502A' : nvCond.color;
+      var nvEyeCol = ov.sinStock ? '#0A84FF' : nvCond.color;
       var nvb = document.createElement('div');
       nvb.innerHTML = '<div data-nv-eyebrow data-zt-cond="' + nvCond.key + '" style="font-size:11px;font-weight:700;letter-spacing:.16em;color:' + nvEyeCol + ';">' + nvEye + '</div>'
         + '<div style="display:flex;flex-direction:column;gap:3px;margin-top:13px;"><h4 style="margin:0;font-size:17px;font-weight:600;letter-spacing:-.01em;color:#1D1D1F;"></h4><div data-zt-nvspec style="font-size:13px;color:#6E6E73;"></div></div>'
@@ -618,15 +661,15 @@
       var rw = document.createElement('div');
       rw.setAttribute('data-appl-imgwrap', '');
       rw.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#F2F3F4,#E7EAEC);position:relative;display:flex;align-items:center;justify-content:center;';
-      if (ov.photo) { var ri = document.createElement('img'); ri.src = ov.photo; ri.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;transform:' + frameCss(ov) + ';'; rw.appendChild(ri); }
+      if (ov.photo) { var ri = document.createElement('img'); ri.src = ov.photo; ri.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;'; rw.appendChild(ri); }
       else { var rp = document.createElement('span'); rp.textContent = (ov.name || '?').charAt(0).toUpperCase(); rp.style.cssText = 'font-size:44px;font-weight:700;color:#C9BFB2;'; rw.appendChild(rp); }
-      if (ov.sinStock) { var rc = document.createElement('span'); rc.textContent = 'SIN STOCK'; rc.setAttribute('data-zt-nostock', ''); rc.style.cssText = 'position:absolute;top:12px;left:12px;background:rgba(201,80,42,.95);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:6px 12px;border-radius:980px;'; rw.appendChild(rc); }
+      if (ov.sinStock) { var rc = document.createElement('span'); rc.textContent = 'SIN STOCK'; rc.setAttribute('data-zt-nostock', ''); rc.style.cssText = 'position:absolute;top:12px;left:12px;background:rgba(10,132,255,.95);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:6px 12px;border-radius:980px;'; rw.appendChild(rc); }
       row.appendChild(rw);
       makePhotoEditable(rw, id);
       var rb = document.createElement('div');
       rb.style.cssText = 'display:flex;flex-direction:column;gap:9px;';
       var rCond = condOf(ov, null, ov.cat);
-      rb.innerHTML = '<div data-zt-cond="' + rCond.key + '" style="font-size:10.5px;font-weight:700;letter-spacing:.18em;color:' + (ov.sinStock ? '#C9502A' : rCond.color) + ';">' + (ov.sinStock ? 'SIN STOCK' : rCond.label) + '</div>'
+      rb.innerHTML = '<div data-zt-cond="' + rCond.key + '" style="font-size:10.5px;font-weight:700;letter-spacing:.18em;color:' + (ov.sinStock ? '#0A84FF' : rCond.color) + ';">' + (ov.sinStock ? 'SIN STOCK' : rCond.label) + '</div>'
         + '<h2 style="margin:0;font-size:19px;font-weight:600;letter-spacing:-.015em;"></h2>'
         + '<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#6E6E73;"></div>';
       rb.children[1].textContent = ov.name || '';
@@ -660,7 +703,7 @@
     if (ov.photo) {
       var im = document.createElement('img');
       im.src = ov.photo;
-      im.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;transform:' + frameCss(ov) + ';';
+      im.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;';
       wrap.appendChild(im);
     } else {
       var ph = document.createElement('span');
@@ -672,7 +715,7 @@
       var chip = document.createElement('span');
       chip.setAttribute('data-zt-nostock', '');
       chip.textContent = 'SIN STOCK';
-      chip.style.cssText = 'position:absolute;top:12px;left:12px;background:rgba(201,80,42,.95);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:6px 12px;border-radius:980px;';
+      chip.style.cssText = 'position:absolute;top:12px;left:12px;background:rgba(10,132,255,.95);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:6px 12px;border-radius:980px;';
       wrap.appendChild(chip);
     }
     card.appendChild(wrap);
@@ -685,7 +728,7 @@
        seminuevo de al lado. Ahora sale del mismo dato que las otras dos. */
     var gCond = condOf(ov, null, ov.cat);
     var gEye = ov.sinStock ? 'SIN STOCK' : gCond.label;
-    var gEyeCol = ov.sinStock ? '#C9502A' : gCond.color;
+    var gEyeCol = ov.sinStock ? '#0A84FF' : gCond.color;
     body.innerHTML = '<div data-zt-cond="' + gCond.key + '" style="font-size:11px;font-weight:700;letter-spacing:.16em;color:' + gEyeCol + ';">' + gEye + '</div>'
       + '<h3 style="margin:0;font-size:21px;font-weight:600;letter-spacing:-.02em;color:#1D1D1F;"></h3>'
       + '<div style="font-size:14px;color:#6E6E73;"></div>'
@@ -763,7 +806,7 @@
     box.style.cssText = 'position:relative;height:100%;min-height:420px;border-radius:28px;overflow:hidden;background:#fff;box-shadow:0 24px 70px -32px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;flex:1;';
     if (ov.photo) { var im = document.createElement('img'); im.src = ov.photo; im.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;position:absolute;inset:0;transform:' + frameCss(ov) + ';'; box.appendChild(im); }
     else { var ph = document.createElement('span'); ph.textContent = (ov.name || '?').charAt(0).toUpperCase(); ph.style.cssText = 'font-size:80px;font-weight:700;color:#C9BFB2;'; box.appendChild(ph); }
-    if (ov.sinStock) { var ch = document.createElement('span'); ch.textContent = 'SIN STOCK'; ch.style.cssText = 'position:absolute;top:16px;left:16px;background:rgba(201,80,42,.95);color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;padding:7px 14px;border-radius:980px;z-index:2;'; box.appendChild(ch); }
+    if (ov.sinStock) { var ch = document.createElement('span'); ch.textContent = 'SIN STOCK'; ch.style.cssText = 'position:absolute;top:16px;left:16px;background:rgba(10,132,255,.95);color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;padding:7px 14px;border-radius:980px;z-index:2;'; box.appendChild(ch); }
     col.appendChild(box); d.appendChild(col);
     makePhotoEditable(box, pid);
     var cmpBtn = (ov.cat === 'Accesorios') ? '' : '<button data-compare="' + pid + '" aria-pressed="false" aria-label="Comparar" title="Comparar equipos" style="width:50px;height:50px;flex-shrink:0;border:1.5px solid rgba(0,0,0,.16);background:#fff;border-radius:16px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#1D1D1F;font-family:inherit;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8h14M5 8l-3 6a3 3 0 0 0 6 0zM19 8l-3 6a3 3 0 0 0 6 0z"></path></svg></button>';
@@ -773,8 +816,8 @@
     info.style.cssText = 'display:flex;flex-direction:column;gap:11px;min-width:0;';
     var dCond = condOf(ov, null, ov.cat);
     var eyeTxt = ov.sinStock ? 'SIN STOCK' : dCond.label;
-    var eyeCol = ov.sinStock ? '#C9502A' : dCond.color;
-    var dotCol = ov.sinStock ? '#C9502A' : '#1F8A5B';
+    var eyeCol = ov.sinStock ? '#0A84FF' : dCond.color;
+    var dotCol = ov.sinStock ? '#0A84FF' : '#1F8A5B';
     var rowsHtml = '';
     rows.forEach(function (r, i) {
       rowsHtml += '<div style="display:flex;justify-content:space-between;align-items:center;gap:18px;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.08);font-size:14px;"><span data-zt-row-k="' + i + '" style="color:#86868B;"></span><span data-zt-row-v="' + i + '" style="font-weight:500;color:#1D1D1F;text-align:right;"></span></div>';
@@ -805,9 +848,9 @@
           + cmpBtn
         + '</div>'
         + '<a href="' + wa + '" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:10px;height:50px;background:#1D1D1F;color:#fff;font-size:16.5px;font-weight:600;border-radius:16px;font-family:inherit;">Comprar ahora<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>'
-        + '<a href="Portal Clientes ICLUB.dc.html#financiar" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:2px;color:#C9502A;font-size:14.5px;font-weight:600;font-family:inherit;">Consultar financiamiento en cuotas →</a>'
+        + '<a href="Portal Clientes ICLUB.dc.html#financiar" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:2px;color:#0A84FF;font-size:14.5px;font-weight:600;font-family:inherit;">Consultar financiamiento en cuotas →</a>'
         + '<div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;padding-top:14px;border-top:1px solid rgba(0,0,0,.08);">'
-          + '<div style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:#1D1D1F;"><span style="width:8px;height:8px;border-radius:50%;background:' + dotCol + ';box-shadow:0 0 0 3px ' + (ov.sinStock ? 'rgba(201,80,42,.15)' : 'rgba(31,138,91,.15)') + ';flex-shrink:0;"></span><span><strong style="font-weight:600;">' + (ov.sinStock ? 'Sin stock' : 'En stock') + '</strong> <span style="color:#86868B;">· ' + (ov.sinStock ? 'consultanos por WhatsApp' : 'entrega inmediata') + '</span></span></div>'
+          + '<div style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:#1D1D1F;"><span style="width:8px;height:8px;border-radius:50%;background:' + dotCol + ';box-shadow:0 0 0 3px ' + (ov.sinStock ? 'rgba(10,132,255,.15)' : 'rgba(31,138,91,.15)') + ';flex-shrink:0;"></span><span><strong style="font-weight:600;">' + (ov.sinStock ? 'Sin stock' : 'En stock') + '</strong> <span style="color:#86868B;">· ' + (ov.sinStock ? 'consultanos por WhatsApp' : 'entrega inmediata') + '</span></span></div>'
           + '<div style="font-size:13.5px;color:#6E6E73;">Envío a todo el país — despacho en el día, el envío se paga al recibir.</div>'
         + '</div>'
       + '</div>';
@@ -947,11 +990,12 @@
         d.setAttribute('data-zt-reccustom', id);
         d.style.cssText = 'position:relative;flex:0 0 232px;scroll-snap-align:start;background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;';
         var imA = document.createElement('a'); imA.href = href; imA.style.cssText = 'display:block;text-decoration:none;';
-        var imB = document.createElement('div'); imB.style.cssText = 'height:210px;background:#fff;display:flex;align-items:center;justify-content:center;';
-        if (o.photo) { imB.style.backgroundImage = 'url("' + o.photo + '")'; imB.style.backgroundSize = 'cover'; imB.style.backgroundPosition = 'center top'; }
+        var imB = document.createElement('div'); imB.style.cssText = 'height:210px;box-sizing:border-box;background:#fff;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;';
+        if (o.photo) { imB.style.padding = '10px'; var ri2 = document.createElement('img'); ri2.src = o.photo; ri2.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;'; imB.appendChild(ri2); }
         else { var ph = document.createElement('span'); ph.textContent = (o.name || '?').charAt(0).toUpperCase(); ph.style.cssText = 'font-size:44px;font-weight:700;color:#C9BFB2;'; imB.appendChild(ph); }
-        if (o.sinStock) { var sk = document.createElement('span'); sk.textContent = 'SIN STOCK'; sk.style.cssText = 'position:absolute;top:12px;left:12px;background:rgba(201,80,42,.95);color:#fff;font-size:10px;font-weight:700;letter-spacing:.08em;padding:5px 10px;border-radius:980px;z-index:2;'; d.appendChild(sk); }
+        if (o.sinStock) { var sk = document.createElement('span'); sk.textContent = 'SIN STOCK'; sk.style.cssText = 'position:absolute;top:12px;left:12px;background:rgba(10,132,255,.95);color:#fff;font-size:10px;font-weight:700;letter-spacing:.08em;padding:5px 10px;border-radius:980px;z-index:2;'; d.appendChild(sk); }
         imA.appendChild(imB); d.appendChild(imA);
+        makePhotoEditable(imB, id);
         var body = document.createElement('div');
         body.style.cssText = 'padding:14px 16px 16px;display:flex;flex-direction:column;gap:2px;flex:1;font-family:inherit;';
         var wa = 'https://wa.me/5493814680653?text=' + encodeURIComponent('Hola! Quiero comprar el ' + (o.name || '') + ' (USD ' + fmtInt(o.usd || 0) + ').');
@@ -1121,6 +1165,87 @@
     var d = prioOf(a) - prioOf(b);
     if (d) return d;
     return (+b.getAttribute('data-zt-usd') || 0) - (+a.getAttribute('data-zt-usd') || 0);
+  }
+
+  /* ---- OFERTA ------------------------------------------------------------
+     Una oferta es un dato del producto (precio anterior, aviso de stock,
+     destacado), no un cartel escrito a mano en la página: se carga una vez en
+     el panel y sale igual en la tarjeta, en la portada y en la ficha. */
+  var AVISOS = { ultima: 'ÚLTIMA UNIDAD', ultimas: 'ÚLTIMAS UNIDADES' };
+  function chipEl(txt, bg) {
+    var s = document.createElement('span');
+    s.textContent = txt;
+    s.style.cssText = 'background:' + bg + ';color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.09em;padding:6px 12px;border-radius:980px;font-family:inherit;white-space:nowrap;';
+    return s;
+  }
+  function usdEl(scope) {
+    var best = null;
+    Array.prototype.forEach.call(scope.querySelectorAll('*'), function (el) {
+      if (el.children.length) return;
+      if (!/^\s*(USD|US\$)\s*[\d.,]+\s*$/.test(el.textContent || '')) return;
+      var fs = parseFloat(getComputedStyle(el).fontSize) || 0;
+      if (!best || fs > best.fs) best = { el: el, fs: fs };
+    });
+    return best && best.el;
+  }
+  function stampOferta(cat) {
+    cat = cat || {};
+    Array.prototype.forEach.call(document.querySelectorAll('[data-zt-oferta]'), function (n) { n.remove(); });
+    var detId = '';
+    try { detId = new URLSearchParams(location.search).get('id') || new URLSearchParams(location.search).get('m') || ''; } catch (e) {}
+    Object.keys(cat).forEach(function (id) {
+      var o = cat[id] || {};
+      var antes = parseFloat(o.usdAntes) || 0, usd = parseFloat(o.usd) || 0;
+      var aviso = AVISOS[o.aviso] || '';
+      var hayOferta = antes > usd && usd > 0;
+      if (!hayOferta && !aviso && !o.destacado) return;
+      var scopes = Array.prototype.slice.call(document.querySelectorAll('[data-zt-custom="' + id + '"]'));
+      /* Un producto del panel puede vivir en una tarjeta escrita a mano: se la
+         busca por el link, igual que hace stampCondicion. */
+      Array.prototype.forEach.call(document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-nv-card]'), function (k) {
+        if (k.hasAttribute('data-zt-custom')) return;
+        var m = (k.getAttribute('href') || '').match(/[?&](?:id|m)=([^&#]+)/);
+        if (m && decodeURIComponent(m[1]) === id) scopes.push(k);
+      });
+      if (detId === id) {
+        var det = document.getElementById('zt-custom-detail') || document.querySelector('.prod-block[data-prod="' + id + '"]') || document.querySelector('[data-zt-detail]');
+        if (det) scopes.push(det);
+      }
+      scopes.forEach(function (scope) {
+        /* El rango escrito en la página manda: si ya dice quién va 1.º y quién
+           2.º, un destacado del panel no puede empatarlos a todos en 0. */
+        if (o.destacado && !scope.hasAttribute('data-zt-first')) scope.setAttribute('data-zt-first', '0');
+        if (scope.querySelector('[data-zt-nostock]')) return;
+        var yaEscrito = !!scope.querySelector('[data-zt-oferta-html]');
+        if ((hayOferta || aviso) && !yaEscrito) {
+          var wrap = scope.querySelector('[data-cc-imgwrap],[data-appl-imgwrap],[data-nv-img]') || scope.firstElementChild;
+          if (wrap) {
+            wrap.style.position = 'relative';
+            var stack = document.createElement('div');
+            stack.setAttribute('data-zt-oferta', '');
+            stack.style.cssText = 'position:absolute;top:12px;left:12px;z-index:5;display:flex;flex-direction:column;gap:6px;align-items:flex-start;';
+            if (hayOferta) stack.appendChild(chipEl('OFERTA', '#D93025'));
+            if (aviso) {
+              var a = chipEl(aviso, 'rgba(176,112,15,.95)');
+              a.setAttribute('data-zt-ultima', '');
+              a.setAttribute('data-zt-fixed', '');
+              stack.appendChild(a);
+            }
+            wrap.appendChild(stack);
+          }
+        }
+        if (hayOferta && !yaEscrito) {
+          var pe = usdEl(scope);
+          if (pe && pe.parentNode) {
+            var was = document.createElement('span');
+            was.setAttribute('data-zt-oferta', '');
+            was.textContent = 'antes U$S ' + fmtInt(antes);
+            was.style.cssText = 'font-size:12.5px;color:#A1A1A6;text-decoration:line-through;font-family:inherit;white-space:nowrap;';
+            pe.parentNode.insertBefore(was, pe.nextSibling);
+          }
+        }
+      });
+    });
   }
 
   function capNovedades() {
@@ -1312,8 +1437,27 @@
     capNovedades();
     sortGridsByPrice();
   }
+  /* Datos guardados por una versión anterior del panel. La tienda no puede
+     esperar a que alguien abra el panel para decir la verdad: se corrigen acá,
+     al leer, antes de que cualquier cosa los use. */
+  var MIGRACIONES = {
+    iphone14: { cuando: function (o) { return o.cond === 'impecable'; },
+                datos: { cond: 'a1', spec: '128 GB · grado A1', usd: 400, usdAntes: 470, aviso: 'ultimas', destacado: true } }
+  };
+  function migrar(db) {
+    var cat = db.catalog || {}, next = null;
+    Object.keys(MIGRACIONES).forEach(function (id) {
+      var o = cat[id];
+      var m = MIGRACIONES[id];
+      if (!o || !m.cuando(o)) return;
+      next = next || Object.assign({}, cat);
+      next[id] = Object.assign({}, o, m.datos);
+    });
+    return next ? Object.assign({}, db, { catalog: next }) : db;
+  }
   function apply(db) {
     if (!db) { baseApply(ZT_RATE); return; }
+    db = migrar(db);
     updateNav(db);
     var cat = db.catalog || {};
     var st = db.settings || {};
@@ -1323,14 +1467,22 @@
     Object.keys(cat).forEach(function (id) {
       var ov = cat[id] || {};
       if (ov.custom) { injectCustomCard(id, ov, rate); return; }
-      var slot = null;
-      ['apple-' + id, 'and-' + id, 'acc-' + id, id].some(function (sid) {
+      /* TODOS los recuadros del producto, no el primero: un equipo tiene su
+         foto en la tarjeta, en la ficha y en los recomendados, y las tres
+         salen del mismo dato. Antes sólo se pintaba la tarjeta y la ficha
+         quedaba vacía. */
+      var slots = [];
+      ['apple-' + id, 'and-' + id, 'acc-' + id, 'prod-front-' + id, id].forEach(function (sid) {
         var el = document.getElementById(sid);
-        if (el && el.tagName && el.tagName.toLowerCase() === 'image-slot') { slot = el; return true; }
-        return false;
+        if (el && el.tagName && el.tagName.toLowerCase() === 'image-slot') slots.push(el);
       });
-      if (!slot) return;
-      var card = findCard(slot);
+      /* Sin recuadro escrito en la página, un override no publica nada: el panel
+         tampoco lo lista (sólo muestra los productos base y los propios), así
+         que es dato muerto y no se inventa una tarjeta con él. */
+      if (!slots.length) return;
+      if (ov.photo && !ov.hidden) slots.forEach(function (s) { setPhoto(s, ov.photo, ov); });
+      var slot = slots[0], card = null;
+      slots.some(function (s) { card = findCard(s); if (card) { slot = s; return true; } return false; });
       if (!card) return;
       ZT_TOUCHED++;
       if (ov.hidden) {
@@ -1345,7 +1497,6 @@
         var chip = card.querySelector('[data-zt-nostock]');
         if (chip) { chip.remove(); card.style.opacity = ''; }
       }
-      if (ov.photo) setPhoto(slot, ov.photo);
     });
     fillCarouselPs5(cat);
     injectCustomDetail(db, rate);
@@ -1357,6 +1508,7 @@
     stampCuota(st.recargos, st.finMin);
     orderPrices();
     stampAhorro(cat);
+    stampOferta(cat);
     stampUltimas(db);
     enhanceRecCarousels();
     capNovedades();
@@ -1621,7 +1773,7 @@
         a.style.cssText = 'display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:14px;text-decoration:none;color:#1D1D1F;transition:background .15s;';
         a.onmouseenter = function () { a.style.background = '#F5F5F4'; };
         a.onmouseleave = function () { a.style.background = 'transparent'; };
-        a.innerHTML = '<span style="width:36px;height:36px;border-radius:10px;background:#F4F1EC;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:#C9502A;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>' +
+        a.innerHTML = '<span style="width:36px;height:36px;border-radius:10px;background:#F4F1EC;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:#0A84FF;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>' +
           '<span style="display:flex;flex-direction:column;gap:1px;min-width:0;"><span style="font-size:15.5px;font-weight:600;letter-spacing:-.01em;">' + it.n + '</span><span style="font-size:12.5px;color:#86868B;">' + it.s + '</span></span>';
         results.appendChild(a);
       });

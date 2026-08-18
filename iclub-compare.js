@@ -117,8 +117,8 @@
     var btns = document.querySelectorAll('[data-compare]');
     for (var i = 0; i < btns.length; i++) {
       var b = btns[i], on = sel.indexOf(b.getAttribute('data-compare')) >= 0;
-      b.style.background = on ? '#C9502A' : '#fff';
-      b.style.borderColor = on ? '#C9502A' : 'rgba(0,0,0,.16)';
+      b.style.background = on ? '#0A84FF' : '#fff';
+      b.style.borderColor = on ? '#0A84FF' : 'rgba(0,0,0,.16)';
       b.style.color = on ? '#fff' : '#1D1D1F';
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
     }
@@ -152,7 +152,7 @@
     var chips = sel.map(chip).join('');
     barInner.innerHTML =
       '<div style="display:flex;align-items:center;gap:8px;flex:1 1 180px;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;">' +
-        '<span style="flex-shrink:0;display:inline-flex;align-items:center;gap:6px;color:#C9502A;font-size:13px;font-weight:700;letter-spacing:.01em;">' +
+        '<span style="flex-shrink:0;display:inline-flex;align-items:center;gap:6px;color:#0A84FF;font-size:13px;font-weight:700;letter-spacing:.01em;">' +
           '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8h14M5 8l-3 6a3 3 0 0 0 6 0zM19 8l-3 6a3 3 0 0 0 6 0z"/></svg>' +
           '<span data-cmp-eyebrow>Comparar</span></span>' +
         chips +
@@ -207,7 +207,7 @@
       var p = CATALOG[id];
       head += '<div style="padding:20px 14px;text-align:center;border-left:1px solid rgba(0,0,0,.06);">' +
         '<div style="font-size:15.5px;font-weight:700;letter-spacing:-.02em;line-height:1.15;">' + esc(p.name) + '</div>' +
-        '<div style="font-size:13px;color:#C9502A;font-weight:600;margin-top:5px;">' + money(p.usd) + '</div>' +
+        '<div style="font-size:13px;color:#0A84FF;font-weight:600;margin-top:5px;">' + money(p.usd) + '</div>' +
         '<button data-cmp-rm="' + id + '" style="margin-top:9px;border:none;background:rgba(0,0,0,.05);color:#86868B;border-radius:980px;font-size:11.5px;font-weight:600;padding:4px 11px;cursor:pointer;font-family:inherit;">Quitar</button>' +
       '</div>';
     });
@@ -236,7 +236,7 @@
     modal.innerHTML =
       '<div data-cmp-sheet style="background:#fff;border-radius:26px;max-width:860px;width:100%;max-height:88vh;overflow:auto;box-shadow:0 40px 100px -30px rgba(0,0,0,.55);position:relative;">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;padding:22px 24px 16px;position:sticky;top:0;background:#fff;z-index:3;">' +
-          '<div><div style="font-size:12px;font-weight:600;letter-spacing:.22em;color:#C9502A;">COMPARADOR</div>' +
+          '<div><div style="font-size:12px;font-weight:600;letter-spacing:.22em;color:#0A84FF;">COMPARADOR</div>' +
           '<div style="font-size:22px;font-weight:700;letter-spacing:-.02em;margin-top:3px;">Ficha técnica lado a lado</div></div>' +
           '<button data-cmp-close aria-label="Cerrar" style="width:40px;height:40px;border-radius:980px;border:none;background:rgba(0,0,0,.05);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>' +
         '</div>' +
