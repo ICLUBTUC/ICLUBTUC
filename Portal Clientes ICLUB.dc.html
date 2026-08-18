@@ -1142,7 +1142,7 @@
         <sc-for list="{{ catItems }}" as="p" hint-placeholder-count="0">
           <div data-cat-row style="background:#fff; border-radius:20px; padding:16px 20px; box-shadow:0 12px 38px -22px rgba(0,0,0,.12); display:grid; grid-template-columns:56px 1fr auto; gap:16px; align-items:center;">
             <sc-if value="{{ p.hasPhoto }}" hint-placeholder-val="{{ false }}">
-              <span onClick="{{ p.frameEdit }}" title="Ajustar cómo se ve en la página" style="position:relative; width:56px; height:56px; border-radius:14px; overflow:hidden; background:linear-gradient(160deg,#F2F3F4,#E7EAEC); display:block; cursor:pointer;">
+              <span onClick="{{ p.frameEdit }}" title="Ajustar cómo se ve en la página" style="position:relative; width:56px; height:56px; border-radius:14px; overflow:hidden; background:#fff; display:block; cursor:pointer;">
                 {{ p.thumb }}
               </span>
             </sc-if>
@@ -1191,7 +1191,7 @@
               </label>
             </sc-if>
             <sc-if value="{{ catNoPhoto }}" hint-placeholder-val="{{ true }}">
-              <label style="flex:0 0 auto; width:230px; max-width:100%; height:200px; border-radius:22px; overflow:hidden; background:linear-gradient(160deg,#F3EEE8,#EDE7DF); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; cursor:pointer;">
+              <label style="flex:0 0 auto; width:230px; max-width:100%; height:200px; border-radius:22px; overflow:hidden; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; cursor:pointer;">
                 <span style="font-size:44px; font-weight:700; color:#C9BFB2;">{{ catInitial }}</span>
                 <span style="background:#fff; color:#1D1D1F; font-size:12px; font-weight:600; border-radius:980px; padding:7px 15px; box-shadow:0 4px 14px rgba(0,0,0,.08);">Subir foto</span>
                 <input type="file" accept="image/*" onChange="{{ catFormPhoto }}" style="display:none;">
@@ -1908,7 +1908,7 @@
         <span style="font-size:18px; font-weight:700; letter-spacing:-.02em;">{{ frameName }}</span>
         <span style="font-size:13px; color:#6E6E73; line-height:1.45;">La foto entera. El recuadro marca lo que se ve en la tienda: arrastrala para moverla y usá el zoom para agrandarla.</span>
       </div>
-      <div onPointerDown="{{ frameDown }}" onPointerMove="{{ frameMove }}" onPointerUp="{{ frameUp }}" onPointerLeave="{{ frameUp }}" style="position:relative; width:100%; max-width:min(368px, 46dvh); align-self:center; flex:0 0 auto; aspect-ratio:1/1; border-radius:22px; overflow:hidden; background:linear-gradient(160deg,#F2F3F4,#E7EAEC); cursor:grab; touch-action:none; user-select:none;">
+      <div onPointerDown="{{ frameDown }}" onPointerMove="{{ frameMove }}" onPointerUp="{{ frameUp }}" onPointerLeave="{{ frameUp }}" style="position:relative; width:100%; max-width:min(368px, 46dvh); align-self:center; flex:0 0 auto; aspect-ratio:1/1; border-radius:22px; overflow:hidden; background:#fff; cursor:grab; touch-action:none; user-select:none;">
         {{ frameImgBig }}
       </div>
       <div style="display:flex; align-items:center; gap:12px;">

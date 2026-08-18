@@ -83,11 +83,16 @@
   // keys the snapshot didn't have (in-memory always wins on conflict, same
   // as the merge already does for a racing drop), so a stale embedded
   // snapshot can never clobber a newer edit.
+  // Claves que vienen SÓLO de la copia incrustada: si el sidecar en disco
+  // trae otra versión, gana el disco (la copia incrustada es una foto vieja
+  // del estado). Una foto cambiada en esta sesión sale de este conjunto en
+  // setSlot() y ya nadie la pisa.
+  const seeded = new Set();
   try {
     const pre = document.querySelector('script[type="application/json"][data-image-slots-preload]');
     if (pre) {
       const data = JSON.parse(pre.textContent);
-      if (data && typeof data === 'object') Object.assign(slots, data);
+      if (data && typeof data === 'object') { Object.assign(slots, data); Object.keys(data).forEach((k) => seeded.add(k)); }
     }
   } catch (e) {}
   // ids explicitly cleared before the sidecar fetch resolved — otherwise
@@ -105,7 +110,9 @@
         // Merge: sidecar loses to any in-memory change that raced ahead of
         // the fetch (drop or clear) so neither is clobbered by hydration.
         if (j && typeof j === 'object') {
-          const merged = Object.assign({}, j, slots);
+          const mine = {};
+          for (const k in slots) if (!seeded.has(k)) mine[k] = slots[k];
+          const merged = Object.assign({}, slots, j, mine);
           // A framing-only write that raced ahead of hydration must not
           // drop a user image that's only on disk — inherit u from the
           // sidecar for any in-memory entry that lacks one.
@@ -153,9 +160,13 @@
 
   function setSlot(id, val) {
     if (!id) return;
+    seeded.delete(id);
     if (val) { slots[id] = val; tombstones.delete(id); }
     else { delete slots[id]; if (!loaded) tombstones.add(id); }
     subs.forEach((fn) => fn());
+    // Aviso para el resto de la página: una foto puesta acá tiene que poder
+    // desplazar a la que haya cargado el panel para el mismo producto.
+    try { document.dispatchEvent(new CustomEvent('image-slot-change', { detail: { id: id, cleared: !val } })); } catch (e) {}
     // A drop is rare + high-value — write immediately so nav-away can't lose
     // it. Gate on the initial read so we don't overwrite a sidecar we haven't
     // merged yet; the merge in load() keeps this change once the read lands.

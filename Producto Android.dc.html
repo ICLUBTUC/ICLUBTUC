@@ -79,8 +79,8 @@ image-slot{--is-frame-bg:#fff;}
 <section class="det-section" style="position:relative; z-index:2; max-width:1020px; margin:0 auto; padding:8px 32px 70px;">
   <div class="det-grid" style="display:grid; grid-template-columns:minmax(300px,380px) 1fr; gap:56px; align-items:stretch;">
     <div class="det-imgcol" style="opacity:0; animation:ztReveal .8s .1s both;">
-      <div style="position:relative; height:100%; min-height:420px; border-radius:32px; overflow:hidden; background:linear-gradient(160deg,{{ product.gFrom }},{{ product.gTo }}); box-shadow:0 24px 70px -32px rgba(0,0,0,.2);">
-        <image-slot id="{{ product.imageId }}" style="width:100%; height:100%; display:block;" shape="rect" fit="cover" placeholder="Foto del equipo"></image-slot>
+      <div style="position:relative; aspect-ratio:1/1; min-height:0; border-radius:32px; overflow:hidden; background:#fff; box-shadow:0 24px 70px -32px rgba(0,0,0,.2);">
+        <image-slot id="{{ product.imageId }}" style="width:100%; height:100%; display:block;" shape="rect" fit="contain" placeholder="Foto del equipo"></image-slot>
       </div>
     </div>
     <div data-zt-detail style="opacity:0; animation:ztReveal .8s .22s both; display:flex; flex-direction:column; gap:11px;">

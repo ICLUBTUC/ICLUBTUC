@@ -163,6 +163,34 @@
     apply(db);
   }
   function savePhoto(pid, url) { saveOv(pid, { photo: url, px: 0, py: 0, pz: 1 }); }
+  /* Una foto arrastrada sobre el recuadro tiene que ganarle a la que quedó
+     cargada en el panel para ese producto: si no, la vieja se sigue pintando
+     encima (z-index 4) y el cambio parece no haber pasado nunca. Se borra la
+     del panel — el reencuadre también, que era el de la foto anterior. */
+  document.addEventListener('image-slot-change', function (e) {
+    var sid = (e.detail && e.detail.id) || '';
+    if (!sid) return;
+    var db = getLocal();
+    if (!db || !db.catalog) return;
+    var ids = [sid, sid.replace(/^apple-/, ''), sid.replace(/^and-/, ''), sid.replace(/^acc-/, ''), sid.replace(/^tv-/, 'tv-'), sid.replace(/^prod-front-/, ''), sid.replace(/^prod-back-/, ''), sid.replace(/^prod-photo-/, '')];
+    var hit = null;
+    for (var i = 0; i < ids.length; i++) {
+      var o = db.catalog[ids[i]];
+      if (o && o.photo) { hit = ids[i]; break; }
+    }
+    if (!hit) return;
+    var ov = Object.assign({}, db.catalog[hit]);
+    delete ov.photo; ov.px = 0; ov.py = 0; ov.pz = 1;
+    db.catalog[hit] = ov;
+    try { localStorage.setItem(LS, JSON.stringify(db)); } catch (err) {}
+    /* Y se saca la que ya está pintada, sin esperar el próximo apply. */
+    Array.prototype.forEach.call(document.querySelectorAll('[data-zt-photo]'), function (img) {
+      var w = img.parentElement;
+      if (w && w.querySelector('#' + (window.CSS && CSS.escape ? CSS.escape(sid) : sid))) img.parentNode.removeChild(img);
+    });
+    pushRemote(db);
+    apply(db);
+  });
   function frameCss(ov) {
     return 'translate(' + (ov.px || 0) + '%,' + (ov.py || 0) + '%) scale(' + (ov.pz || 1) + ')';
   }
@@ -626,9 +654,9 @@
       nv.style.cssText = 'text-decoration:none;color:#1D1D1F;display:flex;flex-direction:column;gap:13px;padding:20px;background:#fff;border-radius:24px;border:1px solid rgba(0,0,0,.05);box-shadow:0 12px 40px -18px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.03);font-family:inherit;' + (ov.sinStock ? 'opacity:.62;' : '');
       var nvi = document.createElement('div');
       nvi.setAttribute('data-nv-img', '');
-      nvi.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#F2F3F4,#E7EAEC);position:relative;display:flex;align-items:center;justify-content:center;';
+      nvi.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:#fff;position:relative;display:flex;align-items:center;justify-content:center;';
       if (ov.photo) { var nim = document.createElement('img'); nim.src = ov.photo; nim.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;'; nvi.appendChild(nim); }
-      else { var nph = document.createElement('span'); nph.textContent = (ov.name || '?').charAt(0).toUpperCase(); nph.style.cssText = 'font-size:40px;font-weight:700;color:#C9BFB2;'; nvi.appendChild(nph); }
+      else { var nph = document.createElement('span'); nph.textContent = (ov.name || '?').charAt(0).toUpperCase(); nph.style.cssText = 'font-size:40px;font-weight:700;color:#D6D6DB;'; nvi.appendChild(nph); }
       nv.appendChild(nvi);
       makePhotoEditable(nvi, id);
       var nvCond = condOf(ov, null, ov.cat);
@@ -660,9 +688,9 @@
       row.style.cssText = 'display:flex;flex-direction:column;gap:16px;padding:22px;background:#fff;border-radius:24px;text-decoration:none;color:#1D1D1F;box-shadow:0 12px 40px -18px rgba(0,0,0,.14), 0 2px 6px rgba(0,0,0,.03);transition:box-shadow .4s, transform .4s;will-change:transform;' + (ov.sinStock ? 'opacity:.62;' : '');
       var rw = document.createElement('div');
       rw.setAttribute('data-appl-imgwrap', '');
-      rw.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#F2F3F4,#E7EAEC);position:relative;display:flex;align-items:center;justify-content:center;';
+      rw.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:#fff;position:relative;display:flex;align-items:center;justify-content:center;';
       if (ov.photo) { var ri = document.createElement('img'); ri.src = ov.photo; ri.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;'; rw.appendChild(ri); }
-      else { var rp = document.createElement('span'); rp.textContent = (ov.name || '?').charAt(0).toUpperCase(); rp.style.cssText = 'font-size:44px;font-weight:700;color:#C9BFB2;'; rw.appendChild(rp); }
+      else { var rp = document.createElement('span'); rp.textContent = (ov.name || '?').charAt(0).toUpperCase(); rp.style.cssText = 'font-size:44px;font-weight:700;color:#D6D6DB;'; rw.appendChild(rp); }
       if (ov.sinStock) { var rc = document.createElement('span'); rc.textContent = 'SIN STOCK'; rc.setAttribute('data-zt-nostock', ''); rc.style.cssText = 'position:absolute;top:12px;left:12px;background:rgba(10,132,255,.95);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:6px 12px;border-radius:980px;'; rw.appendChild(rc); }
       row.appendChild(rw);
       makePhotoEditable(rw, id);
@@ -699,7 +727,7 @@
     card.setAttribute('data-zt-sig', sig);
     card.style.cssText = 'display:flex;flex-direction:column;gap:18px;padding:28px;background:#fff;border-radius:28px;text-decoration:none;color:#1D1D1F;box-shadow:0 18px 60px -24px rgba(0,0,0,.16), 0 3px 8px rgba(0,0,0,.03);font-family:inherit;' + (ov.sinStock ? 'opacity:.62;' : '');
     var wrap = document.createElement('div');
-    wrap.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:20px;overflow:hidden;background:linear-gradient(160deg,#F2F3F4,#E7EAEC);position:relative;display:flex;align-items:center;justify-content:center;';
+    wrap.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:20px;overflow:hidden;background:#fff;position:relative;display:flex;align-items:center;justify-content:center;';
     if (ov.photo) {
       var im = document.createElement('img');
       im.src = ov.photo;
@@ -708,7 +736,7 @@
     } else {
       var ph = document.createElement('span');
       ph.textContent = (ov.name || '?').charAt(0).toUpperCase();
-      ph.style.cssText = 'font-size:44px;font-weight:700;color:#C9BFB2;';
+      ph.style.cssText = 'font-size:44px;font-weight:700;color:#D6D6DB;';
       wrap.appendChild(ph);
     }
     if (ov.sinStock) {
@@ -805,7 +833,7 @@
     var box = document.createElement('div');
     box.style.cssText = 'position:relative;height:100%;min-height:420px;border-radius:28px;overflow:hidden;background:#fff;box-shadow:0 24px 70px -32px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;flex:1;';
     if (ov.photo) { var im = document.createElement('img'); im.src = ov.photo; im.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;position:absolute;inset:0;transform:' + frameCss(ov) + ';'; box.appendChild(im); }
-    else { var ph = document.createElement('span'); ph.textContent = (ov.name || '?').charAt(0).toUpperCase(); ph.style.cssText = 'font-size:80px;font-weight:700;color:#C9BFB2;'; box.appendChild(ph); }
+    else { var ph = document.createElement('span'); ph.textContent = (ov.name || '?').charAt(0).toUpperCase(); ph.style.cssText = 'font-size:80px;font-weight:700;color:#D6D6DB;'; box.appendChild(ph); }
     if (ov.sinStock) { var ch = document.createElement('span'); ch.textContent = 'SIN STOCK'; ch.style.cssText = 'position:absolute;top:16px;left:16px;background:rgba(10,132,255,.95);color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;padding:7px 14px;border-radius:980px;z-index:2;'; box.appendChild(ch); }
     col.appendChild(box); d.appendChild(col);
     makePhotoEditable(box, pid);
@@ -992,7 +1020,7 @@
         var imA = document.createElement('a'); imA.href = href; imA.style.cssText = 'display:block;text-decoration:none;';
         var imB = document.createElement('div'); imB.style.cssText = 'height:210px;box-sizing:border-box;background:#fff;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;';
         if (o.photo) { imB.style.padding = '10px'; var ri2 = document.createElement('img'); ri2.src = o.photo; ri2.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;'; imB.appendChild(ri2); }
-        else { var ph = document.createElement('span'); ph.textContent = (o.name || '?').charAt(0).toUpperCase(); ph.style.cssText = 'font-size:44px;font-weight:700;color:#C9BFB2;'; imB.appendChild(ph); }
+        else { var ph = document.createElement('span'); ph.textContent = (o.name || '?').charAt(0).toUpperCase(); ph.style.cssText = 'font-size:44px;font-weight:700;color:#D6D6DB;'; imB.appendChild(ph); }
         if (o.sinStock) { var sk = document.createElement('span'); sk.textContent = 'SIN STOCK'; sk.style.cssText = 'position:absolute;top:12px;left:12px;background:rgba(10,132,255,.95);color:#fff;font-size:10px;font-weight:700;letter-spacing:.08em;padding:5px 10px;border-radius:980px;z-index:2;'; d.appendChild(sk); }
         imA.appendChild(imB); d.appendChild(imA);
         makePhotoEditable(imB, id);
