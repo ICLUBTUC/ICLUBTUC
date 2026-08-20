@@ -75,12 +75,12 @@
     +         '<a href="Producto Smart TV.dc.html?id=tv-philco-58">Philco 58&quot; <em>Smart 4K</em></a>'
     +         '<a class="zt-dd-all" href="Smart TV ICLUB.dc.html">Ver todos los Smart TV</a>'
     +       '</div></div></div>'
-    +     '<div class="zt-nav-item"><a href="Accesorios ICLUB.dc.html" data-zt-page="acc">Y más… ' + caret + '</a>'
+    +     '<div class="zt-nav-item"><a href="Y mas ICLUB.dc.html" data-zt-page="acc">Y más… ' + caret + '</a>'
     +       '<div class="zt-dd"><div class="zt-dd-panel" data-zt-dd="acc">'
     +         '<div class="zt-dd-label">ACCESORIOS Y CONSOLAS</div>'
     +         '<a href="Producto Apple.dc.html?m=ipad11">iPad 11ª gen <em>Nuevo</em></a>'
     +         '<a href="Producto Apple.dc.html?m=airpodsmax">AirPods Max <em>Nuevo</em></a>'
-    +         '<a class="zt-dd-all" href="Accesorios ICLUB.dc.html">Ver todo</a>'
+    +         '<a class="zt-dd-all" href="Y mas ICLUB.dc.html">Ver todo</a>'
     +       '</div></div></div>'
     +     '<a href="Portal Clientes ICLUB.dc.html#financiar">Cotizador</a>'
     +   '</nav>'
@@ -99,7 +99,7 @@
     +   '<a href="Apple ICLUB.dc.html">Apple ' + chev + '</a>'
     +   '<a href="Android ICLUB.dc.html">Android ' + chev + '</a>'
     +   '<a href="Smart TV ICLUB.dc.html">Smart TV ' + chev + '</a>'
-    +   '<a href="Accesorios ICLUB.dc.html">Y más… ' + chev + '</a>'
+    +   '<a href="Y mas ICLUB.dc.html">Y más… ' + chev + '</a>'
     +   '<a href="Portal Clientes ICLUB.dc.html#financiar">Cotizador ' + chev + '</a>'
     +   '<a href="Portal Clientes ICLUB.dc.html">Mi cuenta ' + chev + '</a>'
     + '</div>';
@@ -112,7 +112,7 @@
     var page = /Apple ICLUB/i.test(loc) ? 'apple'
       : /Android ICLUB/i.test(loc) ? 'android'
       : /Smart TV ICLUB/i.test(loc) ? 'tv'
-      : /Accesorios ICLUB/i.test(loc) ? 'acc' : '';
+      : /Y mas ICLUB|y-mas|accesorios/i.test(loc) ? 'acc' : '';
     if (page) {
       var act = bar.querySelector('[data-zt-page="' + page + '"]');
       if (act) act.classList.add('zt-nav-active');

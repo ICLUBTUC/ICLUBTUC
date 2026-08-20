@@ -1078,7 +1078,7 @@
       'Smart TV': document.querySelector('[data-zt-dd="tv"]')
     };
     if (!panels.Apple && !panels.Celulares) return;
-    var pages = { Apple: 'Apple ICLUB.dc.html', Accesorios: 'Accesorios ICLUB.dc.html', Celulares: 'Android ICLUB.dc.html', 'Smart TV': 'Smart TV ICLUB.dc.html' };
+    var pages = { Apple: 'Apple ICLUB.dc.html', Accesorios: 'Y mas ICLUB.dc.html', Celulares: 'Android ICLUB.dc.html', 'Smart TV': 'Smart TV ICLUB.dc.html' };
     var cat = db.catalog || {};
     /* El reordenamiento se hace una sola vez por panel al final: hacerlo dentro
        del bucle sacaba y volvía a poner los links en cada producto (parpadeo). */
@@ -1086,7 +1086,9 @@
     Object.keys(cat).forEach(function (id) {
       var ov = cat[id] || {};
       if (ov.custom) {
-        var panel = panels[ov.cat] || panels.Celulares;
+        /* Sin panel propio no se cuelga en Android: un accesorio en el menú de
+           celulares confundía (PS5/AirPods aparecían bajo Android). */
+        var panel = panels[ov.cat] || (ov.cat ? null : panels.Celulares);
         if (!panel) return;
         var ex = panel.querySelector('[data-zt-navc="' + id + '"]');
         if (ov.hidden || ov.deleted) { if (ex) ex.remove(); return; }
@@ -1349,7 +1351,7 @@
       if (nm.indexOf('ps5') >= 0 || nm.indexOf('playstation5') >= 0) { found = ov; foundId = id; }
     });
     if (!found) return;
-    var href = found.custom ? detailHrefFor(found.cat, foundId) : 'Accesorios ICLUB.dc.html';
+    var href = found.custom ? detailHrefFor(found.cat, foundId) : 'Y mas ICLUB.dc.html';
     Array.prototype.forEach.call(slide.querySelectorAll('[data-ztc-ps5-link]'), function (a) { a.href = href; });
     var img = slide.querySelector('[data-ztc-ps5-img]');
     var slot = slide.querySelector('[data-ztc-ps5-slot]');
@@ -1545,7 +1547,7 @@
     // portada (carrusel)
     var track = document.getElementById('ztc-track');
     if (track && st.hero) {
-      var hrefs = { apple: 'Apple ICLUB.dc.html', celulares: 'Android ICLUB.dc.html', tv: 'Smart TV ICLUB.dc.html', accesorios: 'Accesorios ICLUB.dc.html' };
+      var hrefs = { apple: 'Apple ICLUB.dc.html', celulares: 'Android ICLUB.dc.html', tv: 'Smart TV ICLUB.dc.html', accesorios: 'Y mas ICLUB.dc.html' };
       var slides = track.querySelectorAll('.ztc-slide');
       st.hero.forEach(function (h, i) {
         var sl = slides[i];
@@ -1572,7 +1574,7 @@
     }
     // si el título de una diapositiva coincide con un producto del catálogo, Comprar/Más info van directo a su tarjeta
     if (track) {
-      var pagesH = { Apple: 'Apple ICLUB.dc.html', Accesorios: 'Accesorios ICLUB.dc.html', Celulares: 'Android ICLUB.dc.html', 'Smart TV': 'Smart TV ICLUB.dc.html' };
+      var pagesH = { Apple: 'Apple ICLUB.dc.html', Accesorios: 'Y mas ICLUB.dc.html', Celulares: 'Android ICLUB.dc.html', 'Smart TV': 'Smart TV ICLUB.dc.html' };
       Array.prototype.forEach.call(track.querySelectorAll('.ztc-slide'), function (sl, si) {
         if (st.hero && st.hero[si] && String(st.hero[si].dest || '').indexOf('prod:') === 0) return;
         var h2b = sl.querySelector('h2');
