@@ -2851,11 +2851,12 @@ class Component extends DCLogic {
     const db = this.state.db || this._load();
     const raw = String(this.state.loginPhone).trim().toLowerCase();
     const ph = raw.replace(/[^0-9]/g, '');
-    if (raw === 'admin') {
+    /* Entra como admin con el número del dueño o con la palabra "admin". */
+    if (raw === 'admin' || ph === '3814680653') {
       /* La contraseña ya no está escrita en el código: se guarda sólo su huella
          SHA-256, que no se puede revertir. Quien lea el sitio publicado no puede
          sacar la clave de acá. Para cambiarla: reemplazar esta huella. */
-      const HUELLA = 'e5779aff7fd1dd339c621d316a7c77410f4c5d32e0b8083a08ab167f54b9b330';
+      const HUELLA = 'aa7f3f1e48b8010cef2bd66065d0c03dd61e157933cebc72f0263b50586d8c0a';
       const pass = this.state.loginPass;
       (async () => {
         let hex = '';
