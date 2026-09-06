@@ -1,7 +1,7 @@
 /* Google Analytics 4 — ICLUB
    Para activarlo: pegá tu ID de medición (empieza con G-) entre las comillas.
    Mientras esté vacío el sitio no carga nada y no envía datos. */
-var ICLUB_GA_ID = '';
+var ICLUB_GA_ID = 'G-6P3V965ER2';
 
 (function () {
   if (!ICLUB_GA_ID || ICLUB_GA_ID.indexOf('G-') !== 0) return;

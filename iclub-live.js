@@ -593,6 +593,19 @@
     var cs = getComputedStyle(wrap);
     img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;box-sizing:border-box;padding:' + (cs.padding || '0') + ';object-fit:contain;z-index:4;border-radius:inherit;transform:' + fc + ';';
     wrap.appendChild(img);
+    /* Una sola foto por recuadro: la del panel tapa a la del sitio en vez de
+       superponerse. Sin esto se veían las dos a la vez, una centrada y la otra
+       estirada a todo el recuadro. */
+    slot.style.visibility = 'hidden';
+  }
+
+  /* El panel se quedó sin foto para este producto: se saca la suya y vuelve a
+     verse la que viene en el sitio. */
+  function clearPhoto(slot) {
+    var wrap = slot.parentElement || slot;
+    var old = wrap.querySelector('[data-zt-photo]');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    if (slot.style.visibility === 'hidden') slot.style.visibility = '';
   }
 
   function detailHrefFor(cat, id) {
@@ -971,7 +984,12 @@
       if (e.target.closest('[data-zt-qplus]')) { if (qin) qin.value = Math.max(1, (parseInt(qin.value, 10) || 1) + 1); return; }
       if (e.target.closest('[data-zt-qminus]')) { if (qin) qin.value = Math.max(1, (parseInt(qin.value, 10) || 1) - 1); return; }
       var cb = e.target.closest('[data-zt-cur]');
-      if (cb) { try { localStorage.setItem('zt_cur', cb.getAttribute('data-zt-cur')); } catch (err) {} ztApplyCur(); return; }
+      if (cb) {
+        /* Sin marcar la elección como manual, ztApplyCur volvía a ignorarla y el
+           botón no hacía nada en las fichas creadas desde el panel. */
+        try { localStorage.setItem('zt_cur', cb.getAttribute('data-zt-cur')); localStorage.setItem('zt_cur_manual', '1'); } catch (err) {}
+        ztApplyCur(); return;
+      }
       var addBtn = e.target.closest('[data-zt-addcart]');
       if (addBtn) {
         var qty = Math.max(1, parseInt(qin ? qin.value : 1, 10) || 1);
@@ -1207,6 +1225,56 @@
     s.textContent = txt;
     s.style.cssText = 'background:' + bg + ';color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.09em;padding:6px 12px;border-radius:980px;font-family:inherit;white-space:nowrap;';
     return s;
+  }
+  /* Botón de WhatsApp en la ficha, con el equipo y el precio ya escritos en el
+     mensaje: llega la consulta sabiendo de qué producto habla. */
+  function addWhatsApp() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-zt-buy]'), function (buy) {
+      var box = buy.parentElement;
+      if (!box) return;
+      var block = buy.closest('.prod-block,[data-zt-detail],.det-info') || box;
+      var h = block.querySelector('h1,h2') || document.querySelector('h1');
+      var name = h ? (h.textContent || '').trim() : '';
+      var pe = block.querySelector('[data-zt-price]') || usdEl(block);
+      var price = pe ? (pe.textContent || '').trim() : '';
+      var msg = 'Hola ICLUB! Me interesa el ' + (name || 'equipo') + (price ? ' (' + price + ')' : '') + '. ¿Sigue disponible?';
+      var href = 'https://wa.me/5493814680653?text=' + encodeURIComponent(msg);
+      var a = box.querySelector('[data-zt-wa]');
+      if (!a) {
+        a = document.createElement('a');
+        a.setAttribute('data-zt-wa', '');
+        a.target = '_blank';
+        a.rel = 'noopener';
+        /* El mensaje se rearma en el momento del clic: si el precio cambió
+           después de dibujar el botón, el texto igual sale con el número que el
+           cliente está viendo. */
+        a.addEventListener('click', function () {
+          var hh = block.querySelector('h1,h2') || document.querySelector('h1');
+          var nn = hh ? (hh.textContent || '').trim() : '';
+          var p2 = block.querySelector('[data-zt-price]') || usdEl(block);
+          var pr = p2 ? (p2.textContent || '').trim() : '';
+          a.href = 'https://wa.me/5493814680653?text=' + encodeURIComponent(
+            'Hola ICLUB! Me interesa el ' + (nn || 'equipo') + (pr ? ' (' + pr + ')' : '') + '. ¿Sigue disponible?');
+        });
+        a.style.cssText = 'text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:9px;height:50px;margin-top:9px;border:1.5px solid rgba(0,0,0,.16);border-radius:14px;background:#fff;color:#1D1D1F;font-family:inherit;font-size:15.5px;font-weight:600;letter-spacing:-.01em;max-width:430px;transition:background .25s,border-color .25s;';
+        a.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="#25D366"><path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.4A10 10 0 1 0 12 2zm0 2a8 8 0 1 1-4.2 14.8l-.3-.2-2.8.8.8-2.7-.2-.3A8 8 0 0 1 12 4zm4.6 10.2c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1l-.5.7c-.1.1-.3.2-.5.1a6.5 6.5 0 0 1-3.2-2.8c-.1-.2 0-.4.1-.5l.5-.6c.1-.2.1-.3 0-.5l-.7-1.6c-.1-.3-.3-.3-.5-.3h-.5c-.2 0-.5.1-.7.4-.3.3-.9 1-.9 2.1 0 1.2.8 2.3 1 2.5.1.2 1.6 2.5 4 3.4 2 .8 2.4.7 2.9.6.4 0 1.3-.5 1.5-1 .2-.5.2-1 .1-1.1z"></path></svg><span>Consultar por WhatsApp</span>';
+        a.addEventListener('mouseenter', function () { a.style.background = '#FAFAF9'; a.style.borderColor = 'rgba(0,0,0,.28)'; });
+        a.addEventListener('mouseleave', function () { a.style.background = '#fff'; a.style.borderColor = 'rgba(0,0,0,.16)'; });
+        if (buy.nextSibling) box.insertBefore(a, buy.nextSibling);
+        else box.appendChild(a);
+      }
+      a.href = href;
+    });
+  }
+
+  function cardsByProductId(id) {
+    var out = [];
+    Array.prototype.forEach.call(document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-nv-card]'), function (k) {
+      if (k.hasAttribute('data-zt-custom')) return;
+      var m = (k.getAttribute('href') || '').match(/[?&](?:id|m)=([^&#]+)/);
+      if (m && decodeURIComponent(m[1]) === id) out.push(k);
+    });
+    return out;
   }
   function usdEl(scope) {
     var best = null;
@@ -1462,6 +1530,7 @@
     stampArs(rate);
     stampCuota(null, 0);
     orderPrices();
+    addWhatsApp();
     stampAhorro({});
     enhanceRecCarousels();
     capNovedades();
@@ -1470,6 +1539,11 @@
   /* Datos guardados por una versión anterior del panel. La tienda no puede
      esperar a que alguien abra el panel para decir la verdad: se corrigen acá,
      al leer, antes de que cualquier cosa los use. */
+  /* Fotos viejas guardadas por el panel que el sitio ya reemplazó por una
+     versión corregida. Se identifican por su tamaño exacto, así que se descarta
+     esa foto y ninguna otra: si más adelante subís una nueva desde el panel,
+     tiene otro tamaño y manda ella. */
+  var FOTOS_REEMPLAZADAS = { 'tv-rca-40': 30967 };
   var MIGRACIONES = {
     iphone14: { cuando: function (o) { return o.cond === 'impecable'; },
                 datos: { cond: 'a1', spec: '128 GB · grado A1', usd: 400, usdAntes: 470, aviso: 'ultimas', destacado: true } }
@@ -1483,11 +1557,21 @@
       next = next || Object.assign({}, cat);
       next[id] = Object.assign({}, o, m.datos);
     });
+    Object.keys(FOTOS_REEMPLAZADAS).forEach(function (id) {
+      var o = cat[id];
+      if (!o || !o.photo || o.photo.length !== FOTOS_REEMPLAZADAS[id]) return;
+      next = next || Object.assign({}, cat);
+      next[id] = Object.assign({}, next[id] || o, { photo: '' });
+    });
     return next ? Object.assign({}, db, { catalog: next }) : db;
   }
   function apply(db) {
     if (!db) { baseApply(ZT_RATE); return; }
+    var pre = db;
     db = migrar(db);
+    /* Si la migración cambió algo, se guarda para no rehacer la corrección en
+       cada carga. */
+    if (db !== pre) { try { localStorage.setItem(LS, JSON.stringify(db)); } catch (e) {} }
     updateNav(db);
     var cat = db.catalog || {};
     var st = db.settings || {};
@@ -1509,11 +1593,23 @@
       /* Sin recuadro escrito en la página, un override no publica nada: el panel
          tampoco lo lista (sólo muestra los productos base y los propios), así
          que es dato muerto y no se inventa una tarjeta con él. */
-      if (!slots.length) return;
       if (ov.photo && !ov.hidden) slots.forEach(function (s) { setPhoto(s, ov.photo, ov); });
+      else slots.forEach(clearPhoto);
       var slot = slots[0], card = null;
       slots.some(function (s) { card = findCard(s); if (card) { slot = s; return true; } return false; });
+      /* Tarjetas escritas a mano cuyo recuadro no sigue la convención de ids:
+         se las encuentra por el link (?m=id), igual que hace stampOferta. Sin
+         esto el precio del panel no llegaba y quedaba el número viejo del HTML. */
+      var byLink = cardsByProductId(id);
+      if (!card) card = byLink[0] || null;
       if (!card) return;
+      byLink.forEach(function (k) {
+        if (k === card) return;
+        if (ov.hidden) { k.style.display = 'none'; return; }
+        if (k.style.display === 'none') k.style.display = '';
+        if (ov.usd) setPrices(k, ov.usd, rate);
+        if (ov.sinStock) markSinStock(k);
+      });
       ZT_TOUCHED++;
       if (ov.hidden) {
         if (card.style.display !== 'none') card.setAttribute('data-zt-disp', card.style.display || '');
@@ -1537,6 +1633,7 @@
     stampArs(rate);
     stampCuota(st.recargos, st.finMin);
     orderPrices();
+    addWhatsApp();
     stampAhorro(cat);
     stampOferta(cat);
     stampUltimas(db);
@@ -1544,6 +1641,7 @@
     capNovedades();
     sortGridsByPrice();
     scheduleOrphans();
+    addWhatsApp();
     // portada (carrusel)
     var track = document.getElementById('ztc-track');
     if (track && st.hero) {
@@ -1605,9 +1703,30 @@
     window.scrollTo({ top: y, behavior: 'smooth' });
   }
 
-  /* Si una grilla deja 1 sola tarjeta en la última fila, pasa a fila
-     deslizable con flecha para que no quede suelta. */
+  /* En celular la grilla es de una columna (lista), así que nunca hay fila
+     huérfana: la fila deslizable solo tenía sentido en pantallas anchas, pero
+     ahí la cuadrícula completa se lee mejor. Queda desactivada y las tarjetas
+     vuelven a su grilla original. */
   function fixOrphanRows() {
+    if (window.innerWidth > 700) { restoreGrids(); return; }
+    railOrphanRows();
+  }
+
+  function restoreGrids() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-zt-orig]'), function (grid) {
+      grid.style.cssText = grid.getAttribute('data-zt-orig');
+      Array.prototype.forEach.call(grid.children, function (ch) {
+        ch.style.flex = ''; ch.style.minWidth = ''; ch.style.maxWidth = ''; ch.style.scrollSnapAlign = '';
+      });
+      var wrapEl = grid.parentElement;
+      if (wrapEl && wrapEl.getAttribute('data-zt-carousel') === 'wrap') {
+        var arr = wrapEl.querySelector('[data-zt-car-arrow]');
+        if (arr) arr.style.display = 'none';
+      }
+    });
+  }
+
+  function railOrphanRows() {
     var cards = document.querySelectorAll('a.cat-card, [data-appl-card], [data-zt-custom]');
     var grids = [];
     Array.prototype.forEach.call(cards, function (c) {
