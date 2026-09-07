@@ -78,7 +78,12 @@ image-slot{--is-frame-bg:#fff;}
   /* Ocultar por filtro se hace con un atributo, no con style inline: el style
      de las tarjetas escritas en la página lo administra el render y borraba el
      display puesto a mano (la tarjeta reaparecía y encima perdía su flex). */
-  [data-flt-hid]{display:none !important;}
+  /* Selectores fuertes a propósito: en móvil hay reglas !important como
+     a[data-appl-card]{display:grid} que le ganaban por especificidad a una
+     regla de un solo atributo, y el filtro no ocultaba nada en el celular. */
+  [data-flt-hid],
+  a[data-appl-card][data-flt-hid],
+  div[data-appl-card][data-flt-hid]{display:none !important;}
 </style>
 <script src="./iclub-live.js"></script>
 <script src="./iclub-nav.js"></script>

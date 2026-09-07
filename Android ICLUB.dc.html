@@ -53,7 +53,12 @@
 image-slot{--is-frame-bg:#fff;}
   /* Ocultar por filtro con atributo, no con style inline: el style de las
      tarjetas del template lo administra el render y lo borraba. */
-  [data-flt-hid]{display:none !important;}
+  /* Selectores fuertes: en móvil a.cat-card{display:grid !important} le ganaba
+     por especificidad y el filtro no ocultaba nada en el celular. */
+  [data-flt-hid],
+  a.cat-card[data-flt-hid],
+  a[data-cat-card][data-flt-hid],
+  div[data-cat-card][data-flt-hid]{display:none !important;}
 </style>
 <script src="./iclub-live.js"></script>
 <script src="./iclub-nav.js"></script>
