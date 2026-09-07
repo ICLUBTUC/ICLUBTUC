@@ -1249,6 +1249,31 @@
           </select>
           <span style="font-size:12.5px; color:#86868B; line-height:1.45;">{{ catCondHint }}</span>
         </div>
+        <sc-if value="{{ catIsApple }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex; flex-direction:column; gap:7px;">
+            <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">MODELO Y VERSIÓN — DECIDE EN QUÉ FILTRO APARECE</label>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px;">
+              <select value="{{ catModelo }}" onChange="{{ setCatModelo }}" style="font-family:inherit; font-size:15px; font-weight:600; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:14px; padding:13px 14px; color:#1D1D1F;">
+                <option value="">Automático (según el nombre)</option>
+                <option value="i17">iPhone 17</option>
+                <option value="i16">iPhone 16</option>
+                <option value="i15">iPhone 15</option>
+                <option value="i14">iPhone 14</option>
+                <option value="i13">iPhone 13</option>
+              </select>
+              <select value="{{ catVariante }}" onChange="{{ setCatVariante }}" style="font-family:inherit; font-size:15px; font-weight:600; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:14px; padding:13px 14px; color:#1D1D1F;">
+                <option value="">Versión automática</option>
+                <option value="base">Estándar</option>
+                <option value="plus">Plus</option>
+                <option value="pro">Pro</option>
+                <option value="promax">Pro Max</option>
+                <option value="mini">mini</option>
+                <option value="e">e</option>
+              </select>
+            </div>
+            <span style="font-size:12.5px; color:#86868B; line-height:1.45;">{{ catModeloHint }}</span>
+          </div>
+        </sc-if>
         <div style="display:flex; flex-direction:column; gap:7px;">
           <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">DESCRIPCIÓN (debajo del título en la ficha)</label>
           <input value="{{ catDesc }}" onChange="{{ setCatDesc }}" type="text" placeholder="Cancelación activa de ruido y audio espacial." style="width:100%; box-sizing:border-box; font-family:inherit; font-size:15px; font-weight:500; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:13px; padding:13px 16px; outline:none;" style-focus="border-color:#1D1D1F; background:#fff;">
@@ -2845,6 +2870,36 @@ class Component extends DCLogic {
       .concat(Object.keys(ov).filter((k) => !ids[k] && ov[k] && ov[k].custom).map((k) => Object.assign({ id: k }, ov[k])))
       .filter((p) => !p.deleted);
   }
+  /* Stock y catálogo son la misma mercadería con dos nombres: "iphone 13 128gb"
+     en stock es "iPhone 13" en la web. Se comparan sin mayúsculas, sin signos y
+     sin la capacidad final, que es lo único que suele sobrar. */
+  _normName(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+  _sameProduct(a, b) {
+    const x = this._normName(a), y = this._normName(b);
+    if (!x || !y) return false;
+    if (x === y) return true;
+    const strip = (s) => s.replace(/\d+(gb|tb)$/, '');
+    return strip(x) === strip(y) || strip(x) === y || x === strip(y);
+  }
+  _invFor(db, name) { return (db.inventory || []).find((x) => this._sameProduct(x.name, name)); }
+  /* Precio de venta del stock, siempre en dólares (la web publica en USD). */
+  _invUsd(it, rate) {
+    if (!it) return 0;
+    const v = this._numF(it.venta);
+    return it.moneda === 'ARS' ? (rate > 0 ? v / rate : 0) : v;
+  }
+  /* Escribe el precio del stock en el producto del catálogo, que es lo que lee
+     la tienda. Devuelve el db nuevo (o el mismo si no había nada que cambiar). */
+  _catPriceFrom(db, invName, usd) {
+    if (!(usd > 0)) return db;
+    const p = this._catalogAll(db).find((q) => this._sameProduct(q.name, invName));
+    if (!p) return db;
+    const prev = Math.round((p.usd || 0));
+    if (prev === Math.round(usd)) return db;
+    const cat = Object.assign({}, db.catalog || {});
+    cat[p.id] = Object.assign({}, cat[p.id] || {}, { usd: Math.round(usd) });
+    return Object.assign({}, db, { catalog: cat });
+  }
   _planTitle(m) { return (m.prods && m.prods[0] ? m.prods[0].name : m.det || 'Plan financiado'); }
 
   _login() {
@@ -3522,7 +3577,11 @@ class Component extends DCLogic {
           const item = { name: String(f.name).trim(), cat: f.cat || 'Otro', moneda: f.moneda || 'USD', costo: this._numF(f.costo), venta: venta, stock: this._num(f.stock) };
           const arr = (db.inventory || []).slice();
           if (this.state.invEdit != null) arr[this.state.invEdit] = Object.assign({}, arr[this.state.invEdit], item); else arr.push(item);
-          this._save(Object.assign({}, db, { inventory: arr }));
+          /* Un precio nuevo acá es un precio nuevo en la web: si el mismo
+             equipo está publicado, se actualiza en el mismo guardado. */
+          let nextDb = Object.assign({}, db, { inventory: arr });
+          nextDb = this._catPriceFrom(nextDb, item.name, this._invUsd(item, invRate));
+          this._save(nextDb);
           this.setState({ invMode: 'list', invEdit: null, invFormData: null, invError: '' });
         },
         aClients: keys.map((k) => {
@@ -4258,7 +4317,7 @@ class Component extends DCLogic {
           condB: p.cond ? (p.cond === 'nuevo' ? 'rgba(31,138,91,.1)' : 'rgba(10,132,255,.12)') : 'rgba(176,112,15,.14)',
           setPhoto: (e) => this._readImg(e, (url) => setOv(p.id, { photo: url })),
           clearPhoto: () => setOv(p.id, { photo: null }),
-          edit: () => this.setState({ catMode: 'form', catEdit: p.id, catError: '', catForm: { desc: p.desc || '', rows: (p.rows || []).map((r) => ({ k: r.k, v: r.v })), name: p.name, spec: p.spec || '', cat: p.cat || 'Celulares', usd: String(p.usd || ''), photo: p.photo || this._slotPhoto(p.id) || null, bat: p.bat ? String(p.bat) : '', pos: p.pos != null ? p.pos : null, hidden: !!p.hidden, usdNew: p.usdNew || '', cond: p.cond || '', usdAntes: p.usdAntes || '', aviso: p.aviso || '', destacado: !!p.destacado } }),
+          edit: () => this.setState({ catMode: 'form', catEdit: p.id, catError: '', catForm: { desc: p.desc || '', rows: (p.rows || []).map((r) => ({ k: r.k, v: r.v })), name: p.name, spec: p.spec || '', cat: p.cat || 'Celulares', usd: String(p.usd || ''), photo: p.photo || this._slotPhoto(p.id) || null, bat: p.bat ? String(p.bat) : '', pos: p.pos != null ? p.pos : null, hidden: !!p.hidden, usdNew: p.usdNew || '', cond: p.cond || '', modelo: p.modelo || '', variante: p.variante || '', usdAntes: p.usdAntes || '', aviso: p.aviso || '', destacado: !!p.destacado } }),
           /* El encuadre es el mismo dato que usa la tienda (px/py/pz): lo que se
              ve acá es literalmente lo que se publica. */
           frameEdit: () => {
@@ -4389,6 +4448,14 @@ class Component extends DCLogic {
         catRowAdd: () => this.setState({ catForm: Object.assign({}, cform, { rows: (cform.rows || []).map((x) => ({ k: x.k, v: x.v })).concat([{ k: '', v: '' }]) }) }),
         catCat: cform.cat, setCatCat: setCf('cat'),
         catCond: cform.cond || (cform.cat === 'Apple' ? 'impecable' : 'nuevo'), setCatCond: setCf('cond'),
+        catModelo: cform.modelo || '', setCatModelo: setCf('modelo'),
+        catVariante: cform.variante || '', setCatVariante: setCf('variante'),
+        catModeloHint: (() => {
+          const fam = { i17: 'iPhone 17', i16: 'iPhone 16', i15: 'iPhone 15', i14: 'iPhone 14', i13: 'iPhone 13' }[cform.modelo];
+          const va = { base: 'Estándar', plus: 'Plus', pro: 'Pro', promax: 'Pro Max', mini: 'mini', e: 'e' }[cform.variante];
+          if (!fam) return 'Si lo dejás en automático, la tienda lo deduce del nombre. Elegilo a mano para estar seguro.';
+          return 'Va al filtro ' + fam + (va ? ' · ' + va : '') + ' de la página Apple.';
+        })(),
         catCondHint: (() => {
           const k = cform.cond || (cform.cat === 'Apple' ? 'impecable' : 'nuevo');
           return {
@@ -4429,6 +4496,12 @@ class Component extends DCLogic {
              ningún otro lugar. Sin esto, un usado heredó el "nuevo sellado"
              escrito a mano en la página. */
           fields.cond = cform.cond || (cform.cat === 'Apple' ? 'impecable' : 'nuevo');
+          /* Modelo y versión: en Apple deciden en qué filtro cae el producto.
+             Si quedan vacíos, la tienda los adivina del nombre — funciona, pero
+             elegirlos acá es lo que evita que un equipo caiga en el grupo
+             equivocado cuando el nombre está escrito de otra forma. */
+          fields.modelo = cform.cat === 'Apple' ? String(cform.modelo || '') : '';
+          fields.variante = cform.cat === 'Apple' ? String(cform.variante || '') : '';
           fields.hidden = !!cform.hidden;
           fields.usdNew = this._numF(cform.usdNew) || null;
           /* La oferta es un dato del producto, no un cartel suelto: precio

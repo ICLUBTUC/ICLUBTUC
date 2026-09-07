@@ -33,7 +33,7 @@
      que estamos — y no sólo del panel: las tarjetas nativas no tienen override,
      y son justamente las que tenían el cartel equivocado. */
   function catFromContext(el) {
-    var card = el && el.closest && el.closest('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card]');
+    var card = el && el.closest && el.closest('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic]');
     var href = (card && card.getAttribute && card.getAttribute('href')) || '';
     if (!href) { try { href = location.pathname + location.search; } catch (e) {} }
     href = decodeURIComponent(href);
@@ -211,10 +211,12 @@
   function makePhotoEditable(wrap, pid) {
     if (wrap.getAttribute('data-zt-editable')) return;
     wrap.setAttribute('data-zt-editable', '');
-    wrap.title = 'Doble clic para editar la foto';
+    if (isAdmin()) wrap.title = 'Doble clic para editar la foto';
     wrap.addEventListener('dblclick', function (e) {
+      /* Para un cliente, el doble clic sobre una foto no significa nada: antes
+         le aparecía un cartel hablándole de un panel que no es suyo. */
+      if (!isAdmin()) return;
       e.preventDefault(); e.stopPropagation();
-      if (!isAdmin()) { ztHint('Para cambiar fotos entrá en Mi cuenta con el usuario admin.'); return; }
       var img = wrap.querySelector('img');
       if (!img) { pickPhoto(pid); return; }
       if (wrap.getAttribute('data-zt-editing')) return;
@@ -246,11 +248,17 @@
     img.style.willChange = 'transform';
     var tip = document.createElement('div');
     tip.style.cssText = 'position:absolute;left:8px;right:8px;bottom:8px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(29,29,31,.85);color:#fff;font-size:11.5px;font-weight:600;border-radius:12px;padding:8px 12px;pointer-events:auto;';
-    tip.innerHTML = '<span>Arrastr\u00e1 \u00b7 rueda = zoom \u00b7 clic afuera = guardar</span>';
+    tip.innerHTML = '<span>Arrastr\u00e1 \u00b7 rueda = zoom</span>';
     var chg = document.createElement('button');
     chg.textContent = 'Cambiar foto';
-    chg.style.cssText = 'flex:0 0 auto;background:#fff;color:#1D1D1F;border:none;border-radius:980px;padding:6px 12px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;';
+    chg.style.cssText = 'flex:0 0 auto;background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:980px;padding:6px 12px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;';
+    /* Un botón explícito: el "clic afuera guarda" no se ve, y si el clic caía
+       sobre otro elemento la foto parecía volver sola a su lugar. */
+    var sav = document.createElement('button');
+    sav.textContent = 'Guardar';
+    sav.style.cssText = 'flex:0 0 auto;background:#fff;color:#1D1D1F;border:none;border-radius:980px;padding:6px 14px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;';
     tip.appendChild(chg);
+    tip.appendChild(sav);
     wrap.appendChild(tip);
     function render() { img.style.transform = frameCss(st); }
     render();
@@ -288,10 +296,13 @@
       wrap.removeEventListener('wheel', onWheel);
       document.removeEventListener('click', onDocClick, true);
       document.removeEventListener('keydown', onKey);
-      if (save) saveOv(pid, { px: st.px, py: st.py, pz: st.pz });
+      /* Se guarda y se deja puesto el encuadre nuevo en la imagen: si esperaba
+         a la próxima pasada, la foto pegaba un salto al valor viejo. */
+      if (save) { saveOv(pid, { px: st.px, py: st.py, pz: st.pz }); img.style.transform = frameCss(st); ztHint('Encuadre guardado.'); }
       else { var o = (getLocal() || {}).catalog || {}; img.style.transform = frameCss(o[pid] || {}); }
     }
     chg.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); finish(false); pickPhoto(pid); });
+    sav.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); finish(true); });
     wrap.addEventListener('click', onWrapClick);
     wrap.addEventListener('pointerdown', onDown);
     document.addEventListener('pointermove', onMove);
@@ -331,7 +342,7 @@
   function stampUltimas(db) {
     var norm = function (s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); };
     var inv = (db.inventory || []).filter(function (it) { return (it.stock || 0) === 1; }).map(function (it) { return norm(it.name); }).filter(Boolean);
-    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card]');
+    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic]');
     Array.prototype.forEach.call(cards, function (card) {
       /* Un aviso escrito a mano en la página gana: es una decisión comercial
          explícita, no una deducción del inventario. */
@@ -404,13 +415,13 @@
         }
       });
     }
-    Array.prototype.forEach.call(document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card]'), function (c) { scopeArs(c, 0); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic]'), function (c) { scopeArs(c, 0); });
     Array.prototype.forEach.call(document.querySelectorAll('.det-section,.det-info'), function (el) { scopeArs(el, 0); });
   }
   /* Tarjetas que sólo traen el precio en dólares: se les agrega la línea en
      pesos, para que todas informen lo mismo. Es idempotente. */
   function stampArs(rate) {
-    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card]');
+    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic]');
     Array.prototype.forEach.call(cards, function (card) {
       var host = null, usd = 0, hasArs = false;
       var walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT);
@@ -459,7 +470,7 @@
     var MIN = parseFloat(minUsd);
     if (!isFinite(MIN) || MIN <= 0) MIN = 150;
     var min = 0;
-    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card]');
+    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic]');
     Array.prototype.forEach.call(cards, function (card) {
       var host = null, usd = 0;
       var all = card.querySelectorAll('*');
@@ -663,7 +674,7 @@
       nv.id = 'zt-custom-' + id;
       nv.setAttribute('data-zt-sig', sig);
       nv.href = detailHrefFor(ov.cat, id);
-      if (ov.cat === 'Apple') nv.setAttribute('data-zt-cur', 'usd');
+      if (isIphone(ov)) nv.setAttribute('data-zt-cur', 'usd');
       nv.style.cssText = 'text-decoration:none;color:#1D1D1F;display:flex;flex-direction:column;gap:13px;padding:20px;background:#fff;border-radius:24px;border:1px solid rgba(0,0,0,.05);box-shadow:0 12px 40px -18px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.03);font-family:inherit;' + (ov.sinStock ? 'opacity:.62;' : '');
       var nvi = document.createElement('div');
       nvi.setAttribute('data-nv-img', '');
@@ -697,7 +708,7 @@
       row.id = 'zt-custom-' + id;
       row.setAttribute('data-zt-sig', sig);
       row.href = detailHrefFor(ov.cat, id);
-      if (ov.cat === 'Apple') row.setAttribute('data-zt-cur', 'usd');
+      if (isIphone(ov)) row.setAttribute('data-zt-cur', 'usd');
       row.style.cssText = 'display:flex;flex-direction:column;gap:16px;padding:22px;background:#fff;border-radius:24px;text-decoration:none;color:#1D1D1F;box-shadow:0 12px 40px -18px rgba(0,0,0,.14), 0 2px 6px rgba(0,0,0,.03);transition:box-shadow .4s, transform .4s;will-change:transform;' + (ov.sinStock ? 'opacity:.62;' : '');
       var rw = document.createElement('div');
       rw.setAttribute('data-appl-imgwrap', '');
@@ -734,7 +745,7 @@
     }
     var card = document.createElement('a');
     card.href = detailHrefFor(ov.cat, id);
-    if (ov.cat === 'Apple') card.setAttribute('data-zt-cur', 'usd');
+    if (isIphone(ov)) card.setAttribute('data-zt-cur', 'usd');
     card.setAttribute('data-zt-custom', id);
     card.id = 'zt-custom-' + id;
     card.setAttribute('data-zt-sig', sig);
@@ -1011,6 +1022,23 @@
 
 
   /* Productos del catálogo agregados también aparecen en "También te puede interesar" */
+  /* Precio de una tarjeta de recomendados: grande la moneda que corresponde al
+     producto, chica la otra como referencia. */
+  function recPrice(o, rate) {
+    var usd = o.usd || 0;
+    var antes = parseFloat(o.usdAntes) || 0;
+    var esIphone = isIphone(o);
+    var big = esIphone ? 'USD ' + fmtInt(usd) : 'ARS ' + fmtInt(usd * rate);
+    var small = esIphone ? 'ARS ' + fmtInt(usd * rate) : 'USD ' + fmtInt(usd);
+    /* Precio anterior tachado: sólo cuando de verdad es más alto, y en la misma
+       moneda que el precio principal para que la comparación se entienda. */
+    var oferta = antes > usd && usd > 0
+      ? '<span data-zt-recantes style="font-size:12px;color:#A1A1A6;font-weight:500;text-decoration:line-through;">' + (esIphone ? 'USD ' + fmtInt(antes) : 'ARS ' + fmtInt(antes * rate)) + '</span>'
+      : '';
+    return oferta
+      + '<span style="font-size:18px;font-weight:700;letter-spacing:-.02em;color:' + (oferta ? '#D93025' : '#1D1D1F') + ';">' + big + '</span>'
+      + '<span style="font-size:12px;color:#A1A1A6;font-weight:500;">' + small + '</span>';
+  }
   function injectRecCards(db, rate) {
     var grids = document.querySelectorAll('.rec-grid');
     if (!grids.length) return;
@@ -1048,13 +1076,57 @@
         body.innerHTML = '<a style="text-decoration:none;color:inherit;font-size:15px;font-weight:600;letter-spacing:-.01em;"></a>'
           + '<span style="font-size:12.5px;color:#86868B;">' + (o.bat ? 'Batería ' + o.bat + '%' : '&nbsp;') + '</span>'
           + '<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:auto;padding-top:12px;">'
-            + '<div style="display:flex;flex-direction:column;"><span style="font-size:18px;font-weight:700;letter-spacing:-.02em;color:#1D1D1F;">USD ' + fmtInt(o.usd || 0) + '</span><span style="font-size:12px;color:#A1A1A6;font-weight:500;">ARS ' + fmtInt((o.usd || 0) * rate) + '</span></div>'
+            + '<div style="display:flex;flex-direction:column;">' + recPrice(o, rate) + '</div>'
             + '<a href="' + href + '" aria-label="Ver producto" style="flex:0 0 auto;width:40px;height:40px;border-radius:980px;border:1.5px solid rgba(0,0,0,.12);background:#fff;display:inline-flex;align-items:center;justify-content:center;color:#1D1D1F;text-decoration:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>'
           + '</div>';
         var nm = body.querySelector('a'); nm.href = href; nm.textContent = o.name || '';
         d.appendChild(body);
         wrap.appendChild(d);
       });
+    });
+  }
+
+  /* Las tarjetas de "También te puede interesar" escritas en la página traen el
+     precio a mano: quedaban con la cotización del día que se escribieron, al
+     lado de las inyectadas por el panel, y no cambiaban al cambiar el precio.
+     Acá se las engancha al mismo circuito que a todas las demás. */
+  function stampRecStatic(cat, rate) {
+    cat = cat || {};
+    Array.prototype.forEach.call(document.querySelectorAll('.rec-grid > div'), function (card) {
+      if (card.hasAttribute('data-zt-reccustom')) return;
+      var a = card.querySelector('a[href]');
+      var m = ((a && a.getAttribute('href')) || '').match(/[?&](?:m|id)=([^&#]+)/);
+      if (!m) return;
+      var id = decodeURIComponent(m[1]);
+      var ov = cat[id] || {};
+      card.setAttribute('data-zt-recstatic', id);
+      /* La moneda principal la decide el producto, igual que en el resto. */
+      var nombre = ov.name || (a.textContent || '');
+      if (/iphone/i.test(nombre)) card.setAttribute('data-zt-cur', 'usd');
+      else card.removeAttribute('data-zt-cur');
+      if (!(parseFloat(ov.usd) > 0)) return;
+      var walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT);
+      var node, usdEl = null;
+      while ((node = walker.nextNode())) {
+        if (/^\s*(USD|US\$)\s*[\d.,]+\s*$/.test(node.nodeValue || '')) {
+          node.nodeValue = 'USD ' + fmtInt(ov.usd);
+          usdEl = node.parentNode;
+          break;
+        }
+      }
+      /* Mismo cartel de oferta que en las tarjetas del panel: el precio anterior
+         tachado arriba del actual, sólo si es mayor. */
+      var antes = parseFloat(ov.usdAntes) || 0;
+      var slot = usdEl && usdEl.parentNode;
+      var prev = card.querySelector('[data-zt-recantes]');
+      if (!slot || !(antes > ov.usd)) { if (prev) prev.remove(); return; }
+      if (!prev) {
+        prev = document.createElement('span');
+        prev.setAttribute('data-zt-recantes', '');
+        prev.style.cssText = 'font-size:12px;color:#A1A1A6;font-weight:500;text-decoration:line-through;order:-1;';
+        slot.insertBefore(prev, slot.firstChild);
+      }
+      prev.textContent = /iphone/i.test(nombre) ? 'USD ' + fmtInt(antes) : 'ARS ' + fmtInt(antes * rate);
     });
   }
 
@@ -1107,7 +1179,8 @@
         /* Sin panel propio no se cuelga en Android: un accesorio en el menú de
            celulares confundía (PS5/AirPods aparecían bajo Android). */
         var panel = panels[ov.cat] || (ov.cat ? null : panels.Celulares);
-        if (!panel) return;
+        /* Un panel de lista fija (Apple = modelos) no recibe productos sueltos. */
+        if (!panel || panel.getAttribute('data-zt-fixed')) return;
         var ex = panel.querySelector('[data-zt-navc="' + id + '"]');
         if (ov.hidden || ov.deleted) { if (ex) ex.remove(); return; }
         var a = ex || document.createElement('a');
@@ -1124,6 +1197,7 @@
       // producto base: ocultar / renombrar el link existente
       var link = null;
       document.querySelectorAll('.zt-dd-panel a').forEach(function (el) {
+        if (el.parentNode && el.parentNode.getAttribute && el.parentNode.getAttribute('data-zt-fixed')) return;
         var h = el.getAttribute('href') || '';
         if (h.indexOf('?m=' + id) !== -1 || h.indexOf('?id=' + id) !== -1 || h.indexOf('#card-' + id) !== -1) link = el;
       });
@@ -1286,6 +1360,32 @@
     });
     return best && best.el;
   }
+  /* ---- MODELO Y VERSIÓN (Apple) ------------------------------------------
+     El filtro de la página Apple agrupa por familia (iPhone 13, 14, 15…) y por
+     versión (base, Plus, Pro, Pro Max). Adivinarlo del título funciona hasta que
+     alguien escribe "iPhone13Pro" o "13 PRO MAX 256": por eso el panel deja
+     elegirlo a mano y acá se sella en la tarjeta. Sin elección del panel, se
+     deduce del nombre, que es el comportamiento que ya había. */
+  function idOfCard(card) {
+    if (!card) return '';
+    var id = card.getAttribute('data-zt-custom') || '';
+    if (id) return id;
+    var m = (card.getAttribute('href') || '').match(/[?&](?:id|m)=([^&#]+)/);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+  function stampModelo(cat) {
+    cat = cat || {};
+    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic]');
+    Array.prototype.forEach.call(cards, function (card) {
+      var ov = cat[idOfCard(card)];
+      if (!ov) return;
+      if (ov.modelo) card.setAttribute('data-zt-model', ov.modelo);
+      else card.removeAttribute('data-zt-model');
+      if (ov.variante) card.setAttribute('data-zt-var', ov.variante);
+      else card.removeAttribute('data-zt-var');
+    });
+  }
+
   function stampOferta(cat) {
     cat = cat || {};
     Array.prototype.forEach.call(document.querySelectorAll('[data-zt-oferta]'), function (n) { n.remove(); });
@@ -1470,12 +1570,19 @@
   function usdFirst(card) {
     return !!(card && card.getAttribute && card.getAttribute('data-zt-cur') === 'usd');
   }
+  /* El dólar es la moneda de los iPhone y de nada más: iPad, AirPods, consolas
+     y todo el resto se publican en pesos, con el dólar como referencia chica.
+     Antes bastaba con ser categoría Apple, y unos AirPods aparecían con "USD 22"
+     como precio principal. */
+  function isIphone(ov) {
+    return !!(ov && ov.cat === 'Apple' && /iphone/i.test(ov.name || ''));
+  }
   function curMark(ov) {
-    return (ov && ov.cat === 'Apple') ? ' data-zt-cur="usd"' : '';
+    return isIphone(ov) ? ' data-zt-cur="usd"' : '';
   }
 
   function orderPrices() {
-    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card]');
+    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic]');
     Array.prototype.forEach.call(cards, function (card) {
       var href = (card.getAttribute && card.getAttribute('href')) || '';
       if (!href) { var a = card.querySelector('a[href]'); href = (a && a.getAttribute('href')) || ''; }
@@ -1629,6 +1736,8 @@
     injectRecCards(db, rate);
     carryProduct();
     stampCondicion(cat);
+    stampModelo(cat);
+    stampRecStatic(cat, rate);
     resyncArs(rate);
     stampArs(rate);
     stampCuota(st.recargos, st.finMin);

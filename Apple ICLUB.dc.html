@@ -75,6 +75,10 @@
     div[data-appl-card] div[data-appl-arrow] svg{width:14px !important; height:14px !important;}
   }
 image-slot{--is-frame-bg:#fff;}
+  /* Ocultar por filtro se hace con un atributo, no con style inline: el style
+     de las tarjetas escritas en la página lo administra el render y borraba el
+     display puesto a mano (la tarjeta reaparecía y encima perdía su flex). */
+  [data-flt-hid]{display:none !important;}
 </style>
 <script src="./iclub-live.js"></script>
 <script src="./iclub-nav.js"></script>
@@ -95,6 +99,10 @@ image-slot{--is-frame-bg:#fff;}
 <section id="appl-hero" style="display:none;"></section>
 
 <section style="max-width:1040px; margin:0 auto; padding:60px 24px 140px; display:flex; flex-direction:column; gap:56px;">
+
+  <div data-appl-filterbar="" style="display:flex; flex-direction:column; gap:12px;"></div>
+
+  <p data-appl-empty="" style="display:none; margin:0; font-size:14.5px; color:#6E6E73;">No hay equipos con esa combinación. Probá otro filtro.</p>
 
   <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:22px;">
 
@@ -257,6 +265,151 @@ class Component extends DCLogic {
     this._initInteractions();
     this._guardImageClicks();
     this._setupChecking();
+    this._setupFilters();
+  }
+
+  /* ---- FILTROS DE LA PÁGINA APPLE ----------------------------------------
+     Una sola grilla y tres hileras de chips: estado, modelo y versión. El
+     filtrado sólo muestra u oculta tarjetas — nunca las mueve de lugar: las
+     tarjetas son parte del render y sacarlas de su contenedor rompía la
+     página entera. */
+  _FAMS(){ return [
+    {key:'i17',label:'iPhone 17',ord:117},{key:'i16',label:'iPhone 16',ord:116},
+    {key:'i15',label:'iPhone 15',ord:115},{key:'i14',label:'iPhone 14',ord:114},
+    {key:'i13',label:'iPhone 13',ord:113}
+  ]; }
+  _VARS(){ return [
+    {key:'mini',label:'mini',ord:-1},{key:'e',label:'e',ord:-2},
+    {key:'base',label:'Estándar',ord:0},{key:'plus',label:'Plus',ord:1},
+    {key:'pro',label:'Pro',ord:2},{key:'promax',label:'Pro Max',ord:3}
+  ]; }
+
+  /* Modelo y versión salen del panel cuando están elegidos ahí (data-zt-model /
+     data-zt-var, que sella iclub-live); si no, se deducen del título. */
+  _familyOf(card){
+    const set=card.getAttribute&&card.getAttribute('data-zt-model');
+    if(set){ const f=this._FAMS().find(x=>x.key===set); if(f) return f; }
+    const h=card.querySelector('h2,h3');
+    const t=(h&&h.textContent||'').trim();
+    let m=t.match(/iphone\s*(1[0-9])/i);
+    if(m){ const n=m[1]; const f=this._FAMS().find(x=>x.key==='i'+n); if(f) return f; return {key:'i'+n,label:'iPhone '+n,ord:100+parseInt(n,10)}; }
+    return {key:'otros',label:'Otros Apple',ord:0};
+  }
+  _variantKey(card){
+    const set=card.getAttribute&&card.getAttribute('data-zt-var');
+    if(set) return set;
+    const h=card.querySelector('h2,h3');
+    const t=(h&&h.textContent||'').toLowerCase();
+    if(/pro\s*max/.test(t)) return 'promax';
+    if(/\bpro\b/.test(t)) return 'pro';
+    if(/\bplus\b/.test(t)) return 'plus';
+    if(/\bmini\b/.test(t)) return 'mini';
+    if(/\d+\s*e\b/.test(t)) return 'e';
+    return 'base';
+  }
+  _isSealed(card){
+    const eye=card.querySelector('[data-zt-cond]');
+    const key=(eye&&eye.getAttribute('data-zt-cond'))||'';
+    return key==='nuevo'||/sellad/i.test((eye&&eye.textContent)||'');
+  }
+
+  _chip(label,active,onClick){
+    const b=document.createElement('button');
+    b.type='button'; b.textContent=label;
+    b.style.cssText='cursor:pointer; font:inherit; font-size:13px; font-weight:600; padding:8px 15px; border-radius:980px; transition:background .25s, color .25s, border-color .25s;'
+      +(active?'background:#1D1D1F; color:#fff; border:1px solid #1D1D1F;':'background:#fff; color:#1D1D1F; border:1px solid rgba(0,0,0,.14);');
+    b.addEventListener('click',onClick);
+    return b;
+  }
+
+  _setupFilters(){
+    this._fEstado='todos'; this._fModelo='todos'; this._fVar='todos';
+    /* El menú de arriba entra con ?modelo=i13: la página abre ya filtrada por
+       esa familia en vez de mostrar todo el catálogo mezclado. */
+    try{
+      const q=new URLSearchParams(location.search);
+      const m=q.get('modelo')||'';
+      if(this._FAMS().some(f=>f.key===m)) this._fModelo=m;
+      const e=q.get('estado')||'';
+      if(e==='nuevo'||e==='usado') this._fEstado=e;
+    }catch(err){}
+    const start=()=>{
+      if(this._disposed) return;
+      this._bar=document.querySelector('[data-appl-filterbar]');
+      this._empty=document.querySelector('[data-appl-empty]');
+      if(!this._bar||!document.querySelector('[data-appl-card]')){ setTimeout(start,250); return; }
+      this._paint();
+      /* Las tarjetas del panel se inyectan después y la animación de entrada
+         reescribe el style de cada tarjeta (y con eso borra el display:none):
+         por eso se observan también los atributos y se repinta un rato más. */
+      const obs=new MutationObserver(()=>{
+        if(this._painting) return;
+        clearTimeout(this._pT); this._pT=setTimeout(()=>this._paint(),150);
+      });
+      obs.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class','data-zt-model','data-zt-var']});
+      this._fObs=obs;
+      [300,900,2000,3500].forEach(ms=>setTimeout(()=>this._paint(),ms));
+    };
+    start();
+  }
+
+  _cards(){ return Array.from(document.querySelectorAll('[data-appl-card]')); }
+
+  _paint(){
+    if(this._disposed||!this._bar) return;
+    this._painting=true;
+    try{ this._paintNow(); } finally { setTimeout(()=>{ this._painting=false; },0); }
+  }
+
+  _paintNow(){
+    const cards=this._cards();
+    const fams={};
+    cards.forEach(c=>{ const f=this._familyOf(c); fams[f.key]=f; });
+    this._FAMS().forEach(f=>{ if(!fams[f.key]) fams[f.key]=f; });
+    const keys=Object.keys(fams).sort((a,b)=>fams[b].ord-fams[a].ord);
+    if(this._fModelo!=='todos'&&!fams[this._fModelo]) this._fModelo='todos';
+    const counts={};
+    keys.forEach(k=>{ counts[k]=cards.filter(c=>this._familyOf(c).key===k).length; });
+    const present={};
+    if(this._fModelo!=='todos') cards.forEach(c=>{ if(this._familyOf(c).key===this._fModelo) present[this._variantKey(c)]=true; });
+    const vars=this._VARS().filter(v=>present[v.key]).sort((a,b)=>a.ord-b.ord);
+    if(this._fVar!=='todos'&&!vars.some(v=>v.key===this._fVar)) this._fVar='todos';
+
+    const sig=this._fEstado+'|'+this._fModelo+'|'+this._fVar+'|'+keys.map(k=>k+':'+counts[k]).join(',')+'|'+vars.map(v=>v.key).join(',');
+    if(this._sig!==sig){
+      this._sig=sig;
+      this._bar.innerHTML='';
+      const row=(label,children)=>{
+        const r=document.createElement('div');
+        r.style.cssText='display:flex; align-items:center; gap:9px; flex-wrap:wrap;';
+        const l=document.createElement('span');
+        l.textContent=label;
+        l.style.cssText='font-size:11px; font-weight:700; letter-spacing:.2em; color:#86868B; margin-right:4px;';
+        r.appendChild(l); children.forEach(c=>r.appendChild(c));
+        this._bar.appendChild(r);
+      };
+      row('ESTADO',[['todos','Todos'],['nuevo','Sellados'],['usado','Seminuevos']].map(([k,l])=>
+        this._chip(l,this._fEstado===k,()=>{ this._fEstado=k; this._sig=null; this._paint(); })));
+      row('MODELO',[this._chip('Todos',this._fModelo==='todos',()=>{ this._fModelo='todos'; this._fVar='todos'; this._sig=null; this._paint(); })]
+        .concat(keys.map(k=>{
+          const c=this._chip(fams[k].label.replace('iPhone ','').trim()||fams[k].label,this._fModelo===k,()=>{ this._fModelo=k; this._fVar='todos'; this._sig=null; this._paint(); });
+          if(!counts[k]){ c.style.opacity='.38'; c.title='Sin equipos cargados'; }
+          return c;
+        })));
+      if(vars.length>1) row('VERSIÓN',[this._chip('Todas',this._fVar==='todos',()=>{ this._fVar='todos'; this._sig=null; this._paint(); })]
+        .concat(vars.map(v=>this._chip(v.label,this._fVar===v.key,()=>{ this._fVar=v.key; this._sig=null; this._paint(); }))));
+    }
+
+    let shown=0;
+    cards.forEach(c=>{
+      const okE=this._fEstado==='todos'||(this._fEstado==='nuevo')===this._isSealed(c);
+      const okM=this._fModelo==='todos'||this._familyOf(c).key===this._fModelo;
+      const okV=this._fVar==='todos'||this._variantKey(c)===this._fVar;
+      const vis=okE&&okM&&okV;
+      if(vis) shown++;
+      c.toggleAttribute('data-flt-hid',!vis);
+    });
+    if(this._empty) this._empty.style.display=shown?'none':'block';
   }
 
   _checkingSchema(){
@@ -408,6 +561,7 @@ class Component extends DCLogic {
   }
   componentWillUnmount(){
     this._disposed=true;
+    if(this._fObs){ try{ this._fObs.disconnect(); }catch(e){} }
     if(this._sts) this._sts.forEach(s=>{ try{s.kill();}catch(e){} });
   }
   renderVals(){ return {}; }

@@ -49,12 +49,16 @@
     +   '<div style="width:1px;height:26px;background:rgba(255,255,255,.12);margin:0 2px 0 4px;"></div>'
     +   '<nav class="zt-topnav" style="display:flex;align-items:center;gap:2px;">'
     +     '<div class="zt-nav-item"><a href="Apple ICLUB.dc.html" data-zt-page="apple">Apple ' + caret + '</a>'
-    +       '<div class="zt-dd"><div class="zt-dd-panel" data-zt-dd="apple">'
+    /* El menú Apple lista modelos, no productos sueltos: cada uno lleva al
+       catálogo ya filtrado por esa familia. Antes se le colgaban todos los
+       equipos del panel y quedaba una lista larga y desordenada. */
+    +       '<div class="zt-dd"><div class="zt-dd-panel" data-zt-dd="apple" data-zt-fixed="1">'
     +         '<div class="zt-dd-label">MODELOS</div>'
-    +         '<a href="Producto Apple.dc.html?m=iphone13">iPhone 13</a>'
-    +         '<a href="Producto Apple.dc.html?m=iphone14">iPhone 14</a>'
-    +         '<a href="Producto Apple.dc.html?m=iphone15">iPhone 15</a>'
-    +         '<a href="Producto Apple.dc.html?m=iphone16pro">iPhone 16 Pro</a>'
+    +         '<a href="Apple ICLUB.dc.html?modelo=i13">iPhone 13</a>'
+    +         '<a href="Apple ICLUB.dc.html?modelo=i14">iPhone 14</a>'
+    +         '<a href="Apple ICLUB.dc.html?modelo=i15">iPhone 15</a>'
+    +         '<a href="Apple ICLUB.dc.html?modelo=i16">iPhone 16</a>'
+    +         '<a href="Apple ICLUB.dc.html?modelo=i17">iPhone 17</a>'
     +         '<a class="zt-dd-all" href="Apple ICLUB.dc.html">Ver todo Apple</a>'
     +       '</div></div></div>'
     +     '<div class="zt-nav-item"><a href="Android ICLUB.dc.html" data-zt-page="android">Android ' + caret + '</a>'

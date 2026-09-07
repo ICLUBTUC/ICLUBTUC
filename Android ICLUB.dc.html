@@ -51,6 +51,9 @@
     a.cat-card > div[data-cc-imgwrap]{grid-row:1 / span 3; width:112px !important; aspect-ratio:1/1 !important;}
   }
 image-slot{--is-frame-bg:#fff;}
+  /* Ocultar por filtro con atributo, no con style inline: el style de las
+     tarjetas del template lo administra el render y lo borraba. */
+  [data-flt-hid]{display:none !important;}
 </style>
 <script src="./iclub-live.js"></script>
 <script src="./iclub-nav.js"></script>
@@ -61,6 +64,10 @@ image-slot{--is-frame-bg:#fff;}
 <section style="display:none;"></section>
 
 <section style="max-width:1160px; margin:0 auto; padding:50px 24px 90px; display:flex; flex-direction:column; gap:52px;">
+
+  <div data-and-filterbar="" style="display:flex; flex-direction:column; gap:12px;"></div>
+
+  <p data-and-empty="" style="display:none; margin:0; font-size:14.5px; color:#6E6E73;">No hay equipos con esa combinación. Probá otro filtro.</p>
 
   <div style="display:flex; flex-direction:column; gap:22px;">
     <div style="display:flex; align-items:center; gap:18px;">
@@ -379,8 +386,93 @@ image-slot{--is-frame-bg:#fff;}
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  componentDidMount(){ this._io=null; this._setup(); this._guardImageClicks(); }
-  componentWillUnmount(){ if(this._io) this._io.disconnect(); }
+  componentDidMount(){ this._io=null; this._setup(); this._guardImageClicks(); this._setupFilters(); }
+
+  /* ---- FILTROS (mismos que Apple, adaptados a marcas) ----------------------
+     Chips de estado y de marca. Sólo se muestran u ocultan tarjetas: moverlas
+     de contenedor rompe el render. Una marca sin tarjetas visibles se oculta
+     entera, título incluido. */
+  _chip(label,active,onClick){
+    const b=document.createElement('button');
+    b.type='button'; b.textContent=label;
+    b.style.cssText='cursor:pointer; font:inherit; font-size:13px; font-weight:600; padding:8px 15px; border-radius:980px; transition:background .25s, color .25s, border-color .25s;'
+      +(active?'background:#1D1D1F; color:#fff; border:1px solid #1D1D1F;':'background:#fff; color:#1D1D1F; border:1px solid rgba(0,0,0,.14);');
+    b.addEventListener('click',onClick);
+    return b;
+  }
+  _isSealed(card){
+    const eye=card.querySelector('[data-zt-cond]');
+    const key=(eye&&eye.getAttribute('data-zt-cond'))||'';
+    return key==='nuevo'||/sellad/i.test((eye&&eye.textContent)||'');
+  }
+  _blocks(){
+    return Array.from(document.querySelectorAll('h2[id^="and-sec-"]')).map(h=>{
+      const wrap=h.parentElement&&h.parentElement.parentElement;
+      return wrap?{key:h.id.replace('and-sec-',''),label:h.textContent.trim(),wrap:wrap}:null;
+    }).filter(Boolean);
+  }
+  _setupFilters(){
+    this._fEstado='todos'; this._fMarca='todos';
+    const start=()=>{
+      if(this._gone) return;
+      this._bar=document.querySelector('[data-and-filterbar]');
+      this._empty=document.querySelector('[data-and-empty]');
+      if(!this._bar||!document.querySelector('[data-cat-card]')){ setTimeout(start,250); return; }
+      this._paint();
+      /* Igual que en Apple: la animación de entrada reescribe el style de las
+         tarjetas, así que se observan atributos y se repinta un rato más. */
+      const obs=new MutationObserver(()=>{
+        if(this._painting) return;
+        clearTimeout(this._pT); this._pT=setTimeout(()=>this._paint(),150);
+      });
+      obs.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class','data-zt-cond']});
+      this._fObs=obs;
+      [300,900,2000,3500].forEach(ms=>setTimeout(()=>this._paint(),ms));
+    };
+    start();
+  }
+  _paint(){
+    if(this._gone||!this._bar) return;
+    this._painting=true;
+    try{ this._paintNow(); } finally { setTimeout(()=>{ this._painting=false; },0); }
+  }
+
+  _paintNow(){
+    const blocks=this._blocks();
+    if(this._fMarca!=='todos'&&!blocks.some(b=>b.key===this._fMarca)) this._fMarca='todos';
+    const sig=this._fEstado+'|'+this._fMarca+'|'+blocks.map(b=>b.key).join(',');
+    if(this._sig!==sig){
+      this._sig=sig;
+      this._bar.innerHTML='';
+      const row=(label,children)=>{
+        const r=document.createElement('div');
+        r.style.cssText='display:flex; align-items:center; gap:9px; flex-wrap:wrap;';
+        const l=document.createElement('span');
+        l.textContent=label;
+        l.style.cssText='font-size:11px; font-weight:700; letter-spacing:.2em; color:#86868B; margin-right:4px;';
+        r.appendChild(l); children.forEach(c=>r.appendChild(c));
+        this._bar.appendChild(r);
+      };
+      row('ESTADO',[['todos','Todos'],['nuevo','Sellados'],['usado','Seminuevos']].map(([k,l])=>
+        this._chip(l,this._fEstado===k,()=>{ this._fEstado=k; this._sig=null; this._paint(); })));
+      row('MARCA',[this._chip('Todas',this._fMarca==='todos',()=>{ this._fMarca='todos'; this._sig=null; this._paint(); })]
+        .concat(blocks.map(b=>this._chip(b.label,this._fMarca===b.key,()=>{ this._fMarca=b.key; this._sig=null; this._paint(); }))));
+    }
+    let shown=0;
+    blocks.forEach(b=>{
+      let vis=0;
+      Array.from(b.wrap.querySelectorAll('[data-cat-card]')).forEach(c=>{
+        const okE=this._fEstado==='todos'||(this._fEstado==='nuevo')===this._isSealed(c);
+        const okM=this._fMarca==='todos'||b.key===this._fMarca;
+        if(okE&&okM) vis++;
+        c.toggleAttribute('data-flt-hid',!(okE&&okM));
+      });
+      b.wrap.toggleAttribute('data-flt-hid',!vis);
+      shown+=vis;
+    });
+    if(this._empty) this._empty.style.display=shown?'none':'block';
+  }
+  componentWillUnmount(){ this._gone=true; if(this._io) this._io.disconnect(); if(this._fObs) this._fObs.disconnect(); }
   renderVals(){ return {}; }
   _guardImageClicks(){
     document.querySelectorAll('[data-cc-imgwrap]').forEach((wrap)=>{
