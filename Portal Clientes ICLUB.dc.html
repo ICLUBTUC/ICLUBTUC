@@ -1138,6 +1138,20 @@
           <input value="{{ catQ }}" onChange="{{ setCatQ }}" type="text" placeholder="Buscar producto…" style="flex:1; min-width:220px; box-sizing:border-box; font-family:inherit; font-size:15px; font-weight:500; color:#1D1D1F; background:#fff; border:1.5px solid rgba(0,0,0,.08); border-radius:980px; padding:13px 20px; outline:none;" style-focus="border-color:#1D1D1F;">
           <span style="font-size:13px; color:#A1A1A6; font-weight:600;">{{ catCount }}</span>
         </div>
+        <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap;">
+          <span style="font-size:11px; font-weight:700; letter-spacing:.2em; color:#A1A1A6; margin-right:4px;">CATEGORÍA</span>
+          <sc-for list="{{ catCatChips }}" as="c" hint-placeholder-count="5">
+            <button onClick="{{ c.pick }}" style="font-family:inherit; font-size:13px; font-weight:600; padding:8px 15px; border-radius:980px; cursor:pointer; color:{{ c.color }}; background:{{ c.bg }}; border:1px solid {{ c.bd }};">{{ c.label }}</button>
+          </sc-for>
+        </div>
+        <sc-if value="{{ catModOn }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap;">
+            <span style="font-size:11px; font-weight:700; letter-spacing:.2em; color:#A1A1A6; margin-right:4px;">MODELO</span>
+            <sc-for list="{{ catModChips }}" as="c" hint-placeholder-count="6">
+              <button onClick="{{ c.pick }}" style="font-family:inherit; font-size:13px; font-weight:600; padding:8px 15px; border-radius:980px; cursor:pointer; color:{{ c.color }}; background:{{ c.bg }}; border:1px solid {{ c.bd }};">{{ c.label }}</button>
+            </sc-for>
+          </div>
+        </sc-if>
         <div style="background:rgba(176,112,15,.08); border-radius:14px; padding:12px 18px; font-size:13px; color:#B0700F; font-weight:500; line-height:1.5;">Lo que cambies acá (precio, foto, visible, stock) se guarda en la nube y se aplica automáticamente en las páginas de la tienda.</div>
         <sc-for list="{{ catItems }}" as="p" hint-placeholder-count="0">
           <div data-cat-row style="background:#fff; border-radius:20px; padding:16px 20px; box-shadow:0 12px 38px -22px rgba(0,0,0,.12); display:grid; grid-template-columns:56px 1fr auto; gap:16px; align-items:center;">
@@ -4254,7 +4268,37 @@ class Component extends DCLogic {
         catFormTitle: this.state.catEdit ? 'Editar producto del catálogo' : 'Nuevo producto del catálogo',
         catQ: this.state.catQ, setCatQ: (e) => this.setState({ catQ: e.target.value }),
         catCount: merged.filter((p) => !p.hidden).length + ' visibles · ' + merged.length + ' en total',
-        catItems: merged.filter((p) => !catQ || (String(p.name) + ' ' + String(p.spec || '') + ' ' + String(p.cat || '')).toLowerCase().includes(catQ)).map((p) => ({
+        /* Mismos filtros que la tienda: categoría y, dentro de Apple, modelo.
+           Con casi 50 productos la lista sola no se podía recorrer. */
+        catCatChips: ['todos', 'Apple', 'Celulares', 'Smart TV', 'Accesorios'].map((k) => {
+          const on = (this.state.catFCat || 'todos') === k;
+          return {
+            label: k === 'todos' ? 'Todas' : k,
+            bg: on ? '#1D1D1F' : '#fff', color: on ? '#fff' : '#1D1D1F', bd: on ? '#1D1D1F' : 'rgba(0,0,0,.14)',
+            pick: () => this.setState({ catFCat: k, catFMod: 'todos' })
+          };
+        }),
+        catModOn: (this.state.catFCat || 'todos') === 'Apple',
+        catModChips: ['todos', 'i17', 'i16', 'i15', 'i14', 'i13'].map((k) => {
+          const on = (this.state.catFMod || 'todos') === k;
+          return {
+            label: k === 'todos' ? 'Todos' : k.replace('i', 'iPhone '),
+            bg: on ? '#1D1D1F' : '#fff', color: on ? '#fff' : '#1D1D1F', bd: on ? '#1D1D1F' : 'rgba(0,0,0,.14)',
+            pick: () => this.setState({ catFMod: k })
+          };
+        }),
+        catItems: merged.filter((p) => !catQ || (String(p.name) + ' ' + String(p.spec || '') + ' ' + String(p.cat || '')).toLowerCase().includes(catQ))
+          .filter((p) => {
+            const fc = this.state.catFCat || 'todos';
+            if (fc !== 'todos' && (p.cat || 'Celulares') !== fc) return false;
+            const fm = this.state.catFMod || 'todos';
+            if (fc !== 'Apple' || fm === 'todos') return true;
+            /* El modelo elegido en el formulario manda; si no lo eligieron, se
+               deduce del nombre, igual que hace la tienda. */
+            if (p.modelo) return p.modelo === fm;
+            const m = String(p.name || '').match(/iphone\s*(1[0-9])/i);
+            return !!m && ('i' + m[1]) === fm;
+          }).map((p) => ({
           name: p.name, spec: (p.cat || '') + (p.spec ? ' · ' + p.spec : '') + (p.bat ? ' · Batería ' + p.bat + '%' : ''),
           priceStr: this._usd(p.usd || 0) + ' · ' + this._ars((p.usd || 0) * rate2),
           /* Cruce con inventario: si el mismo producto está en stock, avisa si
