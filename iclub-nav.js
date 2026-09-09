@@ -22,6 +22,12 @@
     + '#zt-shared-topbar .zt-topnav a.zt-nav-active::after{content:"";position:absolute;left:16px;right:16px;bottom:4px;height:2px;border-radius:2px;background:linear-gradient(90deg,#5AC8FA,#0A84FF);}'
     + '#zt-shared-topbar .zt-acct{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:980px;padding:7px 16px 7px 8px;transition:background .25s,border-color .25s;}'
     + '#zt-shared-topbar .zt-acct:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.28);color:#fff;}'
+    /* El buscador era sólo una lupa redonda y no se leía como buscador: ahora
+       es una pastilla con la palabra "Buscar". En pantallas angostas vuelve a
+       ser el ícono para no empujar la barra. */
+    + '#zt-shared-topbar .zt-search-btn{display:inline-flex;align-items:center;gap:9px;height:38px;padding:0 16px 0 13px;border-radius:980px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);cursor:pointer;font-family:inherit;color:rgba(255,255,255,.72);transition:background .25s,border-color .25s,color .25s;flex-shrink:0;}'
+    + '#zt-shared-topbar .zt-search-btn:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3);color:#fff;}'
+    + '#zt-shared-topbar .zt-search-btn span{font-size:14.5px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;}'
     + '#zt-shared-topbar .zt-burger{display:none;background:none;border:none;cursor:pointer;padding:9px;color:#fff;border-radius:9px;}'
     + '#zt-shared-topbar .zt-burger:hover{background:rgba(255,255,255,.11);}'
     + '#zt-shared-topbar .zt-mobile-menu{display:none;flex-direction:column;background:#111112;border-top:1px solid rgba(255,255,255,.08);padding:6px 20px 16px;}'
@@ -29,6 +35,7 @@
     + '#zt-shared-topbar .zt-mobile-menu a{color:rgba(255,255,255,.9);text-decoration:none;font-size:16px;font-weight:600;padding:15px 4px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between;}'
     + '#zt-shared-topbar .zt-mobile-menu a:last-child{border-bottom:none;}'
     + '@media (max-width:1010px){#zt-shared-topbar .zt-topnav{display:none !important;}#zt-shared-topbar .zt-burger{display:inline-flex !important;}#zt-shared-topbar .zt-acct-text{display:none !important;}#zt-shared-topbar .zt-acct{padding:8px !important;gap:0 !important;}}'
+    + '@media (max-width:1010px){#zt-shared-topbar .zt-search-btn span{display:none !important;}#zt-shared-topbar .zt-search-btn{width:38px;padding:0 !important;justify-content:center;}}'
     + '#zt-shared-topbar .zt-topnav a{white-space:nowrap;}'
     + '@media (max-width:1080px){#zt-shared-topbar .zt-topnav a{font-size:14px;padding:9px 10px;}#zt-shared-topbar > div{gap:12px !important;padding:0 18px !important;}#zt-shared-topbar .zt-acct-text{display:none !important;}#zt-shared-topbar .zt-acct{padding:8px !important;gap:0 !important;}}';
   var fl = document.createElement('link'); fl.rel = 'stylesheet'; fl.href = 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap'; document.head.appendChild(fl);
@@ -89,7 +96,7 @@
     +     '<a href="Portal Clientes ICLUB.dc.html#financiar">Cotizador</a>'
     +   '</nav>'
     +   '<div style="margin-left:auto;display:flex;align-items:center;gap:8px;">'
-    +     '<button class="zt-search-btn" aria-label="Buscar" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.1);border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg></button>'
+    +     '<button class="zt-search-btn" aria-label="Buscar un equipo"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg><span>Buscar</span></button>'
     +     '<a class="zt-acct" href="Portal Clientes ICLUB.dc.html">'
     +       '<span style="width:32px;height:32px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
     +         '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#1D1D1F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.2" r="3.4"></circle><path d="M4.8 19.5c1.35-3.2 4-4.7 7.2-4.7s5.85 1.5 7.2 4.7"></path></svg>'
@@ -100,6 +107,7 @@
     +   '</div>'
     + '</div>'
     + '<div class="zt-mobile-menu" id="zt-shared-mobile-menu">'
+    +   '<a href="#" class="zt-search-link">Buscar un equipo ' + chev + '</a>'
     +   '<a href="Apple ICLUB.dc.html">Apple ' + chev + '</a>'
     +   '<a href="Android ICLUB.dc.html">Android ' + chev + '</a>'
     +   '<a href="Smart TV ICLUB.dc.html">Smart TV ' + chev + '</a>'

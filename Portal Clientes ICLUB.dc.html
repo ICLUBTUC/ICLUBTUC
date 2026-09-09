@@ -1198,11 +1198,19 @@
         <div style="background:#F3F0EB; border-radius:30px; padding:22px; display:flex; flex-direction:column; gap:12px;">
           <div style="display:flex; align-items:center; gap:34px; flex-wrap:wrap; padding:30px; background:#fff; border-radius:28px; box-shadow:0 18px 60px -30px rgba(0,0,0,.18);">
             <sc-if value="{{ catHasPhoto }}" hint-placeholder-val="{{ false }}">
-              <label title="Cambiar foto" style="position:relative; flex:0 0 auto; width:230px; max-width:100%; height:200px; border-radius:22px; overflow:hidden; background-color:#F1EDE7; display:flex; align-items:flex-end; justify-content:center; cursor:pointer;">
-                {{ catPhotoImg }}
-                <span style="position:relative; z-index:2; margin-bottom:10px; background:rgba(29,29,31,.75); color:#fff; font-size:11.5px; font-weight:600; border-radius:980px; padding:6px 13px;">Cambiar foto</span>
-                <input type="file" accept="image/*" onChange="{{ catFormPhoto }}" style="display:none;">
-              </label>
+              <div style="flex:0 0 auto; width:230px; max-width:100%; display:flex; flex-direction:column; gap:9px;">
+                <div onPointerDown="{{ catFrameDown }}" onPointerMove="{{ catFrameMove }}" onPointerUp="{{ catFrameUp }}" onPointerCancel="{{ catFrameUp }}" onWheel="{{ catFrameWheel }}" title="Arrastrá para mover · rueda para zoom" style="position:relative; width:100%; height:200px; border-radius:22px; overflow:hidden; background-color:#fff; border:1px solid rgba(0,0,0,.07); cursor:grab; touch-action:none;">
+                  {{ catPhotoImg }}
+                </div>
+                <div style="display:flex; align-items:center; gap:9px;">
+                  <span style="font-size:11px; font-weight:700; letter-spacing:.14em; color:#A1A1A6;">ZOOM</span>
+                  <input value="{{ catFrameZoom }}" onChange="{{ catFrameSetZoom }}" type="range" min="1" max="3" step="0.01" style="flex:1; min-width:0; accent-color:#0A84FF;">
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <label style="font-family:inherit; font-size:12.5px; font-weight:600; color:#1D1D1F; background:#F0EDE7; border-radius:980px; padding:8px 15px; cursor:pointer;">Cambiar foto<input type="file" accept="image/*" onChange="{{ catFormPhoto }}" style="display:none;"></label>
+                  <button onClick="{{ catFrameReset }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#1D1D1F; background:#F0EDE7; border:none; border-radius:980px; padding:8px 15px; cursor:pointer;">Centrar</button>
+                </div>
+              </div>
             </sc-if>
             <sc-if value="{{ catNoPhoto }}" hint-placeholder-val="{{ true }}">
               <label style="flex:0 0 auto; width:230px; max-width:100%; height:200px; border-radius:22px; overflow:hidden; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; cursor:pointer;">
@@ -1562,8 +1570,8 @@
         </div>
       </div>
       <div style="background:#fff; border-radius:22px; padding:26px 28px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:14px;">
-        <h3 style="margin:0; font-size:17px; font-weight:700;">Planes de financiación</h3>
-        <span style="font-size:13.5px; color:#6E6E73;">Recargo (%) por cantidad de pagos. Se aplica al instante en el cotizador público.</span>
+        <h3 style="margin:0; font-size:17px; font-weight:700;">Crédito personal ICLUB</h3>
+        <span style="font-size:13.5px; color:#6E6E73;">Tu financiación, con tu plata. Recargo (%) por cantidad de pagos — se aplica al instante en el cotizador público.</span>
         <sc-for list="{{ ajPlanes }}" as="pl" hint-placeholder-count="5">
           <div style="display:grid; grid-template-columns:90px 110px 1fr; gap:14px; align-items:center; border-top:1px solid rgba(0,0,0,.05); padding-top:12px;">
             <span style="font-size:14.5px; font-weight:700;">{{ pl.label }}</span>
@@ -1571,6 +1579,26 @@
             <span style="font-size:12.5px; color:#A1A1A6;">{{ pl.hint }}</span>
           </div>
         </sc-for>
+      </div>
+      <div style="background:#fff; border-radius:22px; padding:26px 28px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:14px;">
+        <h3 style="margin:0; font-size:17px; font-weight:700;">Cuotas con tarjeta de crédito</h3>
+        <span style="font-size:13.5px; color:#6E6E73;">El recargo que te cobra la tarjeta. Poné cuánto querés cobrar y controlá el cuadro contra lo que te dice Mercado Pago: si coincide, la página cobra bien.</span>
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+          <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">QUIERO COBRAR</label>
+          <input value="{{ ajTjRef }}" onChange="{{ setAjTjRef }}" type="text" inputMode="numeric" style="width:170px; box-sizing:border-box; font-family:inherit; font-size:15px; font-weight:700; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:12px; padding:11px 14px; outline:none;" style-focus="border-color:#1D1D1F; background:#fff;">
+        </div>
+        <div style="display:grid; grid-template-columns:78px 96px 1fr 1fr; gap:10px; font-size:10.5px; font-weight:700; letter-spacing:.14em; color:#A1A1A6; border-bottom:1px solid rgba(0,0,0,.07); padding-bottom:8px;">
+          <span>PAGOS</span><span>RECARGO %</span><span>LE COBRÁS</span><span>CADA CUOTA</span>
+        </div>
+        <sc-for list="{{ ajTarjeta }}" as="pl" hint-placeholder-count="7">
+          <div style="display:grid; grid-template-columns:78px 96px 1fr 1fr; gap:10px; align-items:center; border-bottom:1px solid rgba(0,0,0,.04); padding-bottom:9px;">
+            <span style="font-size:14.5px; font-weight:700;">{{ pl.label }}</span>
+            <input value="{{ pl.value }}" onChange="{{ pl.set }}" type="text" inputMode="decimal" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:14px; font-weight:600; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:10px; padding:9px 10px; outline:none; text-align:center;" style-focus="border-color:#1D1D1F; background:#fff;">
+            <span style="font-size:14px; font-weight:600; color:{{ pl.totalC }};">{{ pl.total }}</span>
+            <span style="font-size:14px; font-weight:700; color:#1D1D1F;">{{ pl.per }}</span>
+          </div>
+        </sc-for>
+        <span style="font-size:12.5px; color:#A1A1A6; line-height:1.5; border-top:1px solid rgba(0,0,0,.05); padding-top:12px;">Poné 0 en un plan para no ofrecerlo. Estas cuotas no generan cuenta corriente: las cobra la tarjeta, no ICLUB. Si Mercado Pago te cambia los valores, ajustá el % de esa fila y todo el sitio se actualiza.</span>
       </div>
       <div style="background:#fff; border-radius:22px; padding:26px 28px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:14px;">
         <h3 style="margin:0; font-size:17px; font-weight:700;">Mora por atraso</h3>
@@ -1738,10 +1766,43 @@
       </sc-if>
 
       <sc-if value="{{ finStepTarjeta }}" hint-placeholder-val="{{ false }}">
-        <div style="background:#1D1D1F; border-radius:22px; padding:26px 30px; color:#fff; display:flex; flex-direction:column; gap:16px; animation:ztReveal .5s both;">
-          <span style="font-size:15px; font-weight:600; line-height:1.5;">Con tarjeta de crédito trabajamos los planes de cada banco. Coordiná con tu asesor del club para ver las cuotas disponibles con tu tarjeta.</span>
-          <a href="{{ finTarjetaHref }}" target="_blank" rel="noopener" style="align-self:flex-start; display:inline-flex; align-items:center; gap:9px; text-decoration:none; background:#fff; color:#1D1D1F; font-size:14.5px; font-weight:600; padding:13px 24px; border-radius:980px;" style-hover="color:#1D1D1F;">Consultar planes con tarjeta<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
-        </div>
+        <sc-if value="{{ finTjHay }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff; border-radius:22px; padding:24px 26px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:14px; animation:ztReveal .5s both;">
+            <span style="font-size:15px; font-weight:700; letter-spacing:-.01em;">{{ finTjTitle }}</span>
+            <span style="font-size:13px; color:#6E6E73;">1 · ¿Con qué tarjeta pagás?</span>
+            <div style="display:flex; gap:9px; flex-wrap:wrap;">
+              <sc-for list="{{ finTjMarcas }}" as="m" hint-placeholder-count="6">
+                <button onClick="{{ m.pick }}" style="font-family:inherit; font-size:14px; font-weight:600; color:{{ m.color }}; background:{{ m.bg }}; border:1.5px solid {{ m.border }}; border-radius:980px; padding:11px 20px; cursor:pointer; transition:background .25s, border-color .25s, color .25s;">{{ m.name }}</button>
+              </sc-for>
+            </div>
+            <span style="font-size:13px; color:#6E6E73; border-top:1px solid rgba(0,0,0,.06); padding-top:14px;">2 · ¿En cuántos pagos?</span>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px;">
+              <sc-for list="{{ finTjPlans }}" as="p" hint-placeholder-count="4">
+                <button onClick="{{ p.pick }}" style="font-family:inherit; text-align:left; border:1.5px solid {{ p.border }}; background:{{ p.bg }}; border-radius:16px; padding:15px 18px; cursor:pointer; display:flex; flex-direction:column; gap:4px; transition:background .2s, border-color .2s;">
+                  <span style="font-size:11px; font-weight:700; letter-spacing:.16em; color:{{ p.labelC }};">{{ p.label }}</span>
+                  <span style="font-size:20px; font-weight:700; letter-spacing:-.02em; color:{{ p.perC }};">{{ p.per }}</span>
+                  <span style="font-size:12.5px; color:{{ p.totalC }};">{{ p.total }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ finTjListo }}" hint-placeholder-val="{{ false }}">
+              <div style="background:#1D1D1F; border-radius:18px; padding:20px 22px; color:#fff; display:flex; flex-direction:column; gap:14px;">
+                <span style="font-size:14.5px; font-weight:600; line-height:1.55;">{{ finTjResumen }}</span>
+                <a href="{{ finTjHref }}" target="_blank" rel="noopener" style="align-self:flex-start; display:inline-flex; align-items:center; gap:9px; text-decoration:none; background:#fff; color:#1D1D1F; font-size:14.5px; font-weight:600; padding:13px 24px; border-radius:980px;" style-hover="color:#1D1D1F;">Enviar mi solicitud por WhatsApp<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+              </div>
+            </sc-if>
+            <sc-if value="{{ finTjFalta }}" hint-placeholder-val="{{ true }}">
+              <span style="font-size:13px; color:#A1A1A6; line-height:1.5;">{{ finTjFaltaTxt }}</span>
+            </sc-if>
+            <span style="font-size:12.5px; color:#A1A1A6; line-height:1.5;">Los planes y las condiciones finales los define tu banco. Se abona en un solo pago con la tarjeta, sin cuenta corriente en ICLUB.</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ finTjNoHay }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#1D1D1F; border-radius:22px; padding:26px 30px; color:#fff; display:flex; flex-direction:column; gap:16px; animation:ztReveal .5s both;">
+            <span style="font-size:15px; font-weight:600; line-height:1.5;">Con tarjeta de crédito trabajamos los planes de cada banco. Coordiná con tu asesor del club para ver las cuotas disponibles con tu tarjeta.</span>
+            <a href="{{ finTarjetaHref }}" target="_blank" rel="noopener" style="align-self:flex-start; display:inline-flex; align-items:center; gap:9px; text-decoration:none; background:#fff; color:#1D1D1F; font-size:14.5px; font-weight:600; padding:13px 24px; border-radius:980px;" style-hover="color:#1D1D1F;">Consultar planes con tarjeta<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+          </div>
+        </sc-if>
       </sc-if>
 
       <!-- Q4 adelanto -->
@@ -2260,6 +2321,15 @@ class Component extends DCLogic {
     return {
       rate: s.rate || 1520,
       recargos: Object.assign({ 2: 25, 3: 45, 4: 65, 5: 80, 6: 90 }, s.recargos || {}),
+      /* Dos financiaciones distintas y separadas: el crédito personal de ICLUB
+         (recargos, plata nuestra) y las cuotas con tarjeta, donde el recargo lo
+         pone el banco y nosotros sólo lo trasladamos. Mezclarlas daba un número
+         que no era ni el nuestro ni el del banco. */
+      /* Los % salen de la tabla real de Mercado Pago: sobre $1.000.000 a cobrar,
+         lo que hay que pedirle al cliente en cada plan. */
+      tarjeta: Object.assign({ 1: 14, 2: 27.675, 3: 33.25, 6: 53.55, 9: 79.6, 12: 105.5, 18: 167.2 }, s.tarjeta || {}),
+      tjRef: s.tjRef != null ? s.tjRef : 1000000,
+      tjMarcas: s.tjMarcas != null ? s.tjMarcas : 'Visa, Mastercard, American Express, Naranja X, Cabal, Mercado Pago',
       mora: s.mora != null ? s.mora : 0,
       moraTope: s.moraTope != null ? s.moraTope : 20,
       moraGracia: s.moraGracia != null ? s.moraGracia : 3,
@@ -4136,6 +4206,72 @@ class Component extends DCLogic {
         optBtn('Financiamiento personal', fin.medio === 'financiamiento', () => setFin({ medio: 'financiamiento', planN: null })),
         optBtn('Tarjeta de crédito', fin.medio === 'tarjeta', () => setFin({ medio: 'tarjeta', planN: null }))
       ],
+      /* Cuotas con tarjeta: el recargo lo cobra el banco, así que se muestran
+         calculadas pero sin botón de elegir — no generan plan en ICLUB. */
+      /* Tarjeta: el cliente elige marca y plan ANTES de escribirnos, así la
+         consulta llega completa y no hay que preguntarle nada. El mensaje dice
+         qué equipo, qué tarjeta, en cuántos pagos y cuánto paga — nunca el
+         recargo ni el interés: eso es cuenta nuestra, no del cliente. */
+      finTjMarcas: (this._settings(db).tjMarcas || '').split(',').map((s) => s.trim()).filter(Boolean).map((name) => {
+        const on = fin.tjMarca === name;
+        return {
+          name,
+          bg: on ? '#1D1D1F' : '#fff', color: on ? '#fff' : '#1D1D1F',
+          border: on ? '#1D1D1F' : 'rgba(0,0,0,.14)',
+          pick: () => setFin({ tjMarca: on ? null : name })
+        };
+      }),
+      finTjPlans: (() => {
+        if (!finProdChosen) return [];
+        const tj = this._settings(db).tarjeta || {};
+        return [1, 2, 3, 6, 9, 12, 18].filter((n) => this._numF(tj[n]) > 0).map((n) => {
+          const pct = this._numF(tj[n]);
+          const total = finPrice * (1 + pct / 100);
+          const on = fin.tjN === n;
+          return {
+            label: n === 1 ? '1 PAGO' : n + ' CUOTAS',
+            per: this._ars((total / n) * finRate),
+            total: 'Total ' + this._ars(total * finRate),
+            bg: on ? '#1D1D1F' : '#fff', border: on ? '#1D1D1F' : 'rgba(0,0,0,.09)',
+            labelC: on ? 'rgba(255,255,255,.62)' : '#86868B',
+            perC: on ? '#fff' : '#1D1D1F',
+            totalC: on ? 'rgba(255,255,255,.72)' : '#6E6E73',
+            pick: () => setFin({ tjN: on ? null : n })
+          };
+        });
+      })(),
+      finTjListo: !!(finProdChosen && fin.tjMarca && fin.tjN),
+      finTjFalta: !!(finProdChosen && !(fin.tjMarca && fin.tjN)),
+      finTjFaltaTxt: !fin.tjMarca ? 'Elegí tu tarjeta y el plan para enviarnos la solicitud completa.' : 'Elegí en cuántos pagos querés abonarlo.',
+      finTjResumen: (() => {
+        if (!(finProdChosen && fin.tjMarca && fin.tjN)) return '';
+        const tj = this._settings(db).tarjeta || {};
+        const total = finPrice * (1 + this._numF(tj[fin.tjN]) / 100);
+        return finProdChosen.name + ' con ' + fin.tjMarca + ' en ' + (fin.tjN === 1 ? '1 pago' : fin.tjN + ' cuotas') +
+          ' de ' + this._ars((total / fin.tjN) * finRate) + ' · total ' + this._ars(total * finRate) + '.';
+      })(),
+      finTjHref: (() => {
+        if (!(finProdChosen && fin.tjMarca && fin.tjN)) return '#';
+        const tj = this._settings(db).tarjeta || {};
+        const total = finPrice * (1 + this._numF(tj[fin.tjN]) / 100);
+        const msg = 'Hola ICLUB! Quiero comprar con tarjeta de crédito.'
+          + '\n\n📱 Equipo: ' + finProdChosen.name + (finProdChosen.spec ? ' (' + finProdChosen.spec + ')' : '')
+          + '\n💳 Tarjeta: ' + fin.tjMarca
+          + '\n🗓️ Plan: ' + (fin.tjN === 1 ? '1 pago' : fin.tjN + ' cuotas')
+          + '\n💵 Cada cuota: ' + this._ars((total / fin.tjN) * finRate)
+          + '\n✅ Total a abonar: ' + this._ars(total * finRate)
+          + '\n\n¿Cómo seguimos?';
+        return 'https://wa.me/' + finWa + '?text=' + encodeURIComponent(msg);
+      })(),
+      finTjHay: (() => {
+        const tj = this._settings(db).tarjeta || {};
+        return !!finProdChosen && [1, 2, 3, 6, 9, 12, 18].some((n) => this._numF(tj[n]) > 0);
+      })(),
+      finTjNoHay: (() => {
+        const tj = this._settings(db).tarjeta || {};
+        return !!finProdChosen && ![1, 2, 3, 6, 9, 12, 18].some((n) => this._numF(tj[n]) > 0);
+      })(),
+      finTjTitle: finProdChosen ? 'Cuotas con tarjeta para ' + finProdChosen.name + ' · ' + this._ars(finPrice * finRate) : '',
       finTarjeta: !!finProdChosen && fin.medio === 'tarjeta',
       finTarjetaHref: 'https://wa.me/' + finWa + '?text=' + encodeURIComponent('Hola ICLUB! Quiero pagar ' + (finProdChosen ? finProdChosen.name : 'un producto') + ' con tarjeta de crédito. ¿Qué planes tienen?'),
       finShowQ4: !!finProdChosen && fin.medio === 'financiamiento',
@@ -4361,7 +4497,7 @@ class Component extends DCLogic {
           condB: p.cond ? (p.cond === 'nuevo' ? 'rgba(31,138,91,.1)' : 'rgba(10,132,255,.12)') : 'rgba(176,112,15,.14)',
           setPhoto: (e) => this._readImg(e, (url) => setOv(p.id, { photo: url })),
           clearPhoto: () => setOv(p.id, { photo: null }),
-          edit: () => this.setState({ catMode: 'form', catEdit: p.id, catError: '', catForm: { desc: p.desc || '', rows: (p.rows || []).map((r) => ({ k: r.k, v: r.v })), name: p.name, spec: p.spec || '', cat: p.cat || 'Celulares', usd: String(p.usd || ''), photo: p.photo || this._slotPhoto(p.id) || null, bat: p.bat ? String(p.bat) : '', pos: p.pos != null ? p.pos : null, hidden: !!p.hidden, usdNew: p.usdNew || '', cond: p.cond || '', modelo: p.modelo || '', variante: p.variante || '', usdAntes: p.usdAntes || '', aviso: p.aviso || '', destacado: !!p.destacado } }),
+          edit: () => this.setState({ catMode: 'form', catEdit: p.id, catError: '', catForm: { desc: p.desc || '', rows: (p.rows || []).map((r) => ({ k: r.k, v: r.v })), name: p.name, spec: p.spec || '', cat: p.cat || 'Celulares', usd: String(p.usd || ''), photo: p.photo || this._slotPhoto(p.id) || null, bat: p.bat ? String(p.bat) : '', pos: p.pos != null ? p.pos : null, hidden: !!p.hidden, usdNew: p.usdNew || '', cond: p.cond || '', modelo: p.modelo || '', variante: p.variante || '', px: p.px || 0, py: p.py || 0, pz: p.pz || 1, usdAntes: p.usdAntes || '', aviso: p.aviso || '', destacado: !!p.destacado } }),
           /* El encuadre es el mismo dato que usa la tienda (px/py/pz): lo que se
              ve acá es literalmente lo que se publica. */
           frameEdit: () => {
@@ -4518,11 +4654,43 @@ class Component extends DCLogic {
           if (!(u > 0) || n <= u) return 'Tiene que ser mayor al precio de venta para que el ahorro tenga sentido.';
           return 'Ahorra ' + this._usd(n - u) + ' · ' + Math.round((1 - u / n) * 100) + '% menos que uno nuevo.';
         })(),
-        catPhotoImg: cform.photo ? React.createElement('span', { style: {
-          position: 'absolute', inset: 0,
-          backgroundImage: 'url("' + cform.photo + '")',
-          backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'
-        } }) : null,
+        /* El encuadre se edita acá mismo, con el mismo modelo que usa la tienda
+           (contain + translate/scale en %): antes esta tarjeta era un
+           background cover fijo, así que la foto no se podía mover ni acercar y
+           había que ir a buscar el encuadre a la lista. */
+        catPhotoImg: cform.photo ? React.createElement('img', {
+          src: cform.photo, draggable: false, style: {
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            objectFit: 'contain', display: 'block', pointerEvents: 'none',
+            transform: 'translate(' + (this._numF(cform.px) || 0) + '%,' + (this._numF(cform.py) || 0) + '%) scale(' + (this._numF(cform.pz) || 1) + ')'
+          }
+        }) : null,
+        catFrameZoom: String(this._numF(cform.pz) || 1),
+        catFrameSetZoom: (e) => this.setState({ catForm: Object.assign({}, cform, { pz: parseFloat(e.target.value) || 1 }) }),
+        catFrameReset: () => this.setState({ catForm: Object.assign({}, cform, { px: 0, py: 0, pz: 1 }) }),
+        catFrameDown: (e) => {
+          this._catDrag = { x: e.clientX, y: e.clientY, px: this._numF(cform.px) || 0, py: this._numF(cform.py) || 0, w: e.currentTarget.getBoundingClientRect().width || 1 };
+          e.currentTarget.style.cursor = 'grabbing';
+          try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+        },
+        catFrameMove: (e) => {
+          if (!this._catDrag) return;
+          const d = this._catDrag;
+          const lim = (v) => Math.max(-60, Math.min(60, v));
+          this.setState({ catForm: Object.assign({}, cform, {
+            px: lim(d.px + ((e.clientX - d.x) / d.w) * 100),
+            py: lim(d.py + ((e.clientY - d.y) / d.w) * 100)
+          }) });
+        },
+        catFrameUp: (e) => {
+          this._catDrag = null;
+          if (e && e.currentTarget) e.currentTarget.style.cursor = 'grab';
+        },
+        catFrameWheel: (e) => {
+          e.preventDefault();
+          const z = (this._numF(cform.pz) || 1) + (e.deltaY < 0 ? 0.08 : -0.08);
+          this.setState({ catForm: Object.assign({}, cform, { pz: Math.max(1, Math.min(3, Math.round(z * 100) / 100)) }) });
+        },
         catHasPhoto: !!cform.photo, catNoPhoto: !cform.photo, catPhoto: cform.photo || '', catPhotoCss: '"' + (cform.photo || '') + '"',
         catInitial: String(cform.name || '?').trim().charAt(0).toUpperCase() || '?',
         catBatFill: Math.max(8, Math.min(100, this._num(cform.bat) || 0)) + '%',
@@ -4544,6 +4712,11 @@ class Component extends DCLogic {
              Si quedan vacíos, la tienda los adivina del nombre — funciona, pero
              elegirlos acá es lo que evita que un equipo caiga en el grupo
              equivocado cuando el nombre está escrito de otra forma. */
+          /* El encuadre viaja con el producto: sin esto, mover la foto acá no
+             cambiaba nada en la tienda. */
+          fields.px = Math.round((this._numF(cform.px) || 0) * 10) / 10;
+          fields.py = Math.round((this._numF(cform.py) || 0) * 10) / 10;
+          fields.pz = Math.round((this._numF(cform.pz) || 1) * 100) / 100;
           fields.modelo = cform.cat === 'Apple' ? String(cform.modelo || '') : '';
           fields.variante = cform.cat === 'Apple' ? String(cform.variante || '') : '';
           fields.hidden = !!cform.hidden;
@@ -4723,6 +4896,29 @@ class Component extends DCLogic {
              lo parsean con _numF, así el input nunca se normaliza al escribir. */
           set: (e) => this._setSettings({ [f.key]: e.target.value.replace(/[^0-9.,]/g, '') })
         })),
+        /* El cuadro se controla contra el resumen de Mercado Pago: "quiero
+           cobrar X" arriba y, por fila, lo que hay que pedirle al cliente y
+           cuánto le queda cada cuota. Si los dos números coinciden con los del
+           posnet, el % de esa fila está bien y el sitio cobra bien. */
+        ajTjRef: this.state.ajTjRefDraft != null ? this.state.ajTjRefDraft : String(st.tjRef),
+        setAjTjRef: (e) => {
+          const v = e.target.value;
+          this.setState({ ajTjRefDraft: v });
+          const n = this._num(v);
+          if (n > 0) this._setSettings({ tjRef: n });
+        },
+        ajTarjeta: [1, 2, 3, 6, 9, 12, 18].map((n) => {
+          const pct = this._numF(st.tarjeta[n]);
+          const ref = this._numF(st.tjRef) || 0;
+          const total = ref * (1 + pct / 100);
+          return {
+            label: n === 1 ? '1 pago' : n + ' pagos',
+            value: String(st.tarjeta[n] != null ? st.tarjeta[n] : 0),
+            total: pct > 0 ? this._fmt(Math.round(total)) : 'no se ofrece',
+            totalC: pct > 0 ? '#6E6E73' : '#C9C6C0',
+            per: pct > 0 ? this._fmt(Math.round(total / n)) : '—'
+          };
+        }),
         ajPlanes: [2, 3, 4, 5, 6].map((n) => ({
           label: n + ' pagos',
           value: String(st.recargos[n]),

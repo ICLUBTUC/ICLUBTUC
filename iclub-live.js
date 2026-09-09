@@ -18,10 +18,10 @@
      en el panel. Agregar un estado nuevo = una entrada en esta tabla. */
   var CONDS = {
     nuevo:     { label: 'NUEVO · SELLADO',       color: '#1F8A5B', row: 'Nuevo, sellado de fábrica', war: 'Garantía de fábrica' },
-    a1:        { label: 'SEMINUEVO · GRADO A1',  color: '#0A84FF', row: 'Grado A1 — como nuevo, sin marcas de uso', war: 'Garantía ICLUB 30 días' },
-    impecable: { label: 'SEMINUEVO · IMPECABLE', color: '#0A84FF', row: 'Seminuevo impecable — sin marcas de uso', war: 'Garantía ICLUB 30 días' },
-    muybueno:  { label: 'SEMINUEVO · MUY BUENO', color: '#0A84FF', row: 'Seminuevo — micro-marcas que no se ven encendido', war: 'Garantía ICLUB 30 días' },
-    bueno:     { label: 'SEMINUEVO · BUENO',     color: '#0A84FF', row: 'Seminuevo — marcas de uso visibles, funciona perfecto', war: 'Garantía ICLUB 30 días' }
+    a1:        { label: 'SEMINUEVO · GRADO A1',  color: '#0A84FF', row: 'Grado A1 — como nuevo, sin marcas de uso', war: 'Garantía ICLUB' },
+    impecable: { label: 'SEMINUEVO · IMPECABLE', color: '#0A84FF', row: 'Seminuevo impecable — sin marcas de uso', war: 'Garantía ICLUB' },
+    muybueno:  { label: 'SEMINUEVO · MUY BUENO', color: '#0A84FF', row: 'Seminuevo — micro-marcas que no se ven encendido', war: 'Garantía ICLUB' },
+    bueno:     { label: 'SEMINUEVO · BUENO',     color: '#0A84FF', row: 'Seminuevo — marcas de uso visibles, funciona perfecto', war: 'Garantía ICLUB' }
   };
   /* Por categoría, sólo para productos que nadie clasificó todavía. Deliberadamente
      conservador: ante la duda NO se promete "nuevo". Sin condición conocida se
@@ -463,13 +463,18 @@
      cuotas a mano, salen todas de acá. Sólo se ofrece plan a partir de un monto
      mínimo: no tiene sentido financiar un accesorio de USD 16, y además
      ensuciaba el "desde" de la portada con la cuota más barata del catálogo. */
-  function stampCuota(recargos, minUsd) {
+  /* Los recargos de tarjeta reales, iguales a los defaults del panel. El sitio
+     público lee db.settings crudo y ahí la clave no existe hasta que alguien
+     toca un campo en Ajustes: sin esta red, la línea de tarjeta no aparecía
+     nunca en el catálogo. */
+  var TARJETA_DEF = { 1: 14, 2: 27.675, 3: 33.25, 6: 53.55, 9: 79.6, 12: 105.5, 18: 167.2 };
+  function stampCuota(recargos, minUsd, tarjeta) {
     var N = 6;
     var pct = (recargos && recargos[N] != null) ? parseFloat(recargos[N]) : 90;
     if (!isFinite(pct)) pct = 90;
     var MIN = parseFloat(minUsd);
     if (!isFinite(MIN) || MIN <= 0) MIN = 150;
-    var min = 0;
+    var min = 0, minUsdBase = 0;
     var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic]');
     Array.prototype.forEach.call(cards, function (card) {
       var host = null, usd = 0;
@@ -481,9 +486,14 @@
         if (m) { host = el; usd = parseFloat(m[1].replace(/\./g, '').replace(',', '.')) || 0; break; }
       }
       var tag = card.querySelector('[data-zt-cuota]');
-      if (!host || usd < MIN || card.querySelector('[data-zt-nostock]')) { if (tag) tag.parentNode.removeChild(tag); return; }
+      if (!host || usd < MIN || card.querySelector('[data-zt-nostock]')) {
+        if (tag) tag.parentNode.removeChild(tag);
+        var tj0 = card.querySelector('[data-zt-cuotatj]');
+        if (tj0) tj0.parentNode.removeChild(tj0);
+        return;
+      }
       var per = Math.round(usd * (1 + pct / 100) / N);
-      if (!min || per < min) min = per;
+      if (!min || per < min) { min = per; minUsdBase = usd; }
       if (!tag) {
         tag = document.createElement('div');
         tag.setAttribute('data-zt-cuota', '');
@@ -505,14 +515,40 @@
       }
       var slot = (arsEl && arsEl.parentNode) ? arsEl.parentNode : host.parentNode;
       if (!tag.parentNode) slot.appendChild(tag);
-      /* La cuota se lee en la misma moneda que el precio de la tarjeta. */
-      var pesos = !usdFirst(card);
-      tag.textContent = pesos
-        ? (N + ' cuotas de ARS ' + fmtInt(per * ZT_RATE))
-        : (N + ' cuotas de USD ' + fmtInt(per));
+      /* La financiación se informa SIEMPRE en pesos, en toda la tienda: la cuota
+         la paga el cliente en pesos (a nosotros o al banco), así que ponerla en
+         dólares sobre los iPhone era pedirle que haga la cuenta él. */
+      tag.textContent = N + ' cuotas de ARS ' + fmtInt(per * ZT_RATE);
+      /* Segunda línea: la cuota con tarjeta en el plan más largo. Es la que
+         pregunta todo el mundo y la que decide la compra; el recargo lo cobra
+         la tarjeta, así que se aclara de quién es cada cuota. */
+      var tj = card.querySelector('[data-zt-cuotatj]');
+      var tpct = (tarjeta && tarjeta[18] != null) ? parseFloat(tarjeta[18]) : TARJETA_DEF[18];
+      if (!isFinite(tpct)) tpct = 0;
+      if (tpct > 0) {
+        if (!tj) {
+          tj = document.createElement('div');
+          tj.setAttribute('data-zt-cuotatj', '');
+          tj.style.cssText = 'font-size:12px;font-weight:600;color:#6E6E73;letter-spacing:-.01em;margin-top:1px;white-space:nowrap;order:3;';
+          slot.appendChild(tj);
+        }
+        var perTj = Math.round(usd * (1 + tpct / 100) / 18);
+        tj.textContent = '18 con tarjeta de ARS ' + fmtInt(perTj * ZT_RATE);
+      } else if (tj) { tj.parentNode.removeChild(tj); }
     });
     var desde = document.querySelector('[data-zt-desde]');
     if (desde) desde.textContent = min ? ('Desde ARS ' + fmtInt(min * ZT_RATE) + ' por mes en ' + N + ' cuotas') : '';
+    /* La otra puerta de entrada: 18 cuotas con tarjeta. El "desde" se calcula
+       con el equipo más barato del catálogo, igual que el de financiación
+       propia, para que los dos números hablen del mismo producto. */
+    var desdeTj = document.querySelector('[data-zt-desdetj]');
+    if (desdeTj) {
+      var tp = (tarjeta && tarjeta[18] != null) ? parseFloat(tarjeta[18]) : TARJETA_DEF[18];
+      if (!isFinite(tp)) tp = 0;
+      desdeTj.textContent = (minUsdBase && tp > 0)
+        ? ('O hasta 18 cuotas con tu tarjeta, desde ARS ' + fmtInt(Math.round(minUsdBase * (1 + tp / 100) / 18) * ZT_RATE) + ' por mes')
+        : '';
+    }
   }
   /* "Nuevo USD X · ahorrás Y": el argumento del seminuevo. Sólo aparece si el
      precio de nuevo está cargado en el panel y es mayor al de venta. */
@@ -637,14 +673,25 @@
     if (!ok) return null;
     return card.parentElement;
   }
-  function nativeDupe(name) {
+  /* Un sellado y un seminuevo del mismo modelo son DOS productos con dos
+     precios: no pueden taparse entre sí. Antes sólo se comparaba el nombre, así
+     que al cargar un "iPhone 15 sellado" se lo tomaba por repetido del iPhone 15
+     usado que ya estaba en la página y no se publicaba nunca. */
+  function sealedOf(el) {
+    var eye = el && el.querySelector && el.querySelector('[data-zt-cond]');
+    var k = (eye && eye.getAttribute('data-zt-cond')) || '';
+    return k === 'nuevo' || /sellad/i.test((eye && eye.textContent) || '');
+  }
+  function nativeDupe(ov) {
     var norm = function (s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); };
-    var n = norm(name);
+    var n = norm(ov && ov.name);
     if (n.length < 5) return false;
+    var mineSealed = (ov && ov.cond) === 'nuevo';
     var natives = document.querySelectorAll('[data-appl-card]:not([data-zt-custom]),[data-nv-card]:not([data-zt-custom]),[data-cat-card]:not([data-zt-custom]),[data-cc-card]:not([data-zt-custom])');
     return Array.prototype.some.call(natives, function (k) {
       var h = k.querySelector('h2,h3,h4');
       if (!h) return false;
+      if (sealedOf(k) !== mineSealed) return false;
       var base = norm(h.textContent);
       if (base.length < 5 || n.indexOf(base) !== 0) return false;
       /* Lo único que puede sobrar es la capacidad ("iPhone 14" vs "IPHONE 14
@@ -659,8 +706,8 @@
     if (ov.hidden) { if (existing) existing.remove(); return; }
     /* El mismo equipo publicado dos veces con dos precios distintos es peor que
        no publicarlo: manda la tarjeta de la página, que es la que lleva la oferta. */
-    if (nativeDupe(ov.name)) { if (existing) existing.remove(); return; }
-    var sig = [ov.name, ov.spec, ov.usd, ov.sinStock ? 1 : 0, (ov.photo || '').length, rate, ov.bat || '', ov.pos != null ? ov.pos : '', ov.cat || '', (ov.px || 0).toFixed ? (ov.px || 0).toFixed(1) : 0, (ov.py || 0).toFixed ? (ov.py || 0).toFixed(1) : 0, ov.pz || 1].join('|');
+    if (nativeDupe(ov)) { if (existing) existing.remove(); return; }
+    var sig = [ov.name, ov.spec, ov.usd, ov.cond || '', ov.sinStock ? 1 : 0, (ov.photo || '').length, rate, ov.bat || '', ov.pos != null ? ov.pos : '', ov.cat || '', (ov.px || 0).toFixed ? (ov.px || 0).toFixed(1) : 0, (ov.py || 0).toFixed ? (ov.py || 0).toFixed(1) : 0, ov.pz || 1].join('|');
     if (existing && existing.getAttribute('data-zt-sig') === sig) return;
     var grid = gridFor(ov.cat || 'Celulares');
     if (!grid) { if (existing) existing.remove(); return; }
@@ -837,11 +884,11 @@
     Array.prototype.forEach.call(sec.children, function (el) { if (el.id !== 'zt-custom-detail') el.style.setProperty('display', 'none', 'important'); });
     var defRowsByCat = {
       'Smart TV': [{ k: 'Marca', v: 'A completar' }, { k: 'Tamaño', v: 'A completar' }, { k: 'Resolución', v: 'Ultra HD (4K)' }],
-      'Celulares': [{ k: 'Almacenamiento', v: ov.spec || '128 GB' }, { k: 'RAM', v: 'A completar' }, { k: 'Condición', v: condOf(ov, null, ov.cat).row }, { k: 'Garantía', v: '30 días' }],
-      'Apple': [{ k: 'Almacenamiento', v: ov.spec || '128 GB' }, { k: 'Condición', v: condOf(ov, null, ov.cat).row }, { k: 'Garantía', v: '30 días' }],
-      'Accesorios': [{ k: 'Condición', v: condOf(ov, null, ov.cat).row }, { k: 'Garantía', v: '30 días' }]
+      'Celulares': [{ k: 'Almacenamiento', v: ov.spec || '128 GB' }, { k: 'RAM', v: 'A completar' }, { k: 'Condición', v: condOf(ov, null, ov.cat).row }, { k: 'Garantía', v: 'Incluida' }],
+      'Apple': [{ k: 'Almacenamiento', v: ov.spec || '128 GB' }, { k: 'Condición', v: condOf(ov, null, ov.cat).row }, { k: 'Garantía', v: 'Incluida' }],
+      'Accesorios': [{ k: 'Condición', v: condOf(ov, null, ov.cat).row }, { k: 'Garantía', v: 'Incluida' }]
     };
-    var rows = (ov.rows && ov.rows.length) ? ov.rows : (defRowsByCat[ov.cat] || [{ k: 'Detalle', v: ov.spec || 'A completar' }, { k: 'Garantía', v: '30 días' }]);
+    var rows = (ov.rows && ov.rows.length) ? ov.rows : (defRowsByCat[ov.cat] || [{ k: 'Detalle', v: ov.spec || 'A completar' }, { k: 'Garantía', v: 'Incluida' }]);
     var sig = [ov.name, ov.spec, ov.usd, ov.bat || '', (ov.photo || '').length, rate, ov.sinStock ? 1 : 0, ov.cat || '', (ov.px || 0).toFixed ? (ov.px || 0).toFixed(1) : 0, (ov.py || 0).toFixed ? (ov.py || 0).toFixed(1) : 0, ov.pz || 1, JSON.stringify(rows), ov.desc || ''].join('|');
     var ex = document.getElementById('zt-custom-detail');
     if (ex && ex.getAttribute('data-zt-sig') === sig) return;
@@ -1740,7 +1787,7 @@
     stampRecStatic(cat, rate);
     resyncArs(rate);
     stampArs(rate);
-    stampCuota(st.recargos, st.finMin);
+    stampCuota(st.recargos, st.finMin, st.tarjeta);
     orderPrices();
     addWhatsApp();
     stampAhorro(cat);
@@ -1982,17 +2029,48 @@
 
   /* ===== Búsqueda global (lupa) ===== */
   var ZT_SEARCH_INDEX = [{"n":"iPhone 13","h":"Producto Apple.dc.html?m=iphone13","s":"iPhone · OFERTA USD 380"},{"n":"iPhone 14","h":"Producto Apple.dc.html?m=iphone14","s":"iPhone · OFERTA USD 400"},{"n":"iPhone 15","h":"Producto Apple.dc.html?m=iphone15","s":"iPhone · USD 500"},{"n":"iPhone 16 Pro","h":"Producto Apple.dc.html?m=iphone16pro","s":"iPhone · USD 820"},{"n":"AirPods Max","h":"Producto Apple.dc.html?m=airpodsmax","s":"Accesorio Apple · USD 350"},{"n":"iPad 11ª gen","h":"Producto Apple.dc.html?m=ipad11","s":"Accesorio Apple · USD 519"},{"n":"Samsung A07","h":"Producto Android.dc.html?id=and-samsung-a07","s":"Celular · 128 GB · 4 GB · USD 186"},{"n":"Samsung A17","h":"Producto Android.dc.html?id=and-samsung-a17","s":"Celular · 128 GB · 4 GB · USD 259"},{"n":"Samsung A26 5G","h":"Producto Android.dc.html?id=and-samsung-a26","s":"Celular · 256 GB · 8 GB · USD 393"},{"n":"Samsung A36 5G","h":"Producto Android.dc.html?id=and-samsung-a36","s":"Celular · 256 GB · 8 GB · USD 434"},{"n":"Redmi A5","h":"Producto Android.dc.html?id=and-redmi-a5","s":"Celular · 128 GB · 4 GB · USD 186"},{"n":"Xiaomi 15c","h":"Producto Android.dc.html?id=and-xiaomi-15c-4","s":"Celular · 256 GB · 4 GB · USD 205"},{"n":"Xiaomi 15c","h":"Producto Android.dc.html?id=and-xiaomi-15c-8","s":"Celular · 256 GB · 8 GB · USD 229"},{"n":"Xiaomi Note 14","h":"Producto Android.dc.html?id=and-xiaomi-note14","s":"Celular · 256 GB · 8 GB · USD 252"},{"n":"Xiaomi Note 14 Pro 5G","h":"Producto Android.dc.html?id=and-xiaomi-note14pro","s":"Celular · 256 GB · 8 GB · USD 381"},{"n":"Xiaomi Note 15","h":"Producto Android.dc.html?id=and-xiaomi-note15-128","s":"Celular · 128 GB · 6 GB · USD 252"},{"n":"Xiaomi Note 15","h":"Producto Android.dc.html?id=and-xiaomi-note15-256","s":"Celular · 256 GB · 8 GB · USD 300"},{"n":"Xiaomi Note 15 5G","h":"Producto Android.dc.html?id=and-xiaomi-note15-5g","s":"Celular · 256 GB · 8 GB · USD 355"},{"n":"Xiaomi Note 15 Pro","h":"Producto Android.dc.html?id=and-xiaomi-note15pro","s":"Celular · 512 GB · 12 GB · USD 435"},{"n":"Xiaomi Note 15 Pro Plus 5G","h":"Producto Android.dc.html?id=and-xiaomi-note15proplus","s":"Celular · 512 GB · 12 GB · USD 573"},{"n":"Poco C71","h":"Producto Android.dc.html?id=and-poco-c71-64","s":"Celular · 64 GB · 3 GB · USD 152"},{"n":"Poco C71","h":"Producto Android.dc.html?id=and-poco-c71-128","s":"Celular · 128 GB · 4 GB · USD 173"},{"n":"Poco C85","h":"Producto Android.dc.html?id=and-poco-c85","s":"Celular · 256 GB · 8 GB · USD 230"},{"n":"Poco X7 Pro 5G","h":"Producto Android.dc.html?id=and-poco-x7pro-256","s":"Celular · 256 GB · 12 GB · USD 420"},{"n":"Poco X7 Pro 5G","h":"Producto Android.dc.html?id=and-poco-x7pro-512","s":"Celular · 512 GB · 12 GB · USD 507"},{"n":"Motorola G06","h":"Producto Android.dc.html?id=and-moto-g06","s":"Celular · 128 GB · 4 GB · USD 180"},{"n":"Motorola G15","h":"Producto Android.dc.html?id=and-moto-g15","s":"Celular · 256 GB · 4 GB · USD 241"},{"n":"Infinix Smart 10","h":"Producto Android.dc.html?id=and-infinix-smart10","s":"Celular · 128 GB · 4 GB · USD 176"},{"n":"Infinix Hot 60i","h":"Producto Android.dc.html?id=and-infinix-hot60i-4","s":"Celular · 256 GB · 4 GB · USD 214"},{"n":"Infinix Hot 60i","h":"Producto Android.dc.html?id=and-infinix-hot60i-8","s":"Celular · 256 GB · 8 GB · USD 239"},{"n":"Infinix Hot 60 Pro","h":"Producto Android.dc.html?id=and-infinix-hot60pro","s":"Celular · 256 GB · 8 GB · USD 300"},{"n":"Infinix Hot 60 Pro Plus","h":"Producto Android.dc.html?id=and-infinix-hot60proplus","s":"Celular · 256 GB · 8 GB · USD 316"},{"n":"Smart TV EcoPower","h":"Producto Smart TV.dc.html?id=tv-ecopower","s":"Smart TV · 32\" · Full HD · USD 182"},{"n":"Smart TV RCA 40\"","h":"Producto Smart TV.dc.html?id=tv-rca-40","s":"Smart TV · 40\" · Full HD · USD 300"},{"n":"Smart TV Philco 58\"","h":"Producto Smart TV.dc.html?id=tv-philco-58","s":"Smart TV · 58\" · Ultra HD (4K) · USD 490"}];
+  /* El buscador tiene que decir lo mismo que la tarjeta y la ficha: el precio
+     sale del panel y la moneda sigue la regla del sitio (dólar sólo iPhone).
+     El índice trae precios escritos a mano de cuando se generó, así que acá se
+     reescriben; un producto borrado u oculto no se busca. */
+  function ztPriceTxt(name, usd) {
+    usd = parseFloat(usd) || 0;
+    if (!usd) return '';
+    return isIphone({ cat: 'Apple', name: name })
+      ? 'USD ' + fmtInt(usd)
+      : 'ARS ' + fmtInt(usd * ZT_RATE);
+  }
   function ztBuildIndex() {
-    var list = ZT_SEARCH_INDEX.slice();
-    try {
-      var db = getLocal();
-      var cat = (db && db.catalog) || {};
-      Object.keys(cat).forEach(function (id) {
-        var o = cat[id];
-        if (!o || o.deleted || o.hidden || !o.custom || !o.name) return;
-        list.push({ n: o.name, h: detailHrefFor(o.cat || '', id), s: (o.cat || 'Producto') + (o.usd ? ' · USD ' + o.usd : '') });
-      });
-    } catch (e) {}
+    var db = null, cat = {};
+    try { db = getLocal(); cat = (db && db.catalog) || {}; } catch (e) {}
+    var list = [];
+    ZT_SEARCH_INDEX.forEach(function (it) {
+      var m = String(it.h || '').match(/[?&](?:m|id)=([^&#]+)/);
+      var ov = m ? cat[decodeURIComponent(m[1])] : null;
+      if (ov && (ov.deleted || ov.hidden)) return;
+      var nombre = (ov && ov.name) || it.n;
+      /* El subtítulo del índice trae el precio pegado al final: se corta ahí y se
+         vuelve a escribir con el valor y la moneda de hoy. */
+      var base = String(it.s || '').replace(/\s*·?\s*(OFERTA\s*)?(USD|ARS|US\$)\s*[\d.,]+\s*$/i, '');
+      /* Sin override en el panel, el precio sale del número del índice (siempre
+         en USD) — pero igual pasa por ztPriceTxt, para que la moneda la decida
+         el producto y no el string con que se generó el índice. */
+      var usd = (ov && parseFloat(ov.usd)) || 0;
+      if (!usd) {
+        var m2 = String(it.s || '').match(/(?:USD|US\$)\s*([\d.,]+)\s*$/i);
+        if (m2) usd = parseFloat(m2[1].replace(/\./g, '').replace(',', '.')) || 0;
+      }
+      var precio = ztPriceTxt(nombre, usd);
+      if (precio && ov && ov.sinStock) precio = 'SIN STOCK · ' + precio;
+      list.push({ n: nombre, h: it.h, s: base + (precio ? (base ? ' · ' : '') + precio : '') });
+    });
+    Object.keys(cat).forEach(function (id) {
+      var o = cat[id];
+      if (!o || o.deleted || o.hidden || !o.custom || !o.name) return;
+      var precio = ztPriceTxt(o.name, o.usd);
+      if (o.sinStock && precio) precio = 'SIN STOCK · ' + precio;
+      list.push({ n: o.name, h: detailHrefFor(o.cat || '', id), s: (o.cat || 'Producto') + (precio ? ' · ' + precio : '') });
+    });
     return list;
   }
   function ztOpenSearch() {
@@ -2048,7 +2126,7 @@
   (function(){ if(document.getElementById('zt-search-style')) return; var s=document.createElement('style'); s.id='zt-search-style'; s.textContent='@keyframes ztFadeIn{from{opacity:0}to{opacity:1}}'; (document.head||document.documentElement).appendChild(s); })();
   window.ztOpenSearch = ztOpenSearch;
   document.addEventListener('click', function (e) {
-    var b = e.target.closest && e.target.closest('.zt-search-btn');
+    var b = e.target.closest && e.target.closest('.zt-search-btn,.zt-search-link');
     if (b) { e.preventDefault(); ztOpenSearch(); }
   });
 
