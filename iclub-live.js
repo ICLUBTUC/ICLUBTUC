@@ -33,7 +33,7 @@
      que estamos — y no sólo del panel: las tarjetas nativas no tienen override,
      y son justamente las que tenían el cartel equivocado. */
   function catFromContext(el) {
-    var card = el && el.closest && el.closest('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic]');
+    var card = el && el.closest && el.closest('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic],[data-zt-reccustom]');
     var href = (card && card.getAttribute && card.getAttribute('href')) || '';
     if (!href) { try { href = location.pathname + location.search; } catch (e) {} }
     href = decodeURIComponent(href);
@@ -97,6 +97,29 @@
     try { var raw = localStorage.getItem(LS); if (raw) { var db = JSON.parse(raw); if (db && db.clients) return db; } } catch (e) {}
     return null;
   }
+  /* Una ficha de producto del panel (?m=<id del catálogo>) usa la plantilla de
+     otro modelo, y esa plantilla arranca mostrando su producto nativo: el
+     cliente veía un iPhone 13 completo por un instante antes de que apareciera
+     lo que en realidad tocó. Esto lo tapa antes del primer pintado. */
+  (function hideNativeEarly() {
+    try {
+      var q = new URLSearchParams(location.search);
+      var pid = q.get('m') || q.get('id') || '';
+      if (!pid) return;
+      var db = getLocal();
+      var ov = db && db.catalog && db.catalog[pid];
+      if (!ov || !ov.custom || ov.deleted) return;
+      document.documentElement.setAttribute('data-zt-customdetail', '');
+    } catch (e) {}
+  }());
+  /* Reglas propias del script. Van en una hoja de estilo porque las páginas se
+     vuelven a dibujar solas y borran cualquier estilo puesto a mano. */
+  (function baseCss() {
+    var st = document.createElement('style');
+    st.textContent = 'html[data-zt-customdetail] .prod-block{display:none !important;}'
+      + '[data-zt-recwrap]{display:contents !important;}';
+    (document.head || document.documentElement).appendChild(st);
+  }());
   function fetchRemote(cb) {
     try {
       fetch(SB_URL + '/rest/v1/portal_state?id=eq.main&select=data', {
@@ -152,6 +175,21 @@
   function isAdmin() {
     try { return localStorage.getItem('zt-portal-fin-user') === 'admin'; } catch (e) { return false; }
   }
+  /* Las páginas necesitan saberlo para no bloquear el clic sobre la foto: para
+     el admin el clic abre el encuadre, para el cliente abre el producto. */
+  window.ztIsAdmin = isAdmin;
+  /* El link de la PS5 del carrusel se resuelve en vivo (ver fillCarouselPs5) y
+     la página lo pisa al re-dibujarse: el clic lee el destino guardado en la
+     diapositiva, que sí sobrevive. */
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('[data-ztc-ps5-link]');
+    if (!a) return;
+    var slide = a.closest('[data-ztc-ps5]');
+    var href = slide && slide.getAttribute('data-ztc-ps5-href');
+    if (!href || href === a.getAttribute('href')) return;
+    e.preventDefault();
+    location.href = href;
+  }, true);
 
   function saveOv(pid, fields) {
     var db = getLocal(); if (!db) return;
@@ -342,7 +380,7 @@
   function stampUltimas(db) {
     var norm = function (s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); };
     var inv = (db.inventory || []).filter(function (it) { return (it.stock || 0) === 1; }).map(function (it) { return norm(it.name); }).filter(Boolean);
-    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic]');
+    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic],[data-zt-reccustom]');
     Array.prototype.forEach.call(cards, function (card) {
       /* Un aviso escrito a mano en la página gana: es una decisión comercial
          explícita, no una deducción del inventario. */
@@ -415,13 +453,17 @@
         }
       });
     }
-    Array.prototype.forEach.call(document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic]'), function (c) { scopeArs(c, 0); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic],[data-zt-reccustom]'), function (c) { scopeArs(c, 0); });
+    /* La ficha se recorre DESPUÉS de las tarjetas: el carrusel de recomendados
+       vive dentro de .det-section, y al barrerla entera se tomaba el dólar del
+       producto de la ficha y se lo estampaba a las 16 tarjetas por igual. Con
+       las tarjetas ya marcadas, cada una conserva su propio precio. */
     Array.prototype.forEach.call(document.querySelectorAll('.det-section,.det-info'), function (el) { scopeArs(el, 0); });
   }
   /* Tarjetas que sólo traen el precio en dólares: se les agrega la línea en
      pesos, para que todas informen lo mismo. Es idempotente. */
   function stampArs(rate) {
-    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic]');
+    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic],[data-zt-reccustom]');
     Array.prototype.forEach.call(cards, function (card) {
       var host = null, usd = 0, hasArs = false;
       var walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT);
@@ -475,7 +517,7 @@
     var MIN = parseFloat(minUsd);
     if (!isFinite(MIN) || MIN <= 0) MIN = 150;
     var min = 0, minUsdBase = 0;
-    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic]');
+    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic],[data-zt-reccustom]');
     Array.prototype.forEach.call(cards, function (card) {
       var host = null, usd = 0;
       var all = card.querySelectorAll('*');
@@ -497,7 +539,10 @@
       if (!tag) {
         tag = document.createElement('div');
         tag.setAttribute('data-zt-cuota', '');
-        tag.style.cssText = 'font-size:12px;font-weight:600;color:#0A84FF;letter-spacing:-.01em;margin-top:3px;white-space:nowrap;order:2;';
+        /* flex-basis 100%: cuando el bloque de precio es una fila que envuelve
+           (el carrusel del inicio), la cuota se quedaba al lado del botón "Más
+           info" y se montaba encima. Así siempre se lleva su propio renglón. */
+        tag.style.cssText = 'font-size:12px;font-weight:600;color:#0A84FF;letter-spacing:-.01em;margin-top:3px;white-space:nowrap;order:2;flex:0 0 100%;';
       }
       /* La cuota va SIEMPRE al final del bloque de precio. Antes se anclaba en
          [data-zt-ars] cuando ese atributo existía y en el nodo USD cuando no, y
@@ -529,7 +574,7 @@
         if (!tj) {
           tj = document.createElement('div');
           tj.setAttribute('data-zt-cuotatj', '');
-          tj.style.cssText = 'font-size:12px;font-weight:600;color:#6E6E73;letter-spacing:-.01em;margin-top:1px;white-space:nowrap;order:3;';
+          tj.style.cssText = 'font-size:12px;font-weight:600;color:#6E6E73;letter-spacing:-.01em;margin-top:1px;white-space:nowrap;order:3;flex:0 0 100%;';
           slot.appendChild(tj);
         }
         var perTj = Math.round(usd * (1 + tpct / 100) / 18);
@@ -1080,11 +1125,37 @@
     /* Precio anterior tachado: sólo cuando de verdad es más alto, y en la misma
        moneda que el precio principal para que la comparación se entienda. */
     var oferta = antes > usd && usd > 0
-      ? '<span data-zt-recantes style="font-size:12px;color:#A1A1A6;font-weight:500;text-decoration:line-through;">' + (esIphone ? 'USD ' + fmtInt(antes) : 'ARS ' + fmtInt(antes * rate)) + '</span>'
+      ? '<span data-zt-recantes data-usd-val="' + antes + '" style="font-size:12px;color:#A1A1A6;font-weight:500;text-decoration:line-through;">' + (esIphone ? 'USD ' + fmtInt(antes) : 'ARS ' + fmtInt(antes * rate)) + '</span>'
       : '';
+    /* Cada importe lleva su propio dólar anotado: es lo único que permite
+       recalcularlo después sin adivinarlo del texto de al lado — y adivinarlo
+       era lo que hacía que las 16 tarjetas terminaran con el mismo precio. */
     return oferta
-      + '<span style="font-size:18px;font-weight:700;letter-spacing:-.02em;color:' + (oferta ? '#D93025' : '#1D1D1F') + ';">' + big + '</span>'
-      + '<span style="font-size:12px;color:#A1A1A6;font-weight:500;">' + small + '</span>';
+      + '<span data-zt-recbig data-usd-val="' + usd + '" style="font-size:18px;font-weight:700;letter-spacing:-.02em;color:' + (oferta ? '#D93025' : '#1D1D1F') + ';">' + big + '</span>'
+      + '<span data-zt-recsmall data-usd-val="' + usd + '" style="font-size:12px;color:#A1A1A6;font-weight:500;">' + small + '</span>';
+  }
+  /* Última palabra sobre los precios de las tarjetas inyectadas: se reescriben
+     desde el dólar anotado en cada nodo, así ninguna barrida general de la
+     página puede dejarlas todas con el mismo número. */
+  function fixRecPrices(rate) {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-zt-reccustom]'), function (card) {
+      /* El nombre está en el enlace que tiene texto: el primero es el de la
+         foto y viene vacío, así que preguntarle a él daba "no es iPhone" y el
+         equipo aparecía con los pesos como precio principal. */
+      var esIphone = card.getAttribute('data-zt-recip') === '1';
+      var big = card.querySelector('[data-zt-recbig]');
+      var small = card.querySelector('[data-zt-recsmall]');
+      var antes = card.querySelector('[data-zt-recantes]');
+      var u = big ? parseFloat(big.getAttribute('data-usd-val')) || 0 : 0;
+      if (!u) return;
+      if (big) big.textContent = esIphone ? 'USD ' + fmtInt(u) : 'ARS ' + fmtInt(u * rate);
+      if (small) small.textContent = esIphone ? 'ARS ' + fmtInt(u * rate) : 'USD ' + fmtInt(u);
+      if (antes) {
+        var a2 = parseFloat(antes.getAttribute('data-usd-val')) || 0;
+        if (a2 > u) antes.textContent = esIphone ? 'USD ' + fmtInt(a2) : 'ARS ' + fmtInt(a2 * rate);
+        else antes.remove();
+      }
+    });
   }
   function injectRecCards(db, rate) {
     var grids = document.querySelectorAll('.rec-grid');
@@ -1098,7 +1169,10 @@
       if (!wrap) {
         wrap = document.createElement('div');
         wrap.setAttribute('data-zt-recwrap', '');
-        wrap.style.display = 'contents';
+        /* El display va por hoja de estilo (ver ZT_BASE_CSS): esta página se
+           vuelve a dibujar sola y le borraba el estilo puesto a mano, y sin
+           `contents` el contenedor pasaba a ser UNA sola tarjeta gigante con
+           los 15 productos apilados en vertical. */
         grid.appendChild(wrap);
       }
       wrap.innerHTML = '';
@@ -1109,6 +1183,7 @@
         var href = detailHrefFor(o.cat, id);
         var d = document.createElement('div');
         d.setAttribute('data-zt-reccustom', id);
+        if (isIphone(o)) d.setAttribute('data-zt-recip', '1');
         d.style.cssText = 'position:relative;flex:0 0 232px;scroll-snap-align:start;background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;';
         var imA = document.createElement('a'); imA.href = href; imA.style.cssText = 'display:block;text-decoration:none;';
         var imB = document.createElement('div'); imB.style.cssText = 'height:210px;box-sizing:border-box;background:#fff;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;';
@@ -1147,10 +1222,23 @@
       var id = decodeURIComponent(m[1]);
       var ov = cat[id] || {};
       card.setAttribute('data-zt-recstatic', id);
+      /* Un producto oculto o borrado en el panel no se recomienda: la tarjeta
+         escrita en la página seguía ahí, sin foto (el panel se la quita) y con
+         un cuadro blanco vacío en su lugar. */
+      if (ov.hidden || ov.deleted) { card.style.setProperty('display', 'none', 'important'); return; }
+      card.style.removeProperty('display');
       /* La moneda principal la decide el producto, igual que en el resto. */
       var nombre = ov.name || (a.textContent || '');
       if (/iphone/i.test(nombre)) card.setAttribute('data-zt-cur', 'usd');
       else card.removeAttribute('data-zt-cur');
+      /* La foto se pone acá, en la misma pasada que el precio: por id no
+         llegaba nunca (el recuadro de la tarjeta comparte id con el de la
+         ficha) y la tarjeta quedaba con un cuadro blanco vacío. */
+      var rslot = card.querySelector('image-slot');
+      if (rslot) {
+        if (ov.photo && !ov.hidden) setPhoto(rslot, ov.photo, ov);
+        else clearPhoto(rslot);
+      }
       if (!(parseFloat(ov.usd) > 0)) return;
       var walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT);
       var node, usdEl = null;
@@ -1422,7 +1510,7 @@
   }
   function stampModelo(cat) {
     cat = cat || {};
-    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic]');
+    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic],[data-zt-reccustom]');
     Array.prototype.forEach.call(cards, function (card) {
       var ov = cat[idOfCard(card)];
       if (!ov) return;
@@ -1565,9 +1653,25 @@
       var nm = (ov.name || '').toLowerCase().replace(/\s+/g, '');
       if (nm.indexOf('ps5') >= 0 || nm.indexOf('playstation5') >= 0) { found = ov; foundId = id; }
     });
-    if (!found) return;
-    var href = found.custom ? detailHrefFor(found.cat, foundId) : 'Y mas ICLUB.dc.html';
+    /* Si no está cargado en el panel, la PS5 igual existe como producto de la
+       página: se busca su ficha en el índice. Antes el botón caía siempre en el
+       catálogo "Y más" y el cliente tenía que buscarla de nuevo a mano. */
+    var href = '';
+    if (found) href = found.custom ? detailHrefFor(found.cat, foundId) : '';
+    if (!href) {
+      for (var i = 0; i < ZT_SEARCH_INDEX.length; i++) {
+        var nm2 = (ZT_SEARCH_INDEX[i].n || '').toLowerCase().replace(/\s+/g, '');
+        if (nm2.indexOf('ps5') >= 0 || nm2.indexOf('playstation5') >= 0) { href = ZT_SEARCH_INDEX[i].h; break; }
+      }
+    }
+    if (!href) href = 'Y mas ICLUB.dc.html';
+    /* El destino se guarda en la diapositiva, no en cada <a>: esta página se
+       vuelve a dibujar sola y reescribía el href a mano por el del HTML, así
+       que el botón terminaba yendo al catálogo igual. Un clic capturado lee el
+       destino guardado y no depende de que el atributo sobreviva. */
+    slide.setAttribute('data-ztc-ps5-href', href);
     Array.prototype.forEach.call(slide.querySelectorAll('[data-ztc-ps5-link]'), function (a) { a.href = href; });
+    if (!found) return;
     var img = slide.querySelector('[data-ztc-ps5-img]');
     var slot = slide.querySelector('[data-ztc-ps5-slot]');
     if (found.photo && img) {
@@ -1629,7 +1733,7 @@
   }
 
   function orderPrices() {
-    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic]');
+    var cards = document.querySelectorAll('[data-appl-card],[data-cat-card],[data-cc-card],[data-zt-custom],[data-nv-card],[data-zt-recstatic],[data-zt-reccustom]');
     Array.prototype.forEach.call(cards, function (card) {
       var href = (card.getAttribute && card.getAttribute('href')) || '';
       if (!href) { var a = card.querySelector('a[href]'); href = (a && a.getAttribute('href')) || ''; }
@@ -1683,6 +1787,7 @@
     resyncArs(rate);
     stampArs(rate);
     stampCuota(null, 0);
+    fixRecPrices(rate);
     orderPrices();
     addWhatsApp();
     stampAhorro({});
@@ -1740,9 +1845,14 @@
          salen del mismo dato. Antes sólo se pintaba la tarjeta y la ficha
          quedaba vacía. */
       var slots = [];
+      /* Un mismo recuadro aparece dos veces en las fichas: el del producto y el
+         de la tarjeta de "También te puede interesar", con el mismo id.
+         getElementById devolvía sólo el primero, así que la tarjeta del
+         carrusel se quedaba sin foto — un cuadro blanco vacío. */
       ['apple-' + id, 'and-' + id, 'acc-' + id, 'prod-front-' + id, id].forEach(function (sid) {
-        var el = document.getElementById(sid);
-        if (el && el.tagName && el.tagName.toLowerCase() === 'image-slot') slots.push(el);
+        Array.prototype.forEach.call(document.querySelectorAll('[id="' + sid.replace(/"/g, '') + '"]'), function (el) {
+          if (el.tagName && el.tagName.toLowerCase() === 'image-slot' && slots.indexOf(el) === -1) slots.push(el);
+        });
       });
       /* Sin recuadro escrito en la página, un override no publica nada: el panel
          tampoco lo lista (sólo muestra los productos base y los propios), así
@@ -1788,6 +1898,7 @@
     resyncArs(rate);
     stampArs(rate);
     stampCuota(st.recargos, st.finMin, st.tarjeta);
+    fixRecPrices(rate);
     orderPrices();
     addWhatsApp();
     stampAhorro(cat);

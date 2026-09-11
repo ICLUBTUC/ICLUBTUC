@@ -561,6 +561,11 @@ class Component extends DCLogic {
     // capture listener covers native cards AND catalog-injected ones:
     // any click that originates inside a photo wrapper never navigates.
     document.addEventListener('click', (e)=>{
+      /* El clic sobre la foto sólo se bloquea para el administrador, que ahí
+         edita el encuadre. Para un cliente la foto es la parte más grande de la
+         tarjeta y tiene que abrir el producto: antes había que apuntar al texto
+         de abajo para entrar. */
+      if(!(window.ztIsAdmin && window.ztIsAdmin())) return;
       const path = e.composedPath ? e.composedPath() : [e.target];
       const inPhoto = path.some(n => n && n.getAttribute && n.hasAttribute && n.hasAttribute('data-appl-imgwrap'));
       const isControl = path.some(n => n && n.tagName && (n.tagName==='BUTTON' || n.tagName==='INPUT' || n.tagName==='LABEL'));

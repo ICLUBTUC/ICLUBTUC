@@ -487,8 +487,14 @@ class Component extends DCLogic {
   componentWillUnmount(){ this._gone=true; if(this._io) this._io.disconnect(); if(this._fObs) this._fObs.disconnect(); }
   renderVals(){ return {}; }
   _guardImageClicks(){
+    /* Sólo el admin necesita que la foto no navegue (ahí edita el encuadre).
+       Para el cliente la foto es la parte más grande de la tarjeta y tiene que
+       abrir el producto. */
     document.querySelectorAll('[data-cc-imgwrap]').forEach((wrap)=>{
-      wrap.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); });
+      wrap.addEventListener('click', (e)=>{
+        if(!(window.ztIsAdmin && window.ztIsAdmin())) return;
+        e.preventDefault(); e.stopPropagation();
+      });
     });
   }
   _setup(){
