@@ -21,6 +21,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%230A84FF'/%3E%3Crect x='27' y='16' width='10' height='32' rx='3' fill='%23fff'/%3E%3C/svg%3E">
 <script src="./analytics.js" defer></script>
 <script src="./support.js"></script>
+<script src="./iclub-data.js"></script>
 </head>
 <body>
 <x-dc>
@@ -177,7 +178,7 @@ class Component extends DCLogic {
     let prof = {};
     try { prof = JSON.parse(localStorage.getItem('zt-checkout-profile-v1') || '{}') || {}; } catch (e) {}
     let db = null;
-    try { db = JSON.parse(localStorage.getItem('zt-portal-fin-db-v2') || 'null'); } catch (e) {}
+    try { db = JSON.parse(localStorage.getItem('iclub-storefront-v1') || 'null'); } catch (e) {}
     /* Un solo camino de compra: el checkout SIEMPRE trabaja sobre el carrito.
        "Comprar ahora" entra con ?id= y ese equipo se suma al carrito antes de
        mostrar la pantalla, así el cliente que armó un carrito de tres cosas no
@@ -232,15 +233,7 @@ class Component extends DCLogic {
       });
       if (touched) this.setState({ photos: next });
     }).catch(() => {});
-    const SB_URL = 'https://pbmsymvvemvbwhxmgddg.supabase.co';
-    const SB_KEY = 'sb_publishable_dt4zRwkE4_NbZrXvbpZjIw_1Uhe7pFn';
-    try {
-      fetch(SB_URL + '/rest/v1/portal_state?id=eq.main&select=data', {
-        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
-      }).then((r) => r.json()).then((rows) => {
-        const db = rows && rows[0] && rows[0].data;
-        if (!db) return;
-        try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(db)); } catch (e) {}
+    window.ICLUBData.read().then((db) => {
         const patch = {};
         const next = Object.assign({}, this.state.photos);
         let touched = false;
@@ -251,9 +244,9 @@ class Component extends DCLogic {
         if (touched) patch.photos = next;
         if (db.settings && db.settings.rate && db.settings.rate !== this.state.rate) patch.rate = db.settings.rate;
         if (Object.keys(patch).length) this.setState(patch);
-      }).catch(() => {});
-    } catch (e) {}
+    }).catch(() => {});
   }
+
   _saveCart() {
     try { localStorage.setItem('zt_cart', JSON.stringify(this.state.items.map((x) => ({ id: x.id, name: x.name, usd: x.usd, qty: x.qty })))); } catch (e) {}
   }

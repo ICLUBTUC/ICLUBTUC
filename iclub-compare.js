@@ -11,7 +11,7 @@
      comparador no quede desfasado del resto de la tienda. */
   function ztRate() {
     try {
-      var raw = localStorage.getItem('zt-portal-fin-db-v2');
+      var raw = localStorage.getItem('iclub-storefront-v1');
       var db = raw ? JSON.parse(raw) : null;
       var r = db && db.settings && db.settings.rate;
       if (r > 0) return r;

@@ -657,7 +657,10 @@
       // data:image/ URLs from it. The `src` attribute is author-controlled
       // (Claude wrote it into the HTML) so it passes through unchanged.
       let stored = this.id ? getSlot(this.id) : this._local;
-      if (stored && stored.u && !/^data:image\//i.test(stored.u)) stored = null;
+      // Allow raster data URLs and extracted photos with content-hashed local
+      // filenames. Arbitrary remote URLs and relative traversal stay blocked.
+      if (stored && stored.u && !/^data:image\/(?:png|jpeg|webp|avif|gif);base64,/i.test(stored.u)
+          && !/^assets\/photos\/[a-f0-9]{64}\.(?:png|jpg|webp|avif|gif)$/.test(stored.u)) stored = null;
       const srcAttr = this.getAttribute('src') || '';
       this._userUrl = (stored && stored.u) || null;
       const url = this._userUrl || srcAttr;

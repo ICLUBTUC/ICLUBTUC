@@ -1,8 +1,8 @@
 /* ICLUB — aplica el catálogo del panel admin a la tienda pública + cuenta visitas */
 (function () {
-  var SB_URL = 'https://pbmsymvvemvbwhxmgddg.supabase.co';
-  var SB_KEY = 'sb_publishable_dt4zRwkE4_NbZrXvbpZjIw_1Uhe7pFn';
-  var LS = 'zt-portal-fin-db-v2';
+  var SB_URL = window.ICLUBData.config.url;
+  var SB_KEY = window.ICLUBData.config.key;
+  var LS = 'iclub-storefront-v1';
   /* Única fuente de verdad de la cotización. El HTML SOLO guarda el precio en
      dólares; el valor en pesos de CADA producto (nativo del HTML o agregado
      desde el panel) se calcula siempre acá. Nunca escribir pesos a mano. */
@@ -92,9 +92,10 @@
       el.textContent = condOf(ov, el, (ov && ov.cat) || '', 'data-zt-warrow').war;
     });  }
 
+  function escapeHtml(value) { return String(value == null ? '' : value).replace(/[&<>"']/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function fmtInt(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
   function getLocal() {
-    try { var raw = localStorage.getItem(LS); if (raw) { var db = JSON.parse(raw); if (db && db.clients) return db; } } catch (e) {}
+    try { var raw = localStorage.getItem(LS); if (raw) { var db = JSON.parse(raw); if (db && db.catalog) return db; } } catch (e) {}
     return null;
   }
   /* Una ficha de producto del panel (?m=<id del catálogo>) usa la plantilla de
@@ -121,28 +122,8 @@
     (document.head || document.documentElement).appendChild(st);
   }());
   function fetchRemote(cb) {
-    try {
-      fetch(SB_URL + '/rest/v1/portal_state?id=eq.main&select=data', {
-        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
-      }).then(function (r) { return r.json(); }).then(function (rows) {
-        var db = rows && rows[0] && rows[0].data;
-        if (db && db.clients) {
-          try { localStorage.setItem(LS, JSON.stringify(db)); } catch (e) {}
-          cb(db, true);
-        } else cb(null, false);
-      }).catch(function () { cb(null, false); });
-    } catch (e) { cb(null, false); }
+    window.ICLUBData.read().then(function(db) { cb(db,true); }).catch(function() { cb(null,false); });
   }
-  function pushRemote(db) {
-    try {
-      fetch(SB_URL + '/rest/v1/portal_state?id=eq.main', {
-        method: 'PATCH',
-        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-        body: JSON.stringify({ data: db, updated_at: new Date().toISOString() })
-      }).catch(function () {});
-    } catch (e) {}
-  }
-
   /* Editor de texto in-situ (sólo admin). */
   function editableText(el, getVal, onSave) {
     if (!el || !isAdmin() || el.getAttribute('data-zt-editable') === '1') return;
@@ -173,7 +154,8 @@
 
   /* La edición en la tienda pública es sólo para el administrador logueado. */
   function isAdmin() {
-    try { return localStorage.getItem('zt-portal-fin-user') === 'admin'; } catch (e) { return false; }
+    // Public pages never grant edit rights from a browser-local flag.
+    return false;
   }
   /* Las páginas necesitan saberlo para no bloquear el clic sobre la foto: para
      el admin el clic abre el encuadre, para el cliente abre el producto. */
@@ -197,7 +179,6 @@
     db.catalog[pid] = db.catalog[pid] || {};
     for (var k in fields) db.catalog[pid][k] = fields[k];
     try { localStorage.setItem(LS, JSON.stringify(db)); } catch (e) {}
-    pushRemote(db);
     apply(db);
   }
   function savePhoto(pid, url) { saveOv(pid, { photo: url, px: 0, py: 0, pz: 1 }); }
@@ -226,7 +207,6 @@
       var w = img.parentElement;
       if (w && w.querySelector('#' + (window.CSS && CSS.escape ? CSS.escape(sid) : sid))) img.parentNode.removeChild(img);
     });
-    pushRemote(db);
     apply(db);
   });
   function frameCss(ov) {
@@ -701,9 +681,9 @@
   }
 
   function detailHrefFor(cat, id) {
-    if (cat === 'Celulares') return 'Producto Android.dc.html?id=' + id;
-    if (cat === 'Smart TV') return 'Producto Smart TV.dc.html?id=' + id;
-    return 'Producto Apple.dc.html?m=' + id;
+    if (cat === 'Celulares') return 'Producto Android.dc.html?id=' + encodeURIComponent(id);
+    if (cat === 'Smart TV') return 'Producto Smart TV.dc.html?id=' + encodeURIComponent(id);
+    return 'Producto Apple.dc.html?m=' + encodeURIComponent(id);
   }
 
   function gridFor(catName) {
@@ -821,7 +801,7 @@
       var specParts = [];
       specParts.push('<span>128 GB</span>');
       if (ov.bat) {
-        specParts.push('<span style="display:inline-flex;align-items:center;gap:6px;"><span style="position:relative;width:22px;height:11px;border:1.3px solid #9B9BA0;border-radius:3px;display:inline-block;flex:0 0 auto;"><span style="position:absolute;inset:1.5px;width:' + Math.max(8, Math.min(100, ov.bat)) + '%;background:#34C759;border-radius:1px;"></span></span>' + ov.bat + '%</span>');
+        specParts.push('<span style="display:inline-flex;align-items:center;gap:6px;"><span style="position:relative;width:22px;height:11px;border:1.3px solid #9B9BA0;border-radius:3px;display:inline-block;flex:0 0 auto;"><span style="position:absolute;inset:1.5px;width:' + Math.max(8, Math.min(100, ov.bat)) + '%;background:#34C759;border-radius:1px;"></span></span>' + escapeHtml(ov.bat) + '%</span>');
       }
       specWrap.innerHTML = specParts.join('<span style="width:3px;height:3px;border-radius:50%;background:#C7C7CC;"></span>');
       row.appendChild(rb);
@@ -883,7 +863,7 @@
     if (ov.bat) {
       var bw2 = document.createElement('span');
       bw2.style.cssText = 'display:inline-flex;align-items:center;gap:6px;';
-      bw2.innerHTML = '<span style="position:relative;width:38px;height:14px;border:1.5px solid rgba(0,0,0,.3);border-radius:4px;display:inline-block;flex:0 0 auto;"><span style="position:absolute;inset:2px;width:' + Math.max(8, Math.min(100, ov.bat)) + '%;background:#1D1D1F;border-radius:2px;"></span></span><span>Batería ' + ov.bat + '%</span>';
+      bw2.innerHTML = '<span style="position:relative;width:38px;height:14px;border:1.5px solid rgba(0,0,0,.3);border-radius:4px;display:inline-block;flex:0 0 auto;"><span style="position:absolute;inset:2px;width:' + Math.max(8, Math.min(100, ov.bat)) + '%;background:#1D1D1F;border-radius:2px;"></span></span><span>Batería ' + escapeHtml(ov.bat) + '%</span>';
       sw2.appendChild(bw2);
     } else { sw2.style.display = 'none'; }
     card.appendChild(body);
@@ -1802,28 +1782,8 @@
      versión corregida. Se identifican por su tamaño exacto, así que se descarta
      esa foto y ninguna otra: si más adelante subís una nueva desde el panel,
      tiene otro tamaño y manda ella. */
-  var FOTOS_REEMPLAZADAS = { 'tv-rca-40': 30967 };
-  var MIGRACIONES = {
-    iphone14: { cuando: function (o) { return o.cond === 'impecable'; },
-                datos: { cond: 'a1', spec: '128 GB · grado A1', usd: 400, usdAntes: 470, aviso: 'ultimas', destacado: true } }
-  };
-  function migrar(db) {
-    var cat = db.catalog || {}, next = null;
-    Object.keys(MIGRACIONES).forEach(function (id) {
-      var o = cat[id];
-      var m = MIGRACIONES[id];
-      if (!o || !m.cuando(o)) return;
-      next = next || Object.assign({}, cat);
-      next[id] = Object.assign({}, o, m.datos);
-    });
-    Object.keys(FOTOS_REEMPLAZADAS).forEach(function (id) {
-      var o = cat[id];
-      if (!o || !o.photo || o.photo.length !== FOTOS_REEMPLAZADAS[id]) return;
-      next = next || Object.assign({}, cat);
-      next[id] = Object.assign({}, next[id] || o, { photo: '' });
-    });
-    return next ? Object.assign({}, db, { catalog: next }) : db;
-  }
+  // Catalog values come from the panel; no automatic price or condition changes.
+  function migrar(db) { return db; }
   function apply(db) {
     if (!db) { baseApply(ZT_RATE); return; }
     var pre = db;
@@ -2075,7 +2035,8 @@
     db.stats = db.stats || {};
     db.stats[pid] = (db.stats[pid] || 0) + 1;
     try { localStorage.setItem(LS, JSON.stringify(db)); } catch (e) {}
-    if (remoteOk) pushRemote(db);
+    // A visit must never PATCH the entire portal_state document: that used to
+    // broadcast customer and catalog data to every Realtime subscriber.
   }
 
   /* Hover igual al de las tarjetas nativas, para todo producto inyectado
@@ -2212,7 +2173,7 @@
       q = (q || '').trim().toLowerCase();
       if (!q) { results.innerHTML = '<div style="padding:30px;text-align:center;color:#C9C6C0;font-size:14px;">Escrib\u00ed para buscar tu equipo</div>'; return; }
       var matches = idx.filter(function (it) { return (it.n + ' ' + it.s).toLowerCase().indexOf(q) >= 0; });
-      if (!matches.length) { results.innerHTML = '<div style="padding:26px;text-align:center;color:#A1A1A6;font-size:14.5px;">Sin resultados para \u201c' + q + '\u201d</div>'; return; }
+      if (!matches.length) { results.innerHTML = '<div style="padding:26px;text-align:center;color:#A1A1A6;font-size:14.5px;">Sin resultados para \u201c' + escapeHtml(q) + '\u201d</div>'; return; }
       results.innerHTML = '';
       matches.slice(0, 30).forEach(function (it) {
         var a = document.createElement('a');
@@ -2221,7 +2182,7 @@
         a.onmouseenter = function () { a.style.background = '#F5F5F4'; };
         a.onmouseleave = function () { a.style.background = 'transparent'; };
         a.innerHTML = '<span style="width:36px;height:36px;border-radius:10px;background:#F4F1EC;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:#0A84FF;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>' +
-          '<span style="display:flex;flex-direction:column;gap:1px;min-width:0;"><span style="font-size:15.5px;font-weight:600;letter-spacing:-.01em;">' + it.n + '</span><span style="font-size:12.5px;color:#86868B;">' + it.s + '</span></span>';
+          '<span style="display:flex;flex-direction:column;gap:1px;min-width:0;"><span style="font-size:15.5px;font-weight:600;letter-spacing:-.01em;">' + escapeHtml(it.n) + '</span><span style="font-size:12.5px;color:#86868B;">' + escapeHtml(it.s) + '</span></span>';
         results.appendChild(a);
       });
     }

@@ -21,6 +21,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%230A84FF'/%3E%3Crect x='27' y='16' width='10' height='32' rx='3' fill='%23fff'/%3E%3C/svg%3E">
 <script src="./analytics.js" defer></script>
 <script src="./support.js"></script>
+<script src="./iclub-data.js"></script>
 </head>
 <body>
 <x-dc>
@@ -30,11 +31,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="secure-portal.js"></script>
 <script>
-  window.ZT_SUPA = {
-    url: 'https://pbmsymvvemvbwhxmgddg.supabase.co',
-    key: 'sb_publishable_dt4zRwkE4_NbZrXvbpZjIw_1Uhe7pFn'
-  };
+  window.ZT_SUPA = window.ICLUBData.config;
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -628,7 +627,7 @@
         <sc-for list="{{ aFields }}" as="f" hint-placeholder-count="10">
           <div style="display:flex; flex-direction:column; gap:7px;">
             <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">{{ f.label }}</label>
-            <input value="{{ f.value }}" onChange="{{ f.set }}" type="text" placeholder="{{ f.ph }}" autocomplete="off" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:15px; font-weight:500; color:#1D1D1F; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:13px; padding:13px 16px; outline:none; transition:border-color .3s, background .3s;" style-focus="border-color:#1D1D1F; background:#fff;">
+            <input value="{{ f.value }}" onChange="{{ f.set }}" type="{{ f.type }}" placeholder="{{ f.ph }}" autocomplete="off" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:15px; font-weight:500; color:#1D1D1F; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:13px; padding:13px 16px; outline:none; transition:border-color .3s, background .3s;" style-focus="border-color:#1D1D1F; background:#fff;">
           </div>
         </sc-for>
       </div>
@@ -2060,7 +2059,7 @@ class Component extends DCLogic {
       })
     });
     const fixed = Object.assign({}, db, { catalog: next, mig14: true });
-    try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(fixed)); } catch (e) {}
+    
     return fixed;
   }
 
@@ -2070,9 +2069,9 @@ class Component extends DCLogic {
         if (j && typeof j === 'object') this.setState({ slotPhotos: j });
       }).catch(() => {});
     } catch (e) {}
-    const db = this._fix14(this._reconcileNC(this._load()));
+    const db = this._load();
     let user = null;
-    try { user = localStorage.getItem('zt-portal-fin-user') || null; } catch (e) {}
+    // The server restores identity from the opaque session token, never a local flag.
     if (user && user !== 'admin' && !db.clients[user]) user = null;
     let screen = null;
     /* El link "Cotizador" del sitio entra con #financiar: se abre el cotizador
@@ -2083,7 +2082,7 @@ class Component extends DCLogic {
     let fin = this.state.fin || {};
     try {
       const pid = new URLSearchParams(location.search).get('p');
-      if (pid && this._baseProducts().concat(Object.keys(db.catalog || {}).map((k) => ({ id: k }))).some((b) => b.id === pid)) {
+      if (pid) {
         fin = Object.assign({}, fin, { elegido: 'si', prodId: pid });
         screen = 'finan';
       }
@@ -2097,81 +2096,105 @@ class Component extends DCLogic {
     try {
       const cfg = window.ZT_SUPA;
       if (cfg && window.supabase && window.supabase.createClient) {
-        this._sbClient = window.supabase.createClient(cfg.url, cfg.key);
+        this._sbClient = window.supabase.createClient(cfg.url, cfg.key, { auth: { persistSession: false, autoRefreshToken: false } });
       } else { this._sbClient = null; }
     } catch (e) { this._sbClient = null; }
     return this._sbClient;
   }
-  _cloudInit() {
-    const sb = this._sb();
-    if (!sb) { this.setState({ cloud: 'off' }); return; }
-    this.setState({ cloud: 'sync' });
-    // 1) traer lo que esté en la nube
-    sb.from('portal_state').select('data').eq('id', 'main').maybeSingle().then((res) => {
-      if (res && !res.error && res.data && res.data.data && res.data.data.clients) {
-        const remote = res.data.data;
-        /* Si lo local es más nuevo que lo de la nube, gana lo local y se sube:
-           un cambio hecho justo antes de recargar no se pierde. */
-        const localRev = (this.state.db && this.state.db.rev) || 0;
-        if (localRev > (remote.rev || 0)) { this._cloudPush(this.state.db); this.setState({ cloud: 'ok' }); return; }
-        /* Todo lo que entra de la nube pasa por el mismo saneado que lo local,
-           y si cambió se devuelve corregido para no re-servir datos viejos. */
-        const clean = this._reconcileNC(remote);
-        try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(clean)); } catch (e) {}
-        this.setState({ db: clean, cloud: 'ok' });
-        if (JSON.stringify(clean) !== JSON.stringify(remote)) this._cloudPush(clean);
-      } else if (res && res.error) {
-        this.setState({ cloud: 'err' });
-      } else {
-        // nube vacía: subir lo local para inicializar
-        this._cloudPush(this.state.db);
-        this.setState({ cloud: 'ok' });
-      }
-    }, () => this.setState({ cloud: 'err' }));
-    // 2) escuchar cambios de otros dispositivos en vivo
-    try {
-      sb.channel('zt-portal')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'portal_state', filter: 'id=eq.main' }, (payload) => {
-          const remote = payload && payload.new && payload.new.data;
-          /* Si hay una escritura local en curso, el eco de la nube llegaría a
-             pisar lo que el usuario acaba de cambiar: se ignora hasta terminar. */
-          if (this._pushT || this._pushPending) return;
-          if (remote && (remote.rev || 0) < ((this.state.db && this.state.db.rev) || 0)) return;
-          if (remote && remote.clients && JSON.stringify(remote) !== JSON.stringify(this.state.db)) {
-            const clean = this._reconcileNC(remote);
-            try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(clean)); } catch (e) {}
-            this.setState({ db: clean, cloud: 'ok' });
-            if (JSON.stringify(clean) !== JSON.stringify(remote)) this._cloudPush(clean);
-          }
-        }).subscribe();
-    } catch (e) {}
+  _api() {
+    if (!this._portalApi) this._portalApi = new window.ICLUBPortalApi(this._sb());
+    return this._portalApi;
   }
-  _cloudPushNow(db) {
-    const sb = this._sb(); if (!sb || !db) return;
-    try { sb.from('portal_state').upsert({ id: 'main', data: db, updated_at: new Date().toISOString() }); } catch (e) {}
+  async _cloudInit() {
+    try {
+      const sb = this._sb();
+      if (!sb) throw new Error('No se pudo conectar al servidor.');
+      // Clear the old cache that could contain all clients and plaintext keys.
+      try { localStorage.removeItem('zt-portal-fin-db-v2'); localStorage.removeItem('zt-portal-fin-user'); } catch (e) {}
+      const pub = await window.ICLUBData.read();
+      if (!this.state.user) this.setState({ db: Object.assign({ clients: {} }, pub), cloud: 'ok' });
+      if (this._api().token) {
+        try {
+          const state = await this._api().read();
+          this.setState({ db: state.data, user: state.user, cloud: 'ok' });
+        } catch (e) {
+          if (/sesión/i.test(e.message)) this._api().storeToken(null);
+          this.setState({ errorMsg: e.message, cloud: 'err' });
+        }
+      }
+      this._startPolling();
+    } catch (e) { this.setState({ cloud: 'err', errorMsg: e.message }); }
+  }
+  _startPolling() {
+    if (this._pollT) return;
+    const poll = async () => {
+      if (document.hidden || this._pushT || this._pushPending || this._pushDb || !this._api().token || this._pollPending) return;
+      if (Date.now() - (this._lastPoll || 0) < 10000) return;
+      this._lastPoll = Date.now(); this._pollPending = true;
+      const tokenAtStart = this._api().token;
+      try {
+        const rev = await this._api().revision();
+        if (rev.version !== this._api().version) {
+          const state = await this._api().read(false);
+          if (!this._pushDb && !this._pushPending && this._api().token === tokenAtStart) {
+            this._api().version = state.version; this._api().currentUser = state.user;
+            this.setState({ db: state.data, user: state.user, cloud: 'ok' });
+          }
+        }
+      } catch (e) {
+        if (/Tu sesión venció/.test(e.message || '') && !this._pushDb && !this._pushPending && this._api().token === tokenAtStart) {
+          this._api().storeToken(null); this._api().currentUser = null; this._api().version = null;
+          this.setState({ db: this._load(), user: null, cloud: 'err', errorMsg: e.message });
+        } else this.setState({ cloud: 'err' });
+      }
+      finally { this._pollPending = false; }
+    };
+    this._pollT = setInterval(poll,60000);
+    this._visibilityPoll = () => { if (!document.hidden) poll(); };
+    document.addEventListener('visibilitychange',this._visibilityPoll);
+    this._unloadGuard = (event) => {
+      if (this._pushT || this._pushPending || this._pushDb) { event.preventDefault(); event.returnValue = ''; }
+    };
+    window.addEventListener('beforeunload',this._unloadGuard);
+  }
+  componentWillUnmount() {
+    clearInterval(this._pollT); clearTimeout(this._pushT);
+    document.removeEventListener('visibilitychange',this._visibilityPoll);
+    window.removeEventListener('beforeunload',this._unloadGuard);
   }
   _cloudPush(db) {
-    const sb = this._sb();
-    if (!sb) return;
-    if (this._pushT) clearTimeout(this._pushT);
-    /* Si la página se cierra durante la espera, se sube igual: si no, el cambio
-       queda sólo local y la próxima carga lo pierde. */
-    if (!this._flushBound) {
-      this._flushBound = true;
-      window.addEventListener('pagehide', () => {
-        if (this._pushT) { clearTimeout(this._pushT); this._pushT = null; this._cloudPushNow(this._pushDb); }
-      });
-    }
+    if (this.state.user !== 'admin') return;
     this._pushDb = db;
-    this._pushT = setTimeout(() => {
-      this._pushT = null;
-      this._pushPending = true;
-      this.setState({ cloud: 'sync' });
-      const done = (st) => { this._pushPending = false; this.setState({ cloud: st }); };
-      sb.from('portal_state').upsert({ id: 'main', data: db, updated_at: new Date().toISOString() }).then((res) => {
-        done(res && res.error ? 'err' : 'ok');
-      }, () => done('err'));
-    }, 500);
+    clearTimeout(this._pushT);
+    this.setState({ cloud: 'sync' });
+    this._pushT = setTimeout(() => { this._pushT = null; this._flushCloud(); },750);
+  }
+  async _flushCloud() {
+    if (this._pushPending || !this._pushDb) return;
+    const db = this._pushDb;
+    this._pushDb = null; this._pushPending = true;
+    try {
+      const res = await this._api().write(db);
+      window.ICLUBData.invalidate();
+      if (this.state.db === db && !this._pushDb) this.setState({ db: res.data });
+      this.setState({ cloud: this._pushDb ? 'sync' : 'ok' });
+    } catch (e) {
+      // Retain pending work in memory; never overwrite newer server data.
+      this._pushDb = this._pushDb || db;
+      this.setState({ cloud: 'err', errorMsg: e.message });
+      this._pushPending = false;
+      window.alert('No se guardaron estos cambios: ' + e.message + '\nNo cierres esta pantalla hasta guardar o descargar una copia.');
+      return;
+    }
+    this._pushPending = false;
+    if (this._pushDb) this._flushCloud();
+  }
+  async _logout() {
+    if (this._pushT || this._pushPending || this._pushDb) {
+      window.alert('Esperá a que termine el guardado antes de cerrar sesión.'); return;
+    }
+    try { await this._api().logout(); } catch(e) {}
+    this.setState({ db: this._load(), user: null, loginPhone: '', loginPass: '', view: 'dash', screen: null, adminView: null });
   }
 
   _usd(n) {
@@ -2189,19 +2212,14 @@ class Component extends DCLogic {
     return '$ ' + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   }
 
-  _createUser() {
-    const ph = String(this.state.regPhone).replace(/[^0-9]/g, '');
-    if (ph.length < 6) { this.setState({ regError: 'Ingresá un número de celular válido.' }); return; }
-    if (!this.state.regPass) { this.setState({ regError: 'Elegí una contraseña.' }); return; }
-    if (this.state.regPass.length < 4) { this.setState({ regError: 'La contraseña debe tener al menos 4 caracteres.' }); return; }
+  async _createUser() {
+    const ph = String(this.state.regPhone).replace(/[^0-9]/g,'');
     if (this.state.regPass !== this.state.regPass2) { this.setState({ regError: 'Las contraseñas no coinciden.' }); return; }
-    const db = this.state.db || this._load();
-    if (db.clients[ph]) { this.setState({ regError: 'Ya existe un usuario con ese celular. Podés iniciar sesión.' }); return; }
-    const next = Object.assign({}, db, { clients: Object.assign({}, db.clients) });
-    next.clients[ph] = { name: 'Cliente ' + ph, pass: this.state.regPass, cuit: '', dir: '', mail: '', vend: '', iva: 'Consumidor Final', desc: '', lim: 0, blocked: false, movs: [], accesos: [], nuevo: true };
-    this._save(next);
-    this.setState({ regError: '', fin: Object.assign({}, this.state.fin, { created: true }) });
-    this._finScroll();
+    try {
+      const res = await this._api().register(ph,this.state.regPass);
+      this.setState({ db: res.data, user: res.user, regError: '', regPass: '', regPass2: '', cloud: 'ok', fin: Object.assign({},this.state.fin,{created:true}) });
+      this._finScroll();
+    } catch(e) { this.setState({ regError: e.message }); }
   }
 
   _finScroll() {
@@ -2215,7 +2233,7 @@ class Component extends DCLogic {
     const demo = db && db.clients && db.clients['3814680653'];
     if (demo && demo.name === 'Lucas Moreno') {
       delete db.clients['3814680653'];
-      try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(db)); } catch (e) {}
+      
     }
     return db;
   }
@@ -2245,17 +2263,13 @@ class Component extends DCLogic {
   }
 
   _load() {
-    try {
-      const raw = localStorage.getItem('zt-portal-fin-db-v2');
-      if (raw) { const db = JSON.parse(raw); if (db && db.clients) return this._purgeDemo(db); }
-    } catch (e) {}
-    return this._seed();
+    let pub = {};
+    try { pub = JSON.parse(localStorage.getItem('iclub-storefront-v1') || '{}') || {}; } catch(e) {}
+    return Object.assign({},pub,{ clients: {}, nextRc: 1, nextFa: 1, pedidos: [] });
   }
   _save(db) {
-    /* Cada guardado lleva su versión: así la nube nunca puede devolver una
-       copia vieja y deshacer lo que se acaba de cambiar. */
-    db = Object.assign({}, db, { rev: Date.now() });
-    try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(db)); } catch (e) {}
+    if (this.state.user !== 'admin') { window.alert('Esta operación requiere ingresar como administrador.'); return; }
+    db = Object.assign({},db,{rev:Date.now()});
     this.setState({ db: db });
     this._cloudPush(db);
   }
@@ -2427,7 +2441,7 @@ class Component extends DCLogic {
       const next = this._syncRecNC(out, k);
       if (JSON.stringify((next.clients[k] || {}).movs || []) !== antes) { out = next; changed = true; }
     });
-    if (changed) { try { localStorage.setItem('zt-portal-fin-db-v2', JSON.stringify(out)); } catch (e) {} }
+    
     return out;
   }
   /* Mantiene una sola Nota de Crédito automática por plan, igual al recargo ya
@@ -2986,40 +3000,17 @@ class Component extends DCLogic {
   }
   _planTitle(m) { return (m.prods && m.prods[0] ? m.prods[0].name : m.det || 'Plan financiado'); }
 
-  _login() {
-    const db = this.state.db || this._load();
+  async _login() {
+    if (this._loginPending) return;
+    this._loginPending = true;
     const raw = String(this.state.loginPhone).trim().toLowerCase();
-    const ph = raw.replace(/[^0-9]/g, '');
-    /* Entra como admin con el número del dueño o con la palabra "admin". */
-    if (raw === 'admin' || ph === '3814680653') {
-      /* La contraseña ya no está escrita en el código: se guarda sólo su huella
-         SHA-256, que no se puede revertir. Quien lea el sitio publicado no puede
-         sacar la clave de acá. Para cambiarla: reemplazar esta huella. */
-      const HUELLA = 'aa7f3f1e48b8010cef2bd66065d0c03dd61e157933cebc72f0263b50586d8c0a';
-      const pass = this.state.loginPass;
-      (async () => {
-        let hex = '';
-        try {
-          const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pass));
-          hex = Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
-        } catch (e) {}
-        if (hex && hex === HUELLA) {
-          try { localStorage.setItem('zt-portal-fin-user', 'admin'); } catch (e) {}
-          this.setState({ user: 'admin', error: false, amode: 'list', adminView: null });
-        } else this.setState({ error: true, errorMsg: 'Contraseña de administrador incorrecta.' });
-      })();
-      return;
-    }
-    const c = db.clients[ph];
-    if (c && c.pass === this.state.loginPass) {
-      if (c.blocked) { this.setState({ error: true, errorMsg: 'Tu acceso está bloqueado. Comunicate con la administración de ICLUB.' }); return; }
-      const next = Object.assign({}, db, { clients: Object.assign({}, db.clients) });
-      const acc = [{ fecha: this._now(), disp: this._device(), ip: '—' }].concat(c.accesos || []).slice(0, 10);
-      next.clients[ph] = Object.assign({}, c, { accesos: acc });
-      this._save(next);
-      try { localStorage.setItem('zt-portal-fin-user', ph); } catch (e) {}
-      this.setState({ user: ph, error: false, view: 'dash' });
-    } else this.setState({ error: true, errorMsg: 'Teléfono o contraseña incorrectos. Si olvidaste tu clave, pedila al administrador.' });
+    const phone = raw === 'admin' || raw.replace(/[^0-9]/g,'') === '3814680653' ? 'admin' : raw.replace(/[^0-9]/g,'');
+    try {
+      const res = await this._api().login(phone,this.state.loginPass);
+      this.setState({ db: res.data, user: res.user, loginPass: '', error: false, errorMsg: '', view: 'dash', amode: 'list', adminView: null, cloud: 'ok' });
+      this._startPolling();
+    } catch(e) { this.setState({ error: true, errorMsg: e.message }); }
+    finally { this._loginPending = false; }
   }
 
   _receiptFor(c, m, acumPago, saldoAfter, planMov, cuotaIdx) {
@@ -3084,7 +3075,7 @@ class Component extends DCLogic {
     const db = this.state.db || { clients: {}, nextRc: 1, nextFa: 1 };
     const user = this.state.user;
     const isAdmin = user === 'admin';
-    const forced = !!this.props.sesionIniciada && !user;
+    const forced = false;
     const clientKey = isAdmin ? this.state.adminView : (user || (forced ? Object.keys(db.clients)[0] : null));
     const client = clientKey ? db.clients[clientKey] : null;
     const loggedIn = isAdmin || !!client;
@@ -3483,7 +3474,7 @@ class Component extends DCLogic {
         cloudLabel: (this.state.cloud === 'ok' ? 'En la nube' : this.state.cloud === 'sync' ? 'Guardando…' : this.state.cloud === 'err' ? 'Sin conexión' : 'Solo este equipo'),
         cloudColor: (this.state.cloud === 'ok' ? '#1F8A5B' : this.state.cloud === 'sync' ? '#B0700F' : this.state.cloud === 'err' ? '#D93025' : '#86868B'),
         cloudBg: (this.state.cloud === 'ok' ? 'rgba(31,138,91,.1)' : this.state.cloud === 'sync' ? 'rgba(176,112,15,.1)' : this.state.cloud === 'err' ? 'rgba(217,48,37,.1)' : 'rgba(0,0,0,.05)'),
-        cloudDesc: (this.state.cloud === 'ok' ? 'Todo se guarda en la nube y se sincroniza entre tus dispositivos automáticamente.' : this.state.cloud === 'sync' ? 'Guardando cambios en la nube…' : this.state.cloud === 'err' ? 'No se pudo conectar a la nube. Tus datos siguen guardados en este equipo; se subirán al reconectar.' : 'Tus datos se guardan en este dispositivo. Descargá una copia por seguridad.'),
+        cloudDesc: (this.state.cloud === 'ok' ? 'Todo se guarda en la nube y se sincroniza entre tus dispositivos automáticamente.' : this.state.cloud === 'sync' ? 'Guardando cambios en la nube…' : this.state.cloud === 'err' ? 'No se pudo conectar a la nube. Los cambios pendientes siguen en esta pantalla. No la cierres hasta completar el guardado.' : 'Ingresá para consultar o administrar tus datos de forma segura.'),
         aExport: () => {
           try {
             const data = JSON.stringify(this.state.db || {}, null, 2);
@@ -3690,7 +3681,7 @@ class Component extends DCLogic {
               this.setState({ amode: 'pago', editKey: k, movAmount: '', movDet: '', movMet: 'Transferencia', movPlan: abiertos.length === 1 ? abiertos[0].doc : '', movEfec: '', movTransf: '', formError: '' });
             },
             buy: () => this.setState({ amode: 'compra', editKey: k, movAmount: '', movDet: '', movFin: 'contado', movFreq: 'Mensual', movN: '', movRec: '', movPlanSel: '', movSinInt: false, movPlanSel: '', movSinInt: false, movProd: '', movAdel: 'no', movAdelMonto: '', formError: '' }),
-            edit: () => this.setState({ amode: 'form', editKey: k, formError: '', form: { name: c.name, phone: k, pass: c.pass, cuit: c.cuit || '', dir: c.dir || '', mail: c.mail || '', vend: c.vend || '', iva: c.iva || '', desc: c.desc || '', lim: String(c.lim || ''), saldoIni: '', proxFecha: c.proxFecha || '', proxImp: c.proxImp ? String(c.proxImp) : '', proxFreq: c.proxFreq || 'Mensual', proxDow: c.proxDow != null ? c.proxDow : 0 } }),
+            edit: () => this.setState({ amode: 'form', editKey: k, formError: '', form: { name: c.name, phone: k, pass: '', cuit: c.cuit || '', dir: c.dir || '', mail: c.mail || '', vend: c.vend || '', iva: c.iva || '', desc: c.desc || '', lim: String(c.lim || ''), saldoIni: '', proxFecha: c.proxFecha || '', proxImp: c.proxImp ? String(c.proxImp) : '', proxFreq: c.proxFreq || 'Mensual', proxDow: c.proxDow != null ? c.proxDow : 0 } }),
             block: () => {
               const next = Object.assign({}, db, { clients: Object.assign({}, db.clients) });
               next.clients[k] = Object.assign({}, c, { blocked: !c.blocked });
@@ -3722,7 +3713,7 @@ class Component extends DCLogic {
         aBack: () => this.setState({ amode: 'list', editKey: null, form: null, formError: '' }),
         aFormTitle: this.state.editKey ? 'Editar cliente' : 'Nuevo cliente',
         aFields: fieldDefs.filter(([k]) => k !== 'saldoIni' || !this.state.editKey).map(([k, label, ph]) => ({
-          label: label, ph: ph, value: form[k] || '', set: setF(k)
+          label: label, ph: k === 'pass' && this.state.editKey ? 'Dejar vacío para conservar la clave' : ph, type: k === 'pass' ? 'password' : 'text', value: form[k] || '', set: setF(k)
         })),
         aFormError: !!this.state.formError,
         aFormErrorMsg: this.state.formError,
@@ -3741,14 +3732,14 @@ class Component extends DCLogic {
           const ph = String(form.phone || '').replace(/[^0-9]/g, '');
           if (!String(form.name || '').trim()) { this.setState({ formError: 'El nombre no puede estar vacío.' }); return; }
           if (!ph) { this.setState({ formError: 'Ingresá un teléfono (es el usuario de acceso).' }); return; }
-          if (!String(form.pass || '').trim()) { this.setState({ formError: 'Ingresá una contraseña.' }); return; }
+          if (!this.state.editKey && String(form.pass || '').trim().length < 8) { this.setState({ formError: 'Ingresá una contraseña de al menos 8 caracteres.' }); return; }
           if (ph !== this.state.editKey && db.clients[ph]) { this.setState({ formError: 'Ya existe un cliente con ese teléfono.' }); return; }
           const prev = editC;
           const next = Object.assign({}, db, { clients: Object.assign({}, db.clients) });
           if (this.state.editKey && this.state.editKey !== ph) delete next.clients[this.state.editKey];
           const movs = prev ? prev.movs : (this._num(form.saldoIni) > 0 ? [{ f: this._today(), tipo: 'Saldo anterior', doc: '—', det: 'Saldo inicial de la cuenta', imp: -this._num(form.saldoIni) }] : []);
           next.clients[ph] = Object.assign({}, prev || {}, {
-            name: String(form.name).trim(), pass: String(form.pass).trim(),
+            name: String(form.name).trim(), pass: String(form.pass || '').trim(), auth_source: this.state.editKey || null,
             cuit: form.cuit, dir: form.dir, mail: form.mail, vend: form.vend, iva: form.iva, desc: form.desc,
             lim: this._num(form.lim),
             proxFreq: form.proxFreq || 'Mensual',
@@ -4311,12 +4302,11 @@ class Component extends DCLogic {
         const db2 = this.state.db || { clients: {} };
         const total = finFinanced * (1 + finRecargos[finPlanChosen]);
         const p = { id: this._uid(), f: this._today(), prod: finProdChosen.name, totalUsd: Math.round(total), plan: finPlanChosen + ' pagos', adel: fin.adelanto === 'si' ? Math.round(finAdelNum) : 0, estado: 'nueva' };
-        this._save(Object.assign({}, db2, { pedidos: (db2.pedidos || []).concat([p]) }));
+        if (this._api().token) this._api().request(p).catch((e) => window.alert(e.message));
       },
       finGoPortal: () => {
         const ph = String(this.state.regPhone).replace(/[^0-9]/g, '');
-        try { localStorage.setItem('zt-portal-fin-user', ph); } catch (e) {}
-        this.setState({ screen: null, user: ph, view: 'dash' });
+        if (this._api().token && this.state.user) this.setState({ screen: null, view: 'dash' });
       }
     };
 
@@ -4956,7 +4946,7 @@ class Component extends DCLogic {
       setLoginPass: (e) => this.setState({ loginPass: e.target.value, error: false }),
       onKey: (e) => { if (e.key === 'Enter') this._login(); },
       doLogin: () => this._login(),
-      doLogout: () => { try { localStorage.removeItem('zt-portal-fin-user'); } catch (e) {} this.setState({ user: null, view: 'dash', loginPhone: '', loginPass: '', receipt: null, payOpen: false, amode: 'list', adminView: null, screen: null, regPhone: '', regPass: '', regPass2: '', regError: '', fin: { created: false, elegido: null, prodId: null, prodSearch: '', medio: null, adelanto: null, adelMonto: '', planN: null } }); },
+      doLogout: () => this._logout(),
 
       navItems: [
         ['dash', 'Inicio'], ['cuenta', 'Estado de cuenta'], ['compras', 'Compras'],

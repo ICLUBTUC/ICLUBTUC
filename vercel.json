@@ -1,42 +1,206 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/Inicio%20ICLUB.dc.html" },
-    { "source": "/apple", "destination": "/Apple%20ICLUB.dc.html" },
-    { "source": "/android", "destination": "/Android%20ICLUB.dc.html" },
-    { "source": "/y-mas", "destination": "/Y%20mas%20ICLUB.dc.html" },
-    { "source": "/smart-tv", "destination": "/Smart%20TV%20ICLUB.dc.html" },
-    { "source": "/producto", "destination": "/Producto%20Apple.dc.html" },
-    { "source": "/producto-android", "destination": "/Producto%20Android.dc.html" },
-    { "source": "/producto-tv", "destination": "/Producto%20Smart%20TV.dc.html" },
-    { "source": "/portal", "destination": "/Portal%20Clientes%20ICLUB.dc.html" },
-    { "source": "/comprar", "destination": "/Finalizar%20Compra.dc.html" },
-    { "source": "/ayuda", "destination": "/Ayuda%20ICLUB.dc.html" }
+    {
+      "source": "/",
+      "destination": "/Inicio%20ICLUB.dc.html"
+    },
+    {
+      "source": "/apple",
+      "destination": "/Apple%20ICLUB.dc.html"
+    },
+    {
+      "source": "/android",
+      "destination": "/Android%20ICLUB.dc.html"
+    },
+    {
+      "source": "/y-mas",
+      "destination": "/Y%20mas%20ICLUB.dc.html"
+    },
+    {
+      "source": "/smart-tv",
+      "destination": "/Smart%20TV%20ICLUB.dc.html"
+    },
+    {
+      "source": "/producto",
+      "destination": "/Producto%20Apple.dc.html"
+    },
+    {
+      "source": "/producto-android",
+      "destination": "/Producto%20Android.dc.html"
+    },
+    {
+      "source": "/producto-tv",
+      "destination": "/Producto%20Smart%20TV.dc.html"
+    },
+    {
+      "source": "/portal",
+      "destination": "/Portal%20Clientes%20ICLUB.dc.html"
+    },
+    {
+      "source": "/comprar",
+      "destination": "/Finalizar%20Compra.dc.html"
+    },
+    {
+      "source": "/ayuda",
+      "destination": "/Ayuda%20ICLUB.dc.html"
+    }
   ],
   "redirects": [
-    { "source": "/Inicio%20ICLUB.dc.html", "destination": "/", "permanent": false },
-    { "source": "/Apple%20ICLUB.dc.html", "destination": "/apple", "permanent": false },
-    { "source": "/Android%20ICLUB.dc.html", "destination": "/android", "permanent": false },
-    { "source": "/Y%20mas%20ICLUB.dc.html", "destination": "/y-mas", "permanent": false },
-    { "source": "/Accesorios%20ICLUB.dc.html", "destination": "/y-mas", "permanent": true },
-    { "source": "/accesorios", "destination": "/y-mas", "permanent": true },
-    { "source": "/Smart%20TV%20ICLUB.dc.html", "destination": "/smart-tv", "permanent": false },
-    { "source": "/Producto%20Apple.dc.html", "destination": "/producto", "permanent": false },
-    { "source": "/Producto%20Android.dc.html", "destination": "/producto-android", "permanent": false },
-    { "source": "/Producto%20Smart%20TV.dc.html", "destination": "/producto-tv", "permanent": false },
-    { "source": "/Portal%20Clientes%20ICLUB.dc.html", "destination": "/portal", "permanent": false },
-    { "source": "/Finalizar%20Compra.dc.html", "destination": "/comprar", "permanent": false },
-    { "source": "/Ayuda%20ICLUB.dc.html", "destination": "/ayuda", "permanent": false },
-
-    { "source": "/Hero%20ZonaTech.dc.html", "destination": "/", "permanent": true },
-    { "source": "/Apple%20ZonaTech.dc.html", "destination": "/apple", "permanent": true },
-    { "source": "/Android%20ZonaTech.dc.html", "destination": "/android", "permanent": true },
-    { "source": "/Accesorios%20ZonaTech.dc.html", "destination": "/y-mas", "permanent": true },
-    { "source": "/Smart%20TV%20ZonaTech.dc.html", "destination": "/smart-tv", "permanent": true },
-    { "source": "/Producto%20ZonaTech.dc.html", "destination": "/producto", "permanent": true },
-    { "source": "/Portal%20Clientes%20ZonaTech.dc.html", "destination": "/portal", "permanent": true },
-    { "source": "/Ayuda%20ZonaTech.dc.html", "destination": "/ayuda", "permanent": true },
-    { "source": "/iphone", "destination": "/apple", "permanent": true },
-    { "source": "/celulares", "destination": "/android", "permanent": true },
-    { "source": "/producto-celular", "destination": "/producto-android", "permanent": true }
+    {
+      "source": "/Inicio%20ICLUB.dc.html",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/Apple%20ICLUB.dc.html",
+      "destination": "/apple",
+      "permanent": false
+    },
+    {
+      "source": "/Android%20ICLUB.dc.html",
+      "destination": "/android",
+      "permanent": false
+    },
+    {
+      "source": "/Y%20mas%20ICLUB.dc.html",
+      "destination": "/y-mas",
+      "permanent": false
+    },
+    {
+      "source": "/Accesorios%20ICLUB.dc.html",
+      "destination": "/y-mas",
+      "permanent": true
+    },
+    {
+      "source": "/accesorios",
+      "destination": "/y-mas",
+      "permanent": true
+    },
+    {
+      "source": "/Smart%20TV%20ICLUB.dc.html",
+      "destination": "/smart-tv",
+      "permanent": false
+    },
+    {
+      "source": "/Producto%20Apple.dc.html",
+      "destination": "/producto",
+      "permanent": false
+    },
+    {
+      "source": "/Producto%20Android.dc.html",
+      "destination": "/producto-android",
+      "permanent": false
+    },
+    {
+      "source": "/Producto%20Smart%20TV.dc.html",
+      "destination": "/producto-tv",
+      "permanent": false
+    },
+    {
+      "source": "/Portal%20Clientes%20ICLUB.dc.html",
+      "destination": "/portal",
+      "permanent": false
+    },
+    {
+      "source": "/Finalizar%20Compra.dc.html",
+      "destination": "/comprar",
+      "permanent": false
+    },
+    {
+      "source": "/Ayuda%20ICLUB.dc.html",
+      "destination": "/ayuda",
+      "permanent": false
+    },
+    {
+      "source": "/Hero%20ZonaTech.dc.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/Apple%20ZonaTech.dc.html",
+      "destination": "/apple",
+      "permanent": true
+    },
+    {
+      "source": "/Android%20ZonaTech.dc.html",
+      "destination": "/android",
+      "permanent": true
+    },
+    {
+      "source": "/Accesorios%20ZonaTech.dc.html",
+      "destination": "/y-mas",
+      "permanent": true
+    },
+    {
+      "source": "/Smart%20TV%20ZonaTech.dc.html",
+      "destination": "/smart-tv",
+      "permanent": true
+    },
+    {
+      "source": "/Producto%20ZonaTech.dc.html",
+      "destination": "/producto",
+      "permanent": true
+    },
+    {
+      "source": "/Portal%20Clientes%20ZonaTech.dc.html",
+      "destination": "/portal",
+      "permanent": true
+    },
+    {
+      "source": "/Ayuda%20ZonaTech.dc.html",
+      "destination": "/ayuda",
+      "permanent": true
+    },
+    {
+      "source": "/iphone",
+      "destination": "/apple",
+      "permanent": true
+    },
+    {
+      "source": "/celulares",
+      "destination": "/android",
+      "permanent": true
+    },
+    {
+      "source": "/producto-celular",
+      "destination": "/producto-android",
+      "permanent": true
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    },
+    {
+      "source": "/assets/photos/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
   ]
 }
