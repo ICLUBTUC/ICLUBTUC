@@ -1,3 +1,5 @@
+> **Actualización de referidos:** si tu Supabase ya está configurado, seguí `LEEME-REFERIDOS.md` y ejecutá solo `migraciones/04-referidos.sql`. No repitas la instalación inicial de abajo.
+
 # ICLUB — versión optimizada y protegida
 
 Esta carpeta contiene la web completa. No reemplaces la web actual hasta aplicar las migraciones y configurar el administrador. Los cambios se probaron con datos ficticios; no se modificó tu base real.

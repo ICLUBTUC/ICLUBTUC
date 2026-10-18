@@ -32,6 +32,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="secure-portal.js"></script>
+<script src="client-list.js"></script>
+<script src="catalog-filters.js"></script>
+<script src="finance-reports.js"></script>
+<link rel="stylesheet" href="iclub-ui.css">
 <script>
   window.ZT_SUPA = window.ICLUBData.config;
 </script>
@@ -492,17 +496,24 @@
 
 <!-- ══════════════ PANEL ADMIN ══════════════ -->
 <sc-if value="{{ showAdmin }}" hint-placeholder-val="{{ false }}">
-<section class="np" style="position:relative; z-index:2; max-width:980px; margin:0 auto; padding:6px 24px 100px;">
+<section class="np iclub-admin" style="position:relative; z-index:2; max-width:980px; margin:0 auto; padding:6px 24px 100px;">
 
-  <div style="position:relative; z-index:40; display:flex; align-items:flex-end; justify-content:space-between; gap:16px 20px; flex-wrap:wrap; margin-bottom:24px; animation:ztReveal .8s .05s both;">
+  <aside class="admin-sidebar np">
+    <a class="ui-brand" href="/">ICLUB<span>GESTIÓN</span></a>
+    <div class="ui-workspace"><span class="ui-workspace-mark">i</span><div><strong>Mi negocio</strong><span>Panel de control</span></div><span class="ui-workspace-dot"></span></div>
+    <div class="ui-nav-label">ADMINISTRACIÓN</div>
+    <nav aria-label="Panel principal"><sc-for list="{{ aTabs }}" as="t"><button class="ui-nav-item" onClick="{{ t.pick }}" data-active="{{ t.active }}" aria-current="{{ t.current }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{ t.path }}"></path></svg>{{ t.label }}<span class="ui-nav-arrow" aria-hidden="true">›</span></button></sc-for></nav>
+    <div class="ui-nav-label" style="margin-top:25px">OTRAS SECCIONES</div>
+    <a class="ui-nav-item" href="/referidos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M19 8v6 M16 11h6"></path></svg>Referidos<span class="ui-nav-arrow" aria-hidden="true">↗</span></a>
+    <div class="ui-sidebar-footer"><span class="ui-avatar">L</span><div><strong>Administrador</strong><span>Cuenta de ICLUB</span></div><button onClick="{{ doLogout }}" aria-label="Cerrar sesión" title="Cerrar sesión"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5H4v14h5 M14 8l4 4-4 4 M8 12h10"></path></svg></button></div>
+  </aside>
+
+  <div class="admin-heading" style="position:relative; z-index:40; display:flex; align-items:flex-end; justify-content:space-between; gap:16px 20px; flex-wrap:wrap; margin-bottom:24px; animation:ztReveal .8s .05s both;">
     <div style="display:flex; flex-direction:column; gap:12px;">
-      <div style="font-size:12.5px; font-weight:600; letter-spacing:.2em; color:#0A84FF;">PANEL ADMINISTRATIVO</div>
-      <div style="display:inline-flex; flex-wrap:wrap; background:#EAE8E3; border-radius:22px; padding:4px; align-self:flex-start; gap:2px;">
-        <sc-for list="{{ aTabs }}" as="t" hint-placeholder-count="6">
-          <button onClick="{{ t.pick }}" style="font-family:inherit; font-size:14px; font-weight:600; border:none; border-radius:980px; padding:10px 18px; cursor:pointer; background:{{ t.bg }}; color:{{ t.color }}; transition:background .25s, color .25s;">{{ t.label }}</button>
-        </sc-for>
-      </div>
-      <div style="position:relative; max-width:420px;">
+      <div class="admin-breadcrumb">PANEL DE CONTROL <span>/</span> {{ adminPageTitle }}</div>
+      <h1 class="admin-page-title">{{ adminPageTitle }}</h1>
+      <p class="admin-page-subtitle">{{ adminPageSubtitle }}</p>
+      <div class="admin-search" style="position:relative; max-width:420px;">
         <input value="{{ gsQ }}" onChange="{{ gsSet }}" type="text" placeholder="Buscar cliente, factura, recibo o producto…" autocomplete="off" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:14px; font-weight:500; color:#1D1D1F; background:#fff; border:1.5px solid rgba(0,0,0,.08); border-radius:14px; padding:12px 16px; outline:none; transition:border-color .3s;" style-focus="border-color:#1D1D1F;">
         <sc-if value="{{ gsOpen }}" hint-placeholder-val="{{ false }}">
           <div style="position:absolute; top:calc(100% + 8px); left:0; right:0; z-index:30; background:#fff; border-radius:18px; box-shadow:0 24px 70px -24px rgba(0,0,0,.35); overflow:hidden; max-height:360px; overflow-y:auto;">
@@ -537,7 +548,7 @@
     </sc-if>
   </div>
 
-  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; background:#fff; border:1px solid rgba(0,0,0,.06); border-radius:16px; padding:12px 16px; margin-bottom:20px; animation:ztReveal .8s .05s both;">
+  <div class="admin-sync" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; background:#fff; border:1px solid rgba(0,0,0,.06); border-radius:16px; padding:12px 16px; margin-bottom:20px; animation:ztReveal .8s .05s both;">
     <span style="display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:700; letter-spacing:.02em; color:{{ cloudColor }}; background:{{ cloudBg }}; padding:7px 13px; border-radius:980px;">
       <span style="width:8px; height:8px; border-radius:50%; background:{{ cloudColor }};"></span>{{ cloudLabel }}
     </span>
@@ -550,52 +561,62 @@
   <!-- lista -->
   <sc-if value="{{ aList }}" hint-placeholder-val="{{ true }}">
     <sc-if value="{{ cobShow }}" hint-placeholder-val="{{ false }}">
-      <div style="background:#1D1D1F; border-radius:26px; padding:26px 28px; margin-bottom:20px; color:#fff; display:flex; flex-direction:column; gap:18px; box-shadow:0 20px 60px -26px rgba(0,0,0,.4); animation:ztReveal .7s both;">
+      <div class="admin-collections" style="background:#fff; border-radius:26px; padding:18px 22px; margin-bottom:20px; color:#243248; display:flex; flex-direction:column; gap:18px; box-shadow:0 20px 60px -26px rgba(0,0,0,.4); animation:ztReveal .7s both;">
         <div style="display:flex; flex-wrap:wrap; align-items:flex-end; gap:18px;">
           <div style="display:flex; flex-direction:column; gap:5px; margin-right:auto;">
-            <span style="font-size:11.5px; font-weight:700; letter-spacing:.16em; color:rgba(255,255,255,.5);">COBRANZAS</span>
+            <span style="font-size:11.5px; font-weight:700; letter-spacing:.16em; color:rgba(36,50,72,.58);">COBRANZAS</span>
             <span style="font-size:22px; font-weight:700; letter-spacing:-.02em;">{{ cobTitle }}</span>
-            <span style="font-size:13px; color:rgba(255,255,255,.5);">{{ cobSub }}</span>
+            <span style="font-size:13px; color:rgba(36,50,72,.58);">{{ cobSub }}</span>
           </div>
           <div style="display:flex; flex-direction:column; gap:3px; align-items:flex-end;">
-            <span style="font-size:11.5px; font-weight:700; letter-spacing:.12em; color:rgba(255,255,255,.45);">VENCIDO</span>
-            <span style="font-size:22px; font-weight:700; color:#F0A48A;">{{ cobVencidoStr }}</span>
-            <span style="font-size:12px; color:rgba(255,255,255,.45);">{{ cobVencidasN }}</span>
+            <span style="font-size:11.5px; font-weight:700; letter-spacing:.12em; color:rgba(36,50,72,.58);">VENCIDO</span>
+            <span style="font-size:22px; font-weight:700; color:#D34E42;">{{ cobVencidoStr }}</span>
+            <span style="font-size:12px; color:rgba(36,50,72,.58);">{{ cobVencidasN }}</span>
           </div>
           <div style="display:flex; flex-direction:column; gap:3px; align-items:flex-end;">
-            <span style="font-size:11.5px; font-weight:700; letter-spacing:.12em; color:rgba(255,255,255,.45);">POR VENCER</span>
-            <span style="font-size:22px; font-weight:700; color:#8FD6B2;">{{ cobPorVencerStr }}</span>
-            <button onClick="{{ cobRangeToggle }}" style="font-family:inherit; font-size:12px; font-weight:700; color:#fff; background:rgba(255,255,255,.12); border:none; border-radius:980px; padding:6px 14px; cursor:pointer;">{{ cobRangeTxt }}</button>
+            <span style="font-size:11.5px; font-weight:700; letter-spacing:.12em; color:rgba(36,50,72,.58);">POR VENCER</span>
+            <span style="font-size:22px; font-weight:700; color:#16866A;">{{ cobPorVencerStr }}</span>
+            <button onClick="{{ cobRangeToggle }}" style="font-family:inherit; font-size:12px; font-weight:700; color:#243248; background:rgba(40,104,220,.08); border:none; border-radius:980px; padding:6px 14px; cursor:pointer;">{{ cobRangeTxt }}</button>
           </div>
         </div>
+        <button onClick="{{ cobToggle }}" aria-expanded="{{ cobExpanded }}" style="align-self:flex-start;font-family:inherit;font-size:13px;font-weight:650;color:#243248;background:rgba(40,104,220,.08);border:0;border-radius:980px;padding:9px 16px;cursor:pointer;">{{ cobToggleLabel }}</button>
+        <sc-if value="{{ cobExpanded }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex; flex-direction:column; gap:9px;">
           <sc-for list="{{ cobRows }}" as="r" hint-placeholder-count="3">
-            <div style="background:rgba(255,255,255,.06); border:1px solid {{ r.bd }}; border-radius:18px; padding:15px 18px; display:grid; grid-template-columns:1fr auto; gap:14px; align-items:center;">
+            <div style="background:rgba(40,104,220,.03); border:1px solid {{ r.bd }}; border-radius:18px; padding:15px 18px; display:grid; grid-template-columns:1fr auto; gap:14px; align-items:center;">
               <div style="display:flex; flex-direction:column; gap:3px; min-width:0;">
                 <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap;">
                   <span style="font-size:15px; font-weight:700;">{{ r.name }}</span>
                   <span style="font-size:10.5px; font-weight:700; letter-spacing:.06em; color:{{ r.eC }}; background:{{ r.eB }}; padding:4px 10px; border-radius:980px;">{{ r.eL }}</span>
-                  <span style="font-size:15px; font-weight:700; color:#8FD6B2;">{{ r.impStr }}</span>
+                  <span style="font-size:15px; font-weight:700; color:#16866A;">{{ r.impStr }}</span>
                 </div>
-                <span style="font-size:12.5px; color:rgba(255,255,255,.55);">{{ r.sub }}</span>
-                <span style="font-size:12.5px; color:rgba(255,255,255,.4);">{{ r.when }}</span>
+                <span style="font-size:12.5px; color:rgba(36,50,72,.6);">{{ r.sub }}</span>
+                <span style="font-size:12.5px; color:rgba(36,50,72,.5);">{{ r.when }}</span>
                 <sc-if value="{{ r.moraShow }}" hint-placeholder-val="{{ false }}">
-                  <span style="font-size:12.5px; font-weight:600; color:#F0A48A;">{{ r.moraStr }}</span>
+                  <span style="font-size:12.5px; font-weight:600; color:#D34E42;">{{ r.moraStr }}</span>
                 </sc-if>
               </div>
               <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-                <a href="{{ r.waHref }}" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; text-decoration:none; font-family:inherit; font-size:12.5px; font-weight:700; color:#0B2E20; background:#8FD6B2; border-radius:980px; padding:9px 16px;">Recordar</a>
+                <a href="{{ r.waHref }}" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; text-decoration:none; font-family:inherit; font-size:12.5px; font-weight:700; color:#0B2E20; background:#16866A; border-radius:980px; padding:9px 16px;">Recordar</a>
                 <button onClick="{{ r.pay }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#1D1D1F; background:#fff; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Cobrar</button>
-                <button onClick="{{ r.view }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:rgba(255,255,255,.8); background:rgba(255,255,255,.1); border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Ver plan</button>
+                <button onClick="{{ r.view }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:rgba(36,50,72,.85); background:rgba(40,104,220,.08); border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Ver plan</button>
               </div>
             </div>
           </sc-for>
         </div>
+        </sc-if>
       </div>
     </sc-if>
-    <div style="display:flex; flex-direction:column; gap:14px; animation:ztReveal .7s .1s both;">
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin:20px 0;">
+      <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#6E6E73;flex:1;min-width:180px;">Buscar cliente<input value="{{ aClientSearch }}" onChange="{{ aSetClientSearch }}" placeholder="Nombre o celular" style="font:inherit;padding:12px;border:1px solid #ddd;border-radius:12px;background:white;"></label>
+      <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#6E6E73;">Mostrar<select value="{{ aClientFilter }}" onChange="{{ aSetClientFilter }}" style="font:inherit;padding:12px;border:1px solid #ddd;border-radius:12px;background:white;"><option value="debt">Con deuda · activos</option><option value="late">Con pagos atrasados</option><option value="all">Todos los clientes</option><option value="clear">Sin deuda</option><option value="blocked">Bloqueados</option></select></label>
+      <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#6E6E73;">Ordenar por<select value="{{ aClientSort }}" onChange="{{ aSetClientSort }}" style="font:inherit;padding:12px;border:1px solid #ddd;border-radius:12px;background:white;"><option value="late">Mayor atraso primero</option><option value="newest">Últimos agregados</option><option value="balance">Mayor saldo pendiente</option><option value="name">Nombre A–Z</option></select></label>
+      <span style="font-size:12px;color:#86868B;padding:12px;">{{ aClientCount }}</span>
+    </div>
+    <sc-if value="{{ aClientNoResults }}"><p style="padding:20px;background:white;border-radius:14px;color:#6E6E73;">No hay clientes que coincidan con estos filtros. Probá “Todos los clientes”.</p></sc-if>
+    <div class="ui-list-head"><span>CLIENTE / CUENTA</span><span>ACCIONES</span></div><div class="ui-client-list" style="display:flex; flex-direction:column; gap:14px; animation:ztReveal .7s .1s both;">
       <sc-for list="{{ aClients }}" as="c" hint-placeholder-count="2">
-        <div data-adm-row style="background:#fff; border-radius:22px; padding:22px 26px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:grid; grid-template-columns:1fr auto; gap:16px; align-items:center;">
+        <div data-adm-row class="ui-client-row" style="background:#fff; border-radius:22px; padding:22px 26px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:grid; grid-template-columns:1fr auto; gap:16px; align-items:center;">
           <div style="display:flex; flex-direction:column; gap:4px; min-width:0;">
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
               <span style="font-size:16px; font-weight:700;">{{ c.name }}</span>
@@ -607,9 +628,9 @@
             <button onClick="{{ c.view }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#fff; background:#0A84FF; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Ver cuenta</button>
             <button onClick="{{ c.pay }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#fff; background:#1F8A5B; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Registrar pago</button>
             <button onClick="{{ c.buy }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Registrar compra</button>
-            <button onClick="{{ c.edit }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#6E6E73; background:#F5F4F1; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Editar</button>
+            <details class="ui-row-more"><summary aria-label="Más acciones" title="Más acciones">···</summary><div class="ui-row-more-menu">            <button onClick="{{ c.edit }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#6E6E73; background:#F5F4F1; border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Editar</button>
             <button onClick="{{ c.block }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#B0700F; background:rgba(176,112,15,.1); border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">{{ c.blockLabel }}</button>
-            <button onClick="{{ c.del }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#D93025; background:rgba(217,48,37,.1); border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Eliminar</button>
+            <button onClick="{{ c.del }}" style="font-family:inherit; font-size:12.5px; font-weight:600; color:#D93025; background:rgba(217,48,37,.1); border:none; border-radius:980px; padding:9px 16px; cursor:pointer;">Eliminar</button></div></details>
           </div>
         </div>
       </sc-for>
@@ -1151,9 +1172,10 @@
             </sc-for>
           </div>
         </sc-if>
+<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;"><label style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#6E6E73;">Ordenar<select value="{{ catSort }}" onChange="{{ setCatSort }}" style="font:inherit;padding:10px 12px;border:1px solid #ddd;border-radius:12px;background:white;"><option value="default">Orden del catálogo</option><option value="sold">Más vendidos</option><option value="priceLow">Menor precio</option><option value="priceHigh">Mayor precio</option><option value="name">Nombre A–Z</option></select></label><label style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#6E6E73;">Stock<select value="{{ catStock }}" onChange="{{ setCatStock }}" style="font:inherit;padding:10px 12px;border:1px solid #ddd;border-radius:12px;background:white;"><option value="all">Todos</option><option value="stock">En stock</option><option value="out">Sin stock</option></select></label><label style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#6E6E73;">Publicación<select value="{{ catVisibility }}" onChange="{{ setCatVisibility }}" style="font:inherit;padding:10px 12px;border:1px solid #ddd;border-radius:12px;background:white;"><option value="all">Todos</option><option value="visible">Visibles</option><option value="hidden">Ocultos</option></select></label><label style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#6E6E73;">Ventas<select value="{{ catSold }}" onChange="{{ setCatSold }}" style="font:inherit;padding:10px 12px;border:1px solid #ddd;border-radius:12px;background:white;"><option value="all">Todos los equipos</option><option value="yes">Solo con ventas</option></select></label><label style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#6E6E73;">Período de ventas<select value="{{ catPeriod }}" onChange="{{ setCatPeriod }}" style="font:inherit;padding:10px 12px;border:1px solid #ddd;border-radius:12px;background:white;"><option value="all">Todo el historial</option><option value="30">Últimos 30 días</option><option value="90">Últimos 90 días</option></select></label><button onClick="{{ catResetFilters }}" style="font:inherit;padding:10px 12px;border:1px solid #ddd;border-radius:12px;background:white;cursor:pointer;color:#0071e3;">Limpiar filtros</button></div><p style="font-size:12px;color:#86868B;margin:0;">Más vendidos: unidades registradas en Finanzas y asociadas a este equipo. No incluye visitas ni consultas. Si varias variantes comparten nombre y no se identifica la venta, no se asigna automáticamente.</p>
         <div style="background:rgba(176,112,15,.08); border-radius:14px; padding:12px 18px; font-size:13px; color:#B0700F; font-weight:500; line-height:1.5;">Lo que cambies acá (precio, foto, visible, stock) se guarda en la nube y se aplica automáticamente en las páginas de la tienda.</div>
         <sc-for list="{{ catItems }}" as="p" hint-placeholder-count="0">
-          <div data-cat-row style="background:#fff; border-radius:20px; padding:16px 20px; box-shadow:0 12px 38px -22px rgba(0,0,0,.12); display:grid; grid-template-columns:56px 1fr auto; gap:16px; align-items:center;">
+          <div data-cat-row class="ui-catalog-row" style="background:#fff; border-radius:20px; padding:16px 20px; box-shadow:0 12px 38px -22px rgba(0,0,0,.12); display:grid; grid-template-columns:56px 1fr auto; gap:16px; align-items:center;">
             <sc-if value="{{ p.hasPhoto }}" hint-placeholder-val="{{ false }}">
               <span onClick="{{ p.frameEdit }}" title="Ajustar cómo se ve en la página" style="position:relative; width:56px; height:56px; border-radius:14px; overflow:hidden; background:#fff; display:block; cursor:pointer;">
                 {{ p.thumb }}
@@ -1426,8 +1448,14 @@
   <!-- ═══════ FINANZAS ═══════ -->
   <sc-if value="{{ aTabFinanzas }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex; flex-direction:column; gap:22px; animation:ztReveal .7s .05s both;">
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:end;">
+        <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#6E6E73;">Período del reporte<select value="{{ fzPeriod }}" onChange="{{ fzSetPeriod }}" style="font:inherit;background:white;border:1px solid #ddd;border-radius:12px;padding:12px;"><option value="all">Todo el historial</option><option value="today">Hoy</option><option value="week">Esta semana</option><option value="month">Este mes</option><option value="30">Últimos 30 días</option><option value="90">Últimos 90 días</option><option value="year">Este año</option><option value="custom">Elegir fechas</option></select></label>
+        <sc-if value="{{ fzCustom }}"><label style="font-size:12px;color:#6E6E73;">Desde <input type="date" value="{{ fzFrom }}" onChange="{{ fzSetFrom }}" style="padding:12px;border:1px solid #ddd;border-radius:12px;"></label><label style="font-size:12px;color:#6E6E73;">Hasta <input type="date" value="{{ fzTo }}" onChange="{{ fzSetTo }}" style="padding:12px;border:1px solid #ddd;border-radius:12px;"></label></sc-if>
+        <button onClick="{{ fzCsv }}" style="font:inherit;padding:12px 18px;border:1px solid #ddd;background:white;border-radius:12px;cursor:pointer;">Exportar detalle CSV</button>
+      </div><p style="color:#b0700f;font-size:12px;margin:0;">{{ fzError }}</p>
+      <p style="font-size:12px;color:#86868B;margin:0;">Ventas incluye importes financiados todavía no cobrados. Los cobros se muestran aparte: no se suman otra vez a ventas. Por cobrar muestra el saldo actual de todos los clientes.</p>
       <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
-        <span style="font-size:13.5px; color:#6E6E73; margin-right:auto;">Reporte del mes listo para imprimir o mandar al contador.</span>
+        <span style="font-size:13.5px; color:#6E6E73; margin-right:auto;">Reporte: {{ fzLabel }} · listo para imprimir o exportar.</span>
         <button onClick="{{ fzPdf }}" style="font-family:inherit; font-size:14px; font-weight:600; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:12px 24px; cursor:pointer;" style-hover="background:#000;">Descargar reporte PDF</button>
       </div>
       <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px;">
@@ -1441,13 +1469,13 @@
       </div>
       <div style="background:#fff; border-radius:22px; padding:26px 28px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:18px;">
         <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
-          <h3 style="margin:0; font-size:17px; font-weight:700;">Ingresos y gastos · últimos 6 meses</h3>
+          <h3 style="margin:0; font-size:17px; font-weight:700;">Ventas y gastos · {{ fzLabel }}</h3>
           <div style="display:flex; gap:14px; margin-left:auto; font-size:11.5px; font-weight:600; color:#6E6E73;">
-            <span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:10px; height:10px; border-radius:3px; background:#1D1D1F;"></span>Ingresos</span>
+            <span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:10px; height:10px; border-radius:3px; background:#1D1D1F;"></span>Ventas</span>
             <span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:10px; height:10px; border-radius:3px; background:#0A84FF;"></span>Gastos</span>
           </div>
         </div>
-        <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:14px; align-items:end; height:140px;">
+        <div style="display:grid; grid-template-columns:{{ fzChartCols }}; gap:14px; align-items:end; height:160px; overflow-x:auto;">
           <sc-for list="{{ fzChart }}" as="m" hint-placeholder-count="6">
             <div style="display:flex; flex-direction:column; align-items:center; gap:8px; height:100%; justify-content:flex-end;">
               <div style="display:flex; gap:5px; align-items:flex-end; height:100%; width:100%; justify-content:center;">
@@ -2029,7 +2057,7 @@ class Component extends DCLogic {
     user: null, loginPhone: '', loginPass: '', error: false, errorMsg: '',
     view: 'dash', receipt: null, payOpen: false,
     cloud: 'init',
-    atab: 'clientes', invMode: 'list', invFormData: null, invEdit: null, invError: '',
+    atab: 'clientes', clientFilter: 'debt', clientSort: 'late', clientSearch: '', invMode: 'list', invFormData: null, invEdit: null, invError: '',
     search: '', filter: 'todos', calcPago: '', calcCompra: '',
     amode: 'list', editKey: null, form: null, formError: '', adminView: null,
     movAmount: '', movDet: '', movMet: 'Transferencia', movPlan: '', movFin: 'contado', movFreq: 'Mensual', movN: '', movRec: '', movPlanSel: '', movSinInt: false, movPlanSel: '', movSinInt: false,
@@ -2565,7 +2593,7 @@ class Component extends DCLogic {
     const S = (s) => String(s == null ? '' : s).replace(/\u2212/g, '-');
     let y = 130;
     d.setFont('helvetica', 'bold'); d.setFontSize(11); d.setTextColor(29, 29, 31);
-    d.text('Resumen del mes', 40, y); y += 10;
+    d.text('Resumen del período', 40, y); y += 10;
     d.setDrawColor(225, 225, 225); d.line(40, y, 555, y); y += 22;
     data.stats.forEach((s) => {
       d.setFont('helvetica', 'normal'); d.setFontSize(9.5); d.setTextColor(110, 110, 115);
@@ -2593,11 +2621,21 @@ class Component extends DCLogic {
       d.setDrawColor(240, 240, 240); d.line(40, y + 18, 555, y + 18);
       y += 30;
     });
+    if (data.entries) {
+      d.addPage(); y=60;
+      d.setFont('helvetica','bold');d.setFontSize(11);d.setTextColor(29,29,31);d.text('Detalle de movimientos del periodo',40,y);y+=24;
+      data.entries.forEach((e)=>{
+        if(y>750){d.addPage();y=60;}
+        d.setFont('helvetica','bold');d.setFontSize(9);d.setTextColor(29,29,31);d.text(S(e.f+' - '+e.type),40,y);d.text(S(this._ars(e.amount)),555,y,{align:'right'});
+        d.setFont('helvetica','normal');d.setFontSize(8);d.setTextColor(110,110,115);const lines=d.splitTextToSize(S(e.detail),490);d.text(lines,40,y+12);y+=26+Math.max(0,lines.length-1)*10;
+      });
+      if(data.note){if(y>700){d.addPage();y=60;}d.setFontSize(8);d.text(d.splitTextToSize(S(data.note),490),40,y);y+=55;}
+    }
     if (y > 700) { d.addPage(); y = 60; }
     y += 10;
     d.setFillColor(29, 29, 31); d.rect(40, y, 515, 44, 'F');
     d.setFont('helvetica', 'bold'); d.setFontSize(8); d.setTextColor(190, 190, 190);
-    d.text('GANANCIA NETA DEL MES', 54, y + 19);
+    d.text('RESULTADO REGISTRADO DEL PERIODO', 54, y + 19);
     d.setFontSize(15); d.setTextColor(255, 255, 255);
     d.text(S(data.neta), 541, y + 30, { align: 'right' });
     d.save('ICLUB Reporte ' + data.mes.replace(/[^0-9A-Za-z]/g, '-') + '.pdf');
@@ -3351,6 +3389,17 @@ class Component extends DCLogic {
     let adminOut = {};
     if (isAdmin) {
       const keys = Object.keys(db.clients);
+      const lateDays = {};
+      this._cobranzas(db, 0).forEach((r) => { if (r.dias < 0) lateDays[r.key] = Math.max(lateDays[r.key] || 0, -r.dias); });
+      const clientMetrics = keys.map((key) => { const c = db.clients[key]; let daysLate = lateDays[key] || 0;
+        /* Cuentas antiguas sin plan: solo se usa su vencimiento explícito. */
+        if (!daysLate && !(c.movs || []).some((m) => m.finan) && this._saldo(c) > 0 && this._num(c.proxImp) > 0) {
+          const due = this._parseDate(c.proxFecha), today = new Date(); today.setHours(0,0,0,0);
+          if (due && due < today) daysLate = Math.floor((today - due) / 86400000);
+        }
+        return {key: key, name: c.name || '', balance: this._saldo(c), daysLate: daysLate, blocked: !!c.blocked, createdAt: c.createdAt || null};
+      });
+      const visibleClients = window.ICLUBClientList.select(clientMetrics, this.state.clientFilter || 'debt', this.state.clientSort || 'late', this.state.clientSearch || '');
       const amode = this.state.amode;
       const editC = this.state.editKey ? db.clients[this.state.editKey] : null;
       const form = this.state.form || this._blankForm();
@@ -3501,8 +3550,11 @@ class Component extends DCLogic {
           reader.readAsText(file);
           e.target.value = '';
         },
+        adminPageTitle: ({clientes:'Clientes',catalogo:'Catálogo',stock:'Inventario',pedidos:'Pedidos',finanzas:'Finanzas',ajustes:'Ajustes'})[atab] || 'Mi negocio',
+        adminPageSubtitle: ({clientes:'Tus cuentas, saldos y próximos cobros.',catalogo:'Precios, disponibilidad y productos de tu tienda.',stock:'Controlá tus equipos y registrá cada venta.',pedidos:'Consultas y oportunidades para seguir de cerca.',finanzas:'Tus números, con el detalle que necesitás.',ajustes:'Configurá precios, planes y preferencias.'})[atab] || '',
         aTabs: [['clientes', 'Clientes'], ['catalogo', 'Catálogo'], ['stock', 'Inventario'], ['pedidos', 'Pedidos'], ['finanzas', 'Finanzas'], ['ajustes', 'Ajustes']].map(([id, label]) => ({
-          label: label,
+          label: label, active: atab === id, current: atab === id ? 'page' : undefined,
+          path: ({clientes:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M20 21v-2a4 4 0 0 0-3-3.9 M16 3.1a4 4 0 0 1 0 7.8',catalogo:'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',stock:'M3 7l9-4 9 4v10l-9 4-9-4z M3 7l9 4 9-4 M12 11v10',pedidos:'M6 3h12v18H6z M9 7h6 M9 11h6 M9 15h4',finanzas:'M4 20V10 M10 20V4 M16 20v-8 M22 20H2',ajustes:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M12 2v3 M12 19v3 M2 12h3 M19 12h3 M5 5l2 2 M17 17l2 2 M5 19l2-2 M17 7l2-2'})[id],
           pick: () => this.setState({ atab: id, amode: 'list', invMode: 'list', catMode: 'list' }),
           bg: atab === id ? '#1D1D1F' : 'transparent',
           color: atab === id ? '#fff' : '#6E6E73'
@@ -3659,14 +3711,23 @@ class Component extends DCLogic {
           this._save(nextDb);
           this.setState({ invMode: 'list', invEdit: null, invFormData: null, invError: '' });
         },
-        aClients: keys.map((k) => {
+        aClientFilter: this.state.clientFilter || 'debt',
+        aSetClientFilter: (e) => this.setState({clientFilter: e.target.value}),
+        aClientSort: this.state.clientSort || 'late',
+        aSetClientSort: (e) => this.setState({clientSort: e.target.value}),
+        aClientSearch: this.state.clientSearch || '',
+        aSetClientSearch: (e) => this.setState({clientSearch: e.target.value}),
+        aClientCount: visibleClients.length + ' de ' + keys.length + ' clientes',
+        aClientNoResults: visibleClients.length === 0,
+        aClients: visibleClients.map((row) => {
+          const k = row.key;
           const c = db.clients[k];
           const saldo = this._saldo(c);
           const pagadoTot = (c.movs || []).reduce((a, m) => a + (m.imp > 0 ? m.imp : 0), 0);
           return {
             name: c.name, phone: k,
             saldoStr: this._fmt(saldo), limStr: this._fmt(c.lim || 0), pagadoStr: this._fmt(pagadoTot),
-            lastAcc: c.accesos && c.accesos[0] ? 'Último acceso ' + c.accesos[0].fecha : 'Nunca ingresó',
+            lastAcc: (c.accesos && c.accesos[0] ? 'Último acceso ' + c.accesos[0].fecha : 'Nunca ingresó') + (row.daysLate > 0 ? ' · '+row.daysLate+' días de atraso' : '') + (c.createdAt ? ' · Alta '+new Date(c.createdAt).toLocaleDateString('es-AR') : ''),
             stL: c.blocked ? 'BLOQUEADO' : saldo <= 0 ? 'SIN DEUDA' : 'ACTIVO',
             stC: c.blocked ? '#0A84FF' : saldo <= 0 ? '#1F8A5B' : '#B0700F',
             stB: c.blocked ? 'rgba(10,132,255,.12)' : saldo <= 0 ? 'rgba(31,138,91,.1)' : 'rgba(176,112,15,.1)',
@@ -3700,6 +3761,9 @@ class Component extends DCLogic {
         gsOpen: gsRes.open,
         gsEmpty: gsRes.open && gsRes.rows.length === 0,
         gsResults: gsRes.rows,
+        cobExpanded: !!this.state.cobExpanded,
+        cobToggle: () => this.setState({ cobExpanded: !this.state.cobExpanded }),
+        cobToggleLabel: this.state.cobExpanded ? "Ocultar cuotas ↑" : "Ver cuotas ↓",
         cobShow: cobRows.length > 0,
         cobRows: cobRows,
         cobTitle: cobRows.length + (cobRows.length === 1 ? ' cuota por cobrar' : ' cuotas por cobrar'),
@@ -3739,6 +3803,7 @@ class Component extends DCLogic {
           if (this.state.editKey && this.state.editKey !== ph) delete next.clients[this.state.editKey];
           const movs = prev ? prev.movs : (this._num(form.saldoIni) > 0 ? [{ f: this._today(), tipo: 'Saldo anterior', doc: '—', det: 'Saldo inicial de la cuenta', imp: -this._num(form.saldoIni) }] : []);
           next.clients[ph] = Object.assign({}, prev || {}, {
+            createdAt: prev ? (prev.createdAt || null) : new Date().toISOString(),
             name: String(form.name).trim(), pass: String(form.pass || '').trim(), auth_source: this.state.editKey || null,
             cuit: form.cuit, dir: form.dir, mail: form.mail, vend: form.vend, iva: form.iva, desc: form.desc,
             lim: this._num(form.lim),
@@ -4321,6 +4386,10 @@ class Component extends DCLogic {
       const merged = finProductsAll.map((p) => Object.assign({}, p, ov[p.id] || {}))
         .concat(Object.keys(ov).filter((k) => !baseIds[k] && ov[k] && ov[k].custom).map((k) => Object.assign({ id: k }, ov[k])))
         .filter((p) => !p.deleted);
+      const catalogFiltered = window.ICLUBCatalogFilters.select(merged, db.ventas || [], {
+        sort: this.state.catSort || 'default', stock: this.state.catStock || 'all',
+        visibility: this.state.catVisibility || 'all', sold: this.state.catSold || 'all', period: this.state.catPeriod || 'all'
+      });
       const setOv = (id, patch) => {
         const cat = Object.assign({}, db.catalog || {});
         cat[id] = Object.assign({}, cat[id] || {}, patch);
@@ -4346,29 +4415,10 @@ class Component extends DCLogic {
       // finanzas
       const gastos = db.gastos || [];
       const ventasArr2 = db.ventas || [];
-      const monthNames2 = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-      const nowD2 = new Date();
-      const fMonths = [];
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(nowD2.getFullYear(), nowD2.getMonth() - i, 1);
-        fMonths.push({ mm: d.getMonth() + 1, yy: d.getFullYear(), label: monthNames2[d.getMonth()], ing: 0, gan: 0, gas: 0, fin: 0, cc: 0 });
-      }
-      const slotOf = (f) => { const dt = this._parseDate(f); return dt ? fMonths.find((x) => x.mm === dt.getMonth() + 1 && x.yy === dt.getFullYear()) : null; };
-      const cur0 = fMonths[5];
-      ventasArr2.forEach((v) => { const s = slotOf(v.fecha); if (s) { s.ing += v.ventaArs; s.gan += (v.ventaArs - v.costoArs); } });
-      /* Cobros de cuotas: sólo pagos atados a un plan financiado (m.plan).
-         Los pagos sueltos de cuenta corriente se cuentan aparte. */
-      let finCuotas = 0, ccTot = 0;
-      Object.keys(db.clients).forEach((k) => {
-        (db.clients[k].movs || []).forEach((m) => {
-          if (m.tipo !== 'Pago') return;
-          const sl = slotOf(m.f);
-          if (m.plan) { if (sl) { sl.fin += m.imp; finCuotas += (sl === cur0 ? 1 : 0); } }
-          else if (sl) { sl.cc += m.imp; if (sl === cur0) ccTot += m.imp; }
-        });
-      });
-      gastos.forEach((g) => { const s = slotOf(g.f); if (s) s.gas += g.monto; });
-      const cur = fMonths[5];
+      const report = window.ICLUBFinanceReports.build(db, {mode:this.state.fzPeriod || 'all',from:this.state.fzFrom || '',to:this.state.fzTo || ''});
+      const cur = report.totals;
+      const finCuotas = cur.finCount;
+      const fMonths = report.buckets;
       const fMax = Math.max(1, ...fMonths.map((x) => Math.max(x.ing, x.gas)));
       const porCobrar = Object.keys(db.clients).map((k) => ({ k: k, c: db.clients[k], saldo: this._saldo(db.clients[k]) })).filter((x) => x.saldo > 0);
       const totCobrar = porCobrar.reduce((a, x) => a + x.saldo, 0);
@@ -4413,7 +4463,13 @@ class Component extends DCLogic {
             pick: () => this.setState({ catFMod: k })
           };
         }),
-        catItems: merged.filter((p) => !catQ || (String(p.name) + ' ' + String(p.spec || '') + ' ' + String(p.cat || '')).toLowerCase().includes(catQ))
+        catSort: this.state.catSort || 'default', setCatSort: (e) => this.setState({catSort:e.target.value}),
+        catStock: this.state.catStock || 'all', setCatStock: (e) => this.setState({catStock:e.target.value}),
+        catVisibility: this.state.catVisibility || 'all', setCatVisibility: (e) => this.setState({catVisibility:e.target.value}),
+        catSold: this.state.catSold || 'all', setCatSold: (e) => this.setState({catSold:e.target.value}),
+        catPeriod: this.state.catPeriod || 'all', setCatPeriod: (e) => this.setState({catPeriod:e.target.value}),
+        catResetFilters: () => this.setState({catSort:'default',catStock:'all',catVisibility:'all',catSold:'all',catPeriod:'all',catQ:'',catFCat:'todos',catFMod:'todos'}),
+        catItems: catalogFiltered.filter((p) => !catQ || (String(p.name) + ' ' + String(p.spec || '') + ' ' + String(p.cat || '')).toLowerCase().includes(catQ))
           .filter((p) => {
             const fc = this.state.catFCat || 'todos';
             if (fc !== 'todos' && (p.cat || 'Celulares') !== fc) return false;
@@ -4426,7 +4482,7 @@ class Component extends DCLogic {
             return !!m && ('i' + m[1]) === fm;
           }).map((p) => ({
           name: p.name, spec: (p.cat || '') + (p.spec ? ' · ' + p.spec : '') + (p.bat ? ' · Batería ' + p.bat + '%' : ''),
-          priceStr: this._usd(p.usd || 0) + ' · ' + this._ars((p.usd || 0) * rate2),
+          priceStr: this._usd(p.usd || 0) + ' · ' + this._ars((p.usd || 0) * rate2) + ' · '+p.soldUnits+' vendidos'+(this.state.catPeriod && this.state.catPeriod !== 'all' ? ' en '+this.state.catPeriod+' días' : ' registrados'),
           /* Cruce con inventario: si el mismo producto está en stock, avisa si
              el precio de la web quedó desfasado del precio de venta real. */
           ...(() => {
@@ -4746,7 +4802,7 @@ class Component extends DCLogic {
         /* Ranking por producto: qué se vendió más y cuánto dejó de verdad. */
         ...(() => {
           const acc = {};
-          ventasArr2.forEach((v) => {
+          report.sales.forEach((v) => {
             const key = String(v.name || 'Sin nombre');
             if (!acc[key]) acc[key] = { name: key, u: 0, ing: 0, gan: 0 };
             acc[key].u++; acc[key].ing += v.ventaArs; acc[key].gan += (v.ventaArs - v.costoArs);
@@ -4773,8 +4829,9 @@ class Component extends DCLogic {
           };
         })(),
         fzPdf: () => {
+          if(report.error) { window.alert(report.error); return; }
           const acc = {};
-          ventasArr2.filter((v) => slotOf(v.fecha) === cur).forEach((v) => {
+          report.sales.forEach((v) => {
             const k = String(v.name || 'Sin nombre');
             if (!acc[k]) acc[k] = { name: k, u: 0, ing: 0, gan: 0 };
             acc[k].u++; acc[k].ing += v.ventaArs; acc[k].gan += (v.ventaArs - v.costoArs);
@@ -4784,14 +4841,16 @@ class Component extends DCLogic {
             sub: x.u + (x.u === 1 ? ' unidad · ' : ' unidades · ') + this._ars(x.ing) + ' facturado'
           }));
           this._pdfMes({
-            mes: cur.label,
+            mes: report.label,
+            entries: report.events,
+            note: 'Ventas registradas y cobros son medidas diferentes; no deben sumarse. Resultado sin comisiones de referidos no registradas como gasto. Por cobrar: saldo actual.',
             neta: this._ars(cur.gan - cur.gas),
             rank: rank,
             stats: [
-              { label: 'Ingresos por ventas', value: this._ars(cur.ing) },
-              { label: 'Ventas registradas', value: String(ventasArr2.filter((v) => slotOf(v.fecha) === cur).length) },
+              { label: 'Ventas registradas', value: this._ars(cur.ing) },
+              { label: 'Ventas registradas', value: String(report.sales.length) },
               { label: 'Ganancia de ventas', value: this._ars(cur.gan) },
-              { label: 'Gastos del mes', value: this._ars(cur.gas) },
+              { label: 'Gastos del período', value: this._ars(cur.gas) },
               { label: 'Cobros de cuotas', value: this._ars(cur.fin) },
               { label: 'Pagos de cuenta corriente', value: this._ars(cur.cc) },
               { label: 'Por cobrar (total)', value: this._ars(totCobrar) }
@@ -4799,10 +4858,23 @@ class Component extends DCLogic {
           });
         },
         // finanzas
+        fzPeriod: this.state.fzPeriod || 'all',
+        fzSetPeriod: (e) => this.setState({fzPeriod:e.target.value}),
+        fzFrom: this.state.fzFrom || '', fzSetFrom:(e)=>this.setState({fzFrom:e.target.value}),
+        fzTo: this.state.fzTo || '', fzSetTo:(e)=>this.setState({fzTo:e.target.value}),
+        fzCustom: this.state.fzPeriod === 'custom',
+        fzLabel: report.label,
+        fzError: report.error || (report.undated ? report.undated+' movimientos sin fecha válida: incluidos en el historial completo, sin posición en el gráfico.' : ''),
+        fzChartCols: 'repeat('+Math.max(1,report.buckets.length)+', minmax(70px,1fr))',
+        fzCsv: () => {
+          if (report.error) { window.alert(report.error); return; }
+          const blob = new Blob([window.ICLUBFinanceReports.csv(report)],{type:'text/csv;charset=utf-8;'});
+          const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='ICLUB-reporte.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);
+        },
         fzCards: [
-          { label: 'INGRESOS · ' + cur.label.toUpperCase(), value: this._ars(cur.ing), sub: ventasArr2.filter((v) => slotOf(v.fecha) === cur).length + ' ventas este mes', bg: '#1D1D1F', lc: 'rgba(255,255,255,.55)', vc: '#fff', sc: 'rgba(255,255,255,.5)' },
-          { label: 'GASTOS · ' + cur.label.toUpperCase(), value: this._ars(cur.gas), sub: gastos.filter((g) => slotOf(g.f) === cur).length + ' gastos registrados', bg: '#fff', lc: '#86868B', vc: '#0A84FF', sc: '#A1A1A6' },
-          { label: 'GANANCIA NETA · ' + cur.label.toUpperCase(), value: this._ars(cur.gan - cur.gas), sub: 'ganancia de ventas menos gastos', bg: 'rgba(31,138,91,.08)', lc: '#1F8A5B', vc: '#1F8A5B', sc: '#5FA98A' },
+          { label: 'VENTAS · ' + cur.label.toUpperCase(), value: this._ars(cur.ing), sub: report.sales.length + ' ventas en el período', bg: '#1D1D1F', lc: 'rgba(255,255,255,.55)', vc: '#fff', sc: 'rgba(255,255,255,.5)' },
+          { label: 'GASTOS · ' + cur.label.toUpperCase(), value: this._ars(cur.gas), sub: report.expenses.length + ' gastos registrados', bg: '#fff', lc: '#86868B', vc: '#0A84FF', sc: '#A1A1A6' },
+          { label: 'RESULTADO REGISTRADO · ' + cur.label.toUpperCase(), value: this._ars(cur.gan - cur.gas), sub: 'margen de ventas menos gastos registrados', bg: 'rgba(31,138,91,.08)', lc: '#1F8A5B', vc: '#1F8A5B', sc: '#5FA98A' },
           { label: 'COBROS DE CUOTAS · ' + cur.label.toUpperCase(), value: this._ars(cur.fin), sub: finCuotas + (finCuotas === 1 ? ' cuota cobrada · ya contada en la venta' : ' cuotas cobradas · ya contadas en la venta'), bg: '#fff', lc: '#86868B', vc: '#1F8A5B', sc: '#A1A1A6' },
           { label: 'PAGOS DE CUENTA · ' + cur.label.toUpperCase(), value: this._ars(cur.cc), sub: 'pagos sin plan de financiación', bg: '#fff', lc: '#86868B', vc: '#1F8A5B', sc: '#A1A1A6' },
           { label: 'POR COBRAR (TOTAL)', value: this._ars(totCobrar), sub: porCobrar.length + (porCobrar.length === 1 ? ' cliente con saldo' : ' clientes con saldo'), bg: '#fff', lc: '#86868B', vc: '#B0700F', sc: '#A1A1A6' }
@@ -4811,7 +4883,7 @@ class Component extends DCLogic {
           label: m.label,
           hc: Math.max(3, Math.round((m.ing / fMax) * 100)) + '%',
           hp: Math.max(3, Math.round((m.gas / fMax) * 100)) + '%',
-          cTitle: 'Ingresos ' + m.label + ': ' + this._ars(m.ing),
+          cTitle: 'Ventas ' + m.label + ': ' + this._ars(m.ing),
           pTitle: 'Gastos ' + m.label + ': ' + this._ars(m.gas)
         })),
         gConcepto: this.state.gConcepto, setGConcepto: (e) => this.setState({ gConcepto: e.target.value }),
@@ -4824,8 +4896,8 @@ class Component extends DCLogic {
           this._save(Object.assign({}, db, { gastos: gastos.concat([g]) }));
           this.setState({ gConcepto: '', gMonto: '' });
         },
-        gEmpty: gastos.length === 0,
-        gastos: gastos.slice().reverse().map((g) => ({
+        gEmpty: report.expenses.length === 0,
+        gastos: report.expenses.slice().reverse().map((g) => ({
           concepto: g.concepto, sub: g.f + ' · ' + g.cat,
           montoStr: '− ' + this._ars(g.monto),
           del: () => { if (!window.confirm('¿Eliminar este gasto?')) return; this._save(Object.assign({}, db, { gastos: gastos.filter((x) => x.id !== g.id) })); }

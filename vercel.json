@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/referidos",
+      "destination": "/referidos.html"
+    },
+    {
       "source": "/",
       "destination": "/Inicio%20ICLUB.dc.html"
     },
