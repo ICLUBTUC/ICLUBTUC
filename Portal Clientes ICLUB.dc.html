@@ -499,12 +499,13 @@
 <section class="np iclub-admin" style="position:relative; z-index:2; max-width:980px; margin:0 auto; padding:6px 24px 100px;">
 
   <aside class="admin-sidebar np">
+
     <a class="ui-brand" href="/">ICLUB<span>GESTIÓN</span></a>
     <div class="ui-workspace"><span class="ui-workspace-mark">i</span><div><strong>Mi negocio</strong><span>Panel de control</span></div><span class="ui-workspace-dot"></span></div>
     <div class="ui-nav-label">ADMINISTRACIÓN</div>
-    <nav aria-label="Panel principal"><sc-for list="{{ aTabs }}" as="t"><button class="ui-nav-item" onClick="{{ t.pick }}" data-active="{{ t.active }}" aria-current="{{ t.current }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{ t.path }}"></path></svg>{{ t.label }}<span class="ui-nav-arrow" aria-hidden="true">›</span></button></sc-for></nav>
+    <nav aria-label="Panel principal"><a class="ui-nav-item" href="/gestion">Inicio</a><a class="ui-nav-item" href="/gestion#vender">Registrar venta</a><a class="ui-nav-item" href="/gestion#ventas">Registro de ventas</a><sc-for list="{{ aTabs }}" as="t"><button class="ui-nav-item" onClick="{{ t.pick }}" data-active="{{ t.active }}" aria-current="{{ t.current }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{ t.path }}"></path></svg>{{ t.label }}<span class="ui-nav-arrow" aria-hidden="true">›</span></button></sc-for></nav>
     <div class="ui-nav-label" style="margin-top:25px">OTRAS SECCIONES</div>
-    <a class="ui-nav-item" href="/referidos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M19 8v6 M16 11h6"></path></svg>Referidos<span class="ui-nav-arrow" aria-hidden="true">↗</span></a>
+    <a class="ui-nav-item" href="/referidos?admin=1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M19 8v6 M16 11h6"></path></svg>Referidos<span class="ui-nav-arrow" aria-hidden="true">↗</span></a>
     <div class="ui-sidebar-footer"><span class="ui-avatar">L</span><div><strong>Administrador</strong><span>Cuenta de ICLUB</span></div><button onClick="{{ doLogout }}" aria-label="Cerrar sesión" title="Cerrar sesión"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5H4v14h5 M14 8l4 4-4 4 M8 12h10"></path></svg></button></div>
   </aside>
 
@@ -1487,9 +1488,9 @@
           </sc-for>
         </div>
       </div>
-      <div style="background:#fff; border-radius:22px; padding:26px 28px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:16px;">
+      <details class="iclub-fold"><summary>Qué te deja plata</summary><div class="iclub-fold-body" style="max-height:480px;overflow:auto;">
         <div style="display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;">
-          <h3 style="margin:0; font-size:17px; font-weight:700;">Qué te deja plata</h3>
+          
           <span style="font-size:12.5px; color:#A1A1A6; margin-left:auto;">{{ rkSub }}</span>
         </div>
         <sc-if value="{{ rkEmpty }}" hint-placeholder-val="{{ true }}">
@@ -1508,9 +1509,9 @@
             <span style="font-size:12.5px; color:#A1A1A6;">{{ r.sub }}</span>
           </div>
         </sc-for>
-      </div>
-      <div style="background:#fff; border-radius:22px; padding:26px 28px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:16px;">
-        <h3 style="margin:0; font-size:17px; font-weight:700;">Registro de gastos</h3>
+      </div></details>
+      <details class="iclub-fold"><summary>Registro de gastos</summary><div class="iclub-fold-body" style="max-height:480px;overflow:auto;">
+        
         <div data-adm-form style="display:grid; grid-template-columns:2fr 1fr 1fr auto; gap:10px; align-items:end;">
           <div style="display:flex; flex-direction:column; gap:6px;">
             <label style="font-size:11px; font-weight:700; letter-spacing:.1em; color:#86868B;">CONCEPTO</label>
@@ -1545,9 +1546,9 @@
             <button onClick="{{ g.del }}" style="font-family:inherit; font-size:12px; font-weight:600; color:#D93025; background:rgba(217,48,37,.1); border:none; border-radius:980px; padding:7px 13px; cursor:pointer;">✕</button>
           </div>
         </sc-for>
-      </div>
-      <div style="background:#fff; border-radius:22px; padding:26px 28px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:14px;">
-        <h3 style="margin:0; font-size:17px; font-weight:700;">Cuentas por cobrar</h3>
+      </div></details>
+      <details class="iclub-fold"><summary>Cuentas por cobrar</summary><div class="iclub-fold-body" style="max-height:480px;overflow:auto;">
+        
         <sc-if value="{{ cobrarEmpty }}" hint-placeholder-val="{{ false }}">
           <div style="font-size:13.5px; color:#A1A1A6;">Ningún cliente tiene saldo pendiente. 🎉</div>
         </sc-if>
@@ -1571,7 +1572,7 @@
             <span style="font-size:11px; color:#A1A1A6;">{{ cobrarTotSaldo }}</span>
           </div>
         </div>
-      </div>
+      </div></details>
     </div>
   </sc-if>
 
@@ -1596,8 +1597,7 @@
           <span style="font-size:12.5px; color:#A1A1A6; line-height:1.5;">{{ ajRateNote }}</span>
         </div>
       </div>
-      <div style="background:#fff; border-radius:22px; padding:26px 28px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:14px;">
-        <h3 style="margin:0; font-size:17px; font-weight:700;">Crédito personal ICLUB</h3>
+      <details class="iclub-fold"><summary>Crédito personal ICLUB</summary><div class="iclub-fold-body">
         <span style="font-size:13.5px; color:#6E6E73;">Tu financiación, con tu plata. Recargo (%) por cantidad de pagos — se aplica al instante en el cotizador público.</span>
         <sc-for list="{{ ajPlanes }}" as="pl" hint-placeholder-count="5">
           <div style="display:grid; grid-template-columns:90px 110px 1fr; gap:14px; align-items:center; border-top:1px solid rgba(0,0,0,.05); padding-top:12px;">
@@ -1606,9 +1606,8 @@
             <span style="font-size:12.5px; color:#A1A1A6;">{{ pl.hint }}</span>
           </div>
         </sc-for>
-      </div>
-      <div style="background:#fff; border-radius:22px; padding:26px 28px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:14px;">
-        <h3 style="margin:0; font-size:17px; font-weight:700;">Cuotas con tarjeta de crédito</h3>
+      </div></details>
+      <details class="iclub-fold"><summary>Cuotas con tarjeta de crédito</summary><div class="iclub-fold-body">
         <span style="font-size:13.5px; color:#6E6E73;">El recargo que te cobra la tarjeta. Poné cuánto querés cobrar y controlá el cuadro contra lo que te dice Mercado Pago: si coincide, la página cobra bien.</span>
         <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
           <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">QUIERO COBRAR</label>
@@ -1626,9 +1625,8 @@
           </div>
         </sc-for>
         <span style="font-size:12.5px; color:#A1A1A6; line-height:1.5; border-top:1px solid rgba(0,0,0,.05); padding-top:12px;">Poné 0 en un plan para no ofrecerlo. Estas cuotas no generan cuenta corriente: las cobra la tarjeta, no ICLUB. Si Mercado Pago te cambia los valores, ajustá el % de esa fila y todo el sitio se actualiza.</span>
-      </div>
-      <div style="background:#fff; border-radius:22px; padding:26px 28px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:14px;">
-        <h3 style="margin:0; font-size:17px; font-weight:700;">Mora por atraso</h3>
+      </div></details>
+      <details class="iclub-fold"><summary>Mora por atraso</summary><div class="iclub-fold-body">
         <span style="font-size:13.5px; color:#6E6E73;">{{ ajMoraHint }}</span>
         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px;">
           <sc-for list="{{ ajMoraFields }}" as="f" hint-placeholder-count="3">
@@ -1640,9 +1638,8 @@
           </sc-for>
         </div>
         <span style="font-size:12.5px; color:#A1A1A6; line-height:1.5; border-top:1px solid rgba(0,0,0,.05); padding-top:12px;">La mora se calcula sola y se informa en el recordatorio de WhatsApp y en el panel de Cobranzas. El botón "Cobrar" carga solo la cuota — si cobrás la mora, sumala como pago aparte.</span>
-      </div>
-      <div style="background:#fff; border-radius:22px; padding:26px 28px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:16px;">
-        <h3 style="margin:0; font-size:17px; font-weight:700;">Portada (carrusel)</h3>
+      </div></details>
+      <details class="iclub-fold"><summary>Portada (carrusel)</summary><div class="iclub-fold-body">
         <span style="font-size:13.5px; color:#6E6E73;">Título, bajada y destino de cada diapositiva de la página de inicio. Las fotos se cambian arrastrándolas directo sobre el carrusel.</span>
         <sc-for list="{{ ajHero }}" as="h" hint-placeholder-count="3">
           <div style="display:flex; flex-direction:column; gap:10px; border-top:1px solid rgba(0,0,0,.05); padding-top:14px;">
@@ -1658,9 +1655,8 @@
             </div>
           </div>
         </sc-for>
-      </div>
-      <div style="background:#fff; border-radius:22px; padding:26px 28px; box-shadow:0 14px 44px -22px rgba(0,0,0,.12); display:flex; flex-direction:column; gap:12px;">
-        <h3 style="margin:0; font-size:17px; font-weight:700;">Productos más visitados</h3>
+      </div></details>
+      <details class="iclub-fold"><summary>Productos más visitados</summary><div class="iclub-fold-body">
         <sc-if value="{{ statsEmpty }}" hint-placeholder-val="{{ false }}">
           <div style="font-size:13.5px; color:#A1A1A6;">Todavía no hay visitas registradas. Se cuentan cuando alguien abre la ficha de un producto en la tienda.</div>
         </sc-if>
@@ -1671,7 +1667,7 @@
             <span style="margin-left:auto; font-size:12.5px; color:#A1A1A6;">{{ s.views }}</span>
           </div>
         </sc-for>
-      </div>
+      </div></details>
     </div>
   </sc-if>
 
@@ -2057,7 +2053,7 @@ class Component extends DCLogic {
     user: null, loginPhone: '', loginPass: '', error: false, errorMsg: '',
     view: 'dash', receipt: null, payOpen: false,
     cloud: 'init',
-    atab: 'clientes', clientFilter: 'debt', clientSort: 'late', clientSearch: '', invMode: 'list', invFormData: null, invEdit: null, invError: '',
+    atab: new URLSearchParams(location.search).get('tab') || 'clientes', clientFilter: 'debt', clientSort: 'late', clientSearch: '', invMode: 'list', invFormData: null, invEdit: null, invError: '',
     search: '', filter: 'todos', calcPago: '', calcCompra: '',
     amode: 'list', editKey: null, form: null, formError: '', adminView: null,
     movAmount: '', movDet: '', movMet: 'Transferencia', movPlan: '', movFin: 'contado', movFreq: 'Mensual', movN: '', movRec: '', movPlanSel: '', movSinInt: false, movPlanSel: '', movSinInt: false,
@@ -2145,6 +2141,7 @@ class Component extends DCLogic {
         try {
           const state = await this._api().read();
           this.setState({ db: state.data, user: state.user, cloud: 'ok' });
+          if(state.user==='admin'&&!new URLSearchParams(location.search).has('tab')) location.assign('/gestion');
         } catch (e) {
           if (/sesión/i.test(e.message)) this._api().storeToken(null);
           this.setState({ errorMsg: e.message, cloud: 'err' });
@@ -2811,7 +2808,7 @@ class Component extends DCLogic {
     const recUnset = pm.finan.rec == null;
     const recPct = recUnset ? 0 : this._num(pm.finan.rec);
     const contado = recPct > 0 ? base / (1 + recPct / 100) : base;
-    const cuotaImp = Math.round(base / n);
+    const cuotaImp = pm.finan.exact ? Math.round(base / n * 100)/100 : Math.round(base / n);
     const capImp = Math.round(contado / n);
     const vencs = pm.finan.vencs || {};
     const dates = this._schedule(pm.f, n, freq).map((d, i) => vencs[i] || d);
@@ -2831,8 +2828,8 @@ class Component extends DCLogic {
        saca el recargo entero, sin importar la fecha de cada cuota. */
     const esContado = !!pm.finan.contado;
     const cuotaBase = esContado ? capImp : cuotaImp;
-    const cuotas = dates.map((d, i) => ({ n: i + 1, i: i, d: d, dt: this._parseDate(d), req: cuotaBase, paid: 0, pay: null, sinInt: esContado, done: false }));
-    const TOL = 2;
+    const cuotas = dates.map((d, i) => ({ n: i + 1, i: i, d: d, dt: this._parseDate(d), req: pm.finan.exact ? (i===n-1 ? Math.round((base-cuotaBase*(n-1))*100)/100 : cuotaBase) : cuotaBase, paid: 0, pay: null, sinInt: esContado, done: false }));
+    const TOL = pm.finan.exact ? 0.005 : 2;
     let ahorro = esContado ? Math.round(base - contado) : 0, credito = 0;
     pagos.forEach((p) => {
       let rest = p.imp;
@@ -3046,6 +3043,7 @@ class Component extends DCLogic {
     try {
       const res = await this._api().login(phone,this.state.loginPass);
       this.setState({ db: res.data, user: res.user, loginPass: '', error: false, errorMsg: '', view: 'dash', amode: 'list', adminView: null, cloud: 'ok' });
+      if (res.user === 'admin') location.assign('/gestion');
       this._startPolling();
     } catch(e) { this.setState({ error: true, errorMsg: e.message }); }
     finally { this._loginPending = false; }
@@ -3451,10 +3449,10 @@ class Component extends DCLogic {
         };
         Object.keys(db.clients || {}).forEach((k) => {
           const c = db.clients[k];
-          if (hit(c.name) || hit(k)) push('cliente', c.name, 'Tel ' + k + ' · saldo ' + this._fmt(this._saldo(c)), () => this.setState({ atab: 'clientes', amode: 'list', adminView: k, view: 'dash' }));
+          if (hit(c.name) || hit(k)) push('cliente', c.name, 'Tel ' + k + ' · saldo ' + this._fmt(this._saldo(c)), () => this.setState({ atab: new URLSearchParams(location.search).get('tab') || 'clientes', amode: 'list', adminView: k, view: 'dash' }));
           (c.movs || []).forEach((m) => {
             if (!hit(m.doc) && !hit(m.det)) return;
-            push('documento', m.doc, c.name + ' · ' + m.f + ' · ' + this._fmt(Math.abs(m.imp)) + ' · ' + m.tipo, () => this.setState({ atab: 'clientes', amode: 'list', adminView: k, view: 'cuenta' }));
+            push('documento', m.doc, c.name + ' · ' + m.f + ' · ' + this._fmt(Math.abs(m.imp)) + ' · ' + m.tipo, () => this.setState({ atab: new URLSearchParams(location.search).get('tab') || 'clientes', amode: 'list', adminView: k, view: 'cuenta' }));
           });
         });
         this._catalogAll(db).forEach((p) => {
@@ -3566,7 +3564,7 @@ class Component extends DCLogic {
         aShowNewCat: atab === 'catalogo' && (this.state.catMode || 'list') === 'list',
         aTabClientes: atab === 'clientes',
         aTabStock: atab === 'stock',
-        aGoClientes: () => this.setState({ atab: 'clientes', amode: 'list' }),
+        aGoClientes: () => this.setState({ atab: new URLSearchParams(location.search).get('tab') || 'clientes', amode: 'list' }),
         aGoStock: () => this.setState({ atab: 'stock', invMode: 'list' }),
         aTabCliBg: atab === 'clientes' ? '#1D1D1F' : 'transparent',
         aTabCliCol: atab === 'clientes' ? '#fff' : '#6E6E73',
@@ -3703,7 +3701,7 @@ class Component extends DCLogic {
           if (venta <= 0) { this.setState({ invError: 'Ingresá el precio de venta.' }); return; }
           const item = { name: String(f.name).trim(), cat: f.cat || 'Otro', moneda: f.moneda || 'USD', costo: this._numF(f.costo), venta: venta, stock: this._num(f.stock) };
           const arr = (db.inventory || []).slice();
-          if (this.state.invEdit != null) arr[this.state.invEdit] = Object.assign({}, arr[this.state.invEdit], item); else arr.push(item);
+          if (this.state.invEdit != null) arr[this.state.invEdit] = Object.assign({}, arr[this.state.invEdit], item); else arr.push(Object.assign({id:this._uid()},item));
           /* Un precio nuevo acá es un precio nuevo en la web: si el mismo
              equipo está publicado, se actualiza en el mismo guardado. */
           let nextDb = Object.assign({}, db, { inventory: arr });

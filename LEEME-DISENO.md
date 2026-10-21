@@ -1,3 +1,5 @@
+> Esta entrega también agrega el módulo Gestión y requiere la migración 05. Leé LEEME-EMPEZAR-AQUI.md antes de publicar.
+
 # ICLUB · Diseño claro y compacto
 
 Esta versión mejora la presentación de las dos secciones, manteniéndolas separadas.

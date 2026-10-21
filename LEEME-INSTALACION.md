@@ -1,3 +1,7 @@
+# Actualización de gestión
+
+Leé primero **LEEME-EMPEZAR-AQUI.md**. Esta versión necesita la migración 05; la 04 solamente si todavía no instalaste Referidos. No reinicies tu Supabase.
+
 > **Actualización de referidos:** si tu Supabase ya está configurado, seguí `LEEME-REFERIDOS.md` y ejecutá solo `migraciones/04-referidos.sql`. No repitas la instalación inicial de abajo.
 
 # ICLUB — versión optimizada y protegida

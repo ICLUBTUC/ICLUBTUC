@@ -1,3 +1,5 @@
+> Actualización: la guía vigente de caja, porcentajes y ventas vinculadas es LEEME-EMPEZAR-AQUI.md. Para esas funciones aplicá migraciones/05-gestion.sql después de 04.
+
 # ICLUB · Sistema de referidos
 
 Esta entrega conserva la web del ZIP recibido e incorpora /referidos. No se modificó la base real ni se publicó el sitio.
