@@ -1,3 +1,5 @@
+> ENTREGA ACTUAL: leé LEEME-EMPEZAR-AQUI.md. Aplicá solamente ACTUALIZAR-SUPABASE.sql (migración 06). Las instrucciones de migraciones anteriores que siguen son históricas.
+
 # ICLUB · Dos secciones independientes
 
 ## Tu panel principal: /portal

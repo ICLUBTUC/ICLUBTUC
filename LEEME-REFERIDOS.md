@@ -1,3 +1,5 @@
+> ENTREGA ACTUAL: leé LEEME-EMPEZAR-AQUI.md. Aplicá solamente ACTUALIZAR-SUPABASE.sql (migración 06). Las instrucciones de migraciones anteriores que siguen son históricas.
+
 > Actualización: la guía vigente de caja, porcentajes y ventas vinculadas es LEEME-EMPEZAR-AQUI.md. Para esas funciones aplicá migraciones/05-gestion.sql después de 04.
 
 # ICLUB · Sistema de referidos

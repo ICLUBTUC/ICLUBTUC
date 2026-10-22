@@ -1,3 +1,5 @@
+> ENTREGA ACTUAL: leé LEEME-EMPEZAR-AQUI.md. Aplicá solamente ACTUALIZAR-SUPABASE.sql (migración 06). Las instrucciones de migraciones anteriores que siguen son históricas.
+
 # Actualización de gestión
 
 Leé primero **LEEME-EMPEZAR-AQUI.md**. Esta versión necesita la migración 05; la 04 solamente si todavía no instalaste Referidos. No reinicies tu Supabase.

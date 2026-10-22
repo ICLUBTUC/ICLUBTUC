@@ -1,3 +1,5 @@
+> ENTREGA ACTUAL: leé LEEME-EMPEZAR-AQUI.md. Aplicá solamente ACTUALIZAR-SUPABASE.sql (migración 06). Las instrucciones de migraciones anteriores que siguen son históricas.
+
 > Esta entrega también agrega el módulo Gestión y requiere la migración 05. Leé LEEME-EMPEZAR-AQUI.md antes de publicar.
 
 # ICLUB · Diseño claro y compacto
