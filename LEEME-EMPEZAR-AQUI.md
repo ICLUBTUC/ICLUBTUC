@@ -2,15 +2,20 @@
 
 ## Actualizar tu instalación actual
 
-Ya aplicaste las migraciones anteriores. Para esta entrega ejecutá SOLAMENTE el archivo **ACTUALIZAR-SUPABASE.sql**, que está en esta misma carpeta. Es la migración 06 completa, también conservada en migraciones/06-mejoras-panel.sql. No hace falta ejecutar ambos archivos.
+Si ya viste **version_instalada = 6** en Supabase, **NO vuelvas a ejecutar SQL**. Este arreglo cambia la página y las pruebas, sin modificar tu base.
 
-1. Conservá tu copia de seguridad.
-2. Abrí ACTUALIZAR-SUPABASE.sql con Bloc de notas. Copiá TODO su contenido en una consulta nueva del Editor SQL de tu proyecto Supabase y ejecutá el código completo, sin dejar un fragmento seleccionado.
-3. Al terminar debe aparecer una fila con **version_instalada = 6** y los nombres de las funciones de lectura y alta de referidores. Si hay error, no sigas ejecutando archivos al azar: conservá el texto del error.
-4. Subí todo el contenido de ICLUBTUC a la raíz de tu repositorio, reemplazando la versión anterior. vercel.json debe quedar en la raíz. Conservá vendor/, document-fonts.js, design-system.css, sale-documents.js y todos los demás archivos.
-5. Esperá a que Vercel publique y recargá con Ctrl + Shift + R. Ingresá como administrador.
+1. Descomprimí el ZIP nuevo.
+2. Subí el contenido de la carpeta ICLUBTUC a la raíz de tu repositorio de GitHub, reemplazando los archivos anteriores. No subas el ZIP como archivo de la página. vercel.json debe quedar en la raíz.
+3. Esperá a que Vercel termine de publicar y recargá con Ctrl + Shift + R.
+4. En Administrar referidos completá nombre, celular con código de área y contraseña de al menos ocho caracteres. El botón muestra Guardando y luego el resultado junto al formulario.
 
-Esta migración conserva clientes, compras, pagos, inventario, comisiones y claves. También restaura las funciones de Referidos/Gestión compatibles para evitar que la reinstalación de una migración anterior deje desactivados los cambios nuevos. No reinicies Supabase ni vuelvas a ejecutar 01/02/04/05 por separado después de 06.
+Solo para una instalación que todavía NO tenga versión 6: ejecutá ACTUALIZAR-SUPABASE.sql completo una vez. No reinstales migraciones anteriores.
+
+## Corrección del guardado de referidores · 24/10/2026
+
+El campo de teléfono tenía name="id". En HTMLFormElement ese nombre puede ocultar la propiedad id del formulario: el manejador no reconocía memberForm y no enviaba la solicitud. Ahora se llama phone y el código identifica los formularios con getAttribute, también al elegir cuenta existente.
+
+La validación muestra mensajes persistentes junto al botón. Incluye nombre, teléfono, mínimo de contraseña, estado Guardando, protección contra doble clic y distinción entre fallo de escritura y fallo de actualización de la lista después de guardar. La contraseña no se conserva en pantalla tras un alta confirmada.
 
 ## Qué se corrigió y agregó
 
@@ -37,10 +42,12 @@ Fuera de la carpeta ICLUBTUC, el ZIP incluye **VISTA-LOCAL.html**. Abrilo en tu 
 
 ## Pruebas realizadas
 
-Pasaron las 13 suites de pruebas: seguridad/sesiones; datos y caché; Referidos; cotizador; clientes; catálogo; reportes; negocio; Gestión SQL; interfaz original; migración 06; flujos nuevos; documentos PDF.
+Pasaron las 14 suites de pruebas: seguridad/sesiones; datos y caché; Referidos; cotizador; clientes; catálogo; reportes; negocio; Gestión SQL; interfaz original; migración 06; flujos nuevos; documentos PDF; integración de Referidos con SQL real local.
 
 Se verificaron transacciones y reversión completa por errores, permisos, aislamiento, claves cifradas, alta de cuentas nuevas y existentes, stock, canje, ventas, caja, comisiones fijas/porcentuales, búsqueda, registro, descargas, acción de imprimir y conservación de formularios cuando falla el servidor. También se generaron y revisaron visualmente comprobantes y un reporte PDF de 35 ventas en varias páginas.
 
 La interfaz se probó con DOM y API simulada. No hubo un navegador real disponible en esta ejecución ni acceso a tu proyecto privado de Supabase; por eso falta comprobar la presentación real en tu navegador y tu despliegue después de instalar. No se crearon cuentas reales, no se ejecutó SQL en tu proyecto ni se publicó nada por vos.
 
 Para repetir las pruebas de código: en tests, npm ci y npm test con Node 22 o superior. node_modules no está incluido en el ZIP.
+
+La nueva suite referral-integration.cjs conecta la interfaz JSDOM a PGlite/PostgreSQL y ejecuta las migraciones de producción. Prueba clics de botones, colisión de nombre id, validación, doble clic, creación, login por formulario, cuenta existente, duplicados, creación de producto, comisión, cotización y copia WhatsApp, venta, cobros parciales/completos, límites de pagos, aislamiento, recarga, deshabilitar/habilitar y error de refresco posterior al guardado. No sustituye una prueba visual en Chrome ni una prueba dentro de tu Supabase publicado.
