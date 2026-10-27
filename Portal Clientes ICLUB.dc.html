@@ -32,10 +32,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="secure-portal.js"></script>
-<script src="client-list.js"></script>
+<script src="collection-plan.js?v=20261027-fix10"></script><script src="collection-view.js?v=20261027-fix10"></script><script src="client-list.js"></script>
 <script src="catalog-filters.js"></script>
 <script src="finance-reports.js"></script>
-<link rel="stylesheet" href="iclub-ui.css"><link rel="stylesheet" href="design-system.css">
+<link rel="stylesheet" href="iclub-ui.css?v=20261027-fix10"><link rel="stylesheet" href="design-system.css?v=20261027-fix10">
 <script>
   window.ZT_SUPA = window.ICLUBData.config;
 </script>
@@ -506,7 +506,7 @@
     <nav aria-label="Panel principal"><a class="ui-nav-item" href="/gestion">Inicio</a><a class="ui-nav-item" href="/gestion#vender">Registrar venta</a><a class="ui-nav-item" href="/gestion#ventas">Registro de ventas</a><sc-for list="{{ aTabs }}" as="t"><button class="ui-nav-item" onClick="{{ t.pick }}" data-active="{{ t.active }}" aria-current="{{ t.current }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{ t.path }}"></path></svg>{{ t.label }}<span class="ui-nav-arrow" aria-hidden="true">›</span></button></sc-for></nav>
     <div class="ui-nav-label" style="margin-top:25px">OTRAS SECCIONES</div>
     <a class="ui-nav-item" href="/referidos?admin=1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M19 8v6 M16 11h6"></path></svg>Referidos<span class="ui-nav-arrow" aria-hidden="true">↗</span></a>
-    <div class="ui-sidebar-footer"><span class="ui-avatar">L</span><div><strong>Administrador</strong><span>Cuenta de ICLUB</span></div><button onClick="{{ doLogout }}" aria-label="Cerrar sesión" title="Cerrar sesión"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5H4v14h5 M14 8l4 4-4 4 M8 12h10"></path></svg></button></div>
+    <a class="ui-nav-item" href="/gestion#respaldo">Respaldo y recuperación<span class="ui-nav-arrow">›</span></a><div class="ui-sidebar-footer"><span class="ui-avatar">L</span><div><strong>Administrador</strong><span>Cuenta de ICLUB</span></div><button onClick="{{ doLogout }}" aria-label="Cerrar sesión" title="Cerrar sesión"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5H4v14h5 M14 8l4 4-4 4 M8 12h10"></path></svg></button></div>
   </aside>
 
   <div class="admin-heading" style="position:relative; z-index:40; display:flex; align-items:flex-end; justify-content:space-between; gap:16px 20px; flex-wrap:wrap; margin-bottom:24px; animation:ztReveal .8s .05s both;">
@@ -554,8 +554,8 @@
       <span style="width:8px; height:8px; border-radius:50%; background:{{ cloudColor }};"></span>{{ cloudLabel }}
     </span>
     <span style="font-size:12.5px; color:#6E6E73; font-weight:500; line-height:1.4; margin-right:auto;">{{ cloudDesc }}</span>
-    <button onClick="{{ aExport }}" style="font-family:inherit; font-size:13px; font-weight:600; color:#1D1D1F; background:#F0EEEA; border:none; border-radius:980px; padding:10px 18px; cursor:pointer; transition:background .25s;" style-hover="background:#E7E4DE;">↓ Exportar copia</button>
-    <label style="font-family:inherit; font-size:13px; font-weight:600; color:#1D1D1F; background:#F0EEEA; border-radius:980px; padding:10px 18px; cursor:pointer; transition:background .25s;" style-hover="background:#E7E4DE;">↑ Importar copia<input type="file" accept="application/json" onChange="{{ aImport }}" style="display:none;"></label>
+    <button onClick="{{ aExport }}" style="font-family:inherit; font-size:13px; font-weight:600; color:#1D1D1F; background:#F0EEEA; border:none; border-radius:980px; padding:10px 18px; cursor:pointer; transition:background .25s;" style-hover="background:#E7E4DE;">↓ Exportar datos del portal</button>
+    <label style="font-family:inherit; font-size:13px; font-weight:600; color:#1D1D1F; background:#F0EEEA; border-radius:980px; padding:10px 18px; cursor:pointer; transition:background .25s;" style-hover="background:#E7E4DE;">↑ Importar copia antigua<input type="file" accept="application/json" onChange="{{ aImport }}" style="display:none;"></label>
   </div>
 
   <sc-if value="{{ aTabClientes }}" hint-placeholder-val="{{ true }}">
@@ -580,7 +580,7 @@
             <button onClick="{{ cobRangeToggle }}" style="font-family:inherit; font-size:12px; font-weight:700; color:#243248; background:rgba(40,104,220,.08); border:none; border-radius:980px; padding:6px 14px; cursor:pointer;">{{ cobRangeTxt }}</button>
           </div>
         </div>
-        <button onClick="{{ cobToggle }}" aria-expanded="{{ cobExpanded }}" style="align-self:flex-start;font-family:inherit;font-size:13px;font-weight:650;color:#243248;background:rgba(40,104,220,.08);border:0;border-radius:980px;padding:9px 16px;cursor:pointer;">{{ cobToggleLabel }}</button>
+        <label class="frequency-filter">Frecuencia de cobro<select value="{{ collectionFrequency }}" onChange="{{ setCollectionFrequency }}"><option value="all">Todos los pendientes</option><option value="weekly">Semanales</option><option value="monthly">Mensuales</option></select></label><button onClick="{{ cobToggle }}" aria-expanded="{{ cobExpanded }}" style="align-self:flex-start;font-family:inherit;font-size:13px;font-weight:650;color:#243248;background:rgba(40,104,220,.08);border:0;border-radius:980px;padding:9px 16px;cursor:pointer;">{{ cobToggleLabel }}</button>
         <sc-if value="{{ cobExpanded }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex; flex-direction:column; gap:9px;">
           <sc-for list="{{ cobRows }}" as="r" hint-placeholder-count="3">
@@ -610,7 +610,7 @@
     </sc-if>
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin:20px 0;">
       <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#6E6E73;flex:1;min-width:180px;">Buscar cliente<input value="{{ aClientSearch }}" onChange="{{ aSetClientSearch }}" placeholder="Nombre o celular" style="font:inherit;padding:12px;border:1px solid #ddd;border-radius:12px;background:white;"></label>
-      <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#6E6E73;">Mostrar<select value="{{ aClientFilter }}" onChange="{{ aSetClientFilter }}" style="font:inherit;padding:12px;border:1px solid #ddd;border-radius:12px;background:white;"><option value="debt">Con deuda · activos</option><option value="late">Con pagos atrasados</option><option value="all">Todos los clientes</option><option value="clear">Sin deuda</option><option value="blocked">Bloqueados</option></select></label>
+      <label class="frequency-filter">Frecuencia del plan<select value="{{ aClientFrequency }}" onChange="{{ aSetClientFrequency }}"><option value="all">Todos</option><option value="weekly">Semanales con saldo</option><option value="monthly">Mensuales con saldo</option></select></label><label style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#6E6E73;">Mostrar<select value="{{ aClientFilter }}" onChange="{{ aSetClientFilter }}" style="font:inherit;padding:12px;border:1px solid #ddd;border-radius:12px;background:white;"><option value="debt">Con deuda · activos</option><option value="late">Con pagos atrasados</option><option value="all">Todos los clientes</option><option value="clear">Sin deuda</option><option value="blocked">Bloqueados</option></select></label>
       <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#6E6E73;">Ordenar por<select value="{{ aClientSort }}" onChange="{{ aSetClientSort }}" style="font:inherit;padding:12px;border:1px solid #ddd;border-radius:12px;background:white;"><option value="late">Mayor atraso primero</option><option value="newest">Últimos agregados</option><option value="balance">Mayor saldo pendiente</option><option value="name">Nombre A–Z</option></select></label>
       <span style="font-size:12px;color:#86868B;padding:12px;">{{ aClientCount }}</span>
     </div>
@@ -729,7 +729,7 @@
       </sc-if>
       <div style="display:flex; flex-direction:column; gap:7px;">
         <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">IMPORTE</label>
-        <input value="{{ aMovAmount }}" onChange="{{ setAMovAmount }}" type="text" inputMode="numeric" placeholder="$ 200.000" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:22px; font-weight:700; color:#1D1D1F; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:14px; padding:14px 18px; outline:none;" style-focus="border-color:#1D1D1F; background:#fff;">
+        <input value="{{ aMovAmount }}" onChange="{{ setAMovAmount }}" type="text" inputMode="decimal" placeholder="$ 200.000,50" style="width:100%; box-sizing:border-box; font-family:inherit; font-size:22px; font-weight:700; color:#1D1D1F; background:#F5F4F1; border:1.5px solid rgba(0,0,0,.06); border-radius:14px; padding:14px 18px; outline:none;" style-focus="border-color:#1D1D1F; background:#fff;">
       </div>
       <div style="display:flex; flex-direction:column; gap:7px;">
         <label style="font-size:11.5px; font-weight:700; letter-spacing:.1em; color:#86868B;">DETALLE</label>
@@ -763,7 +763,7 @@
               <span style="font-size:13.5px; font-weight:700; color:#1D1D1F;">{{ aMovPlanDue }}</span>
               <span style="font-size:12.5px; color:#6E6E73; line-height:1.45;">{{ aMovPlanSub }}</span>
             </div>
-            <button onClick="{{ aMovFillDue }}" style="font-family:inherit; font-size:13px; font-weight:700; color:#1D1D1F; background:#fff; border:1px solid rgba(0,0,0,.1); border-radius:980px; padding:9px 16px; cursor:pointer; white-space:nowrap;">Sólo la cuota</button>
+            <button onClick="{{ aMovFillDue }}" style="font-family:inherit; font-size:13px; font-weight:700; color:#1D1D1F; background:#fff; border:1px solid rgba(0,0,0,.1); border-radius:980px; padding:9px 16px; cursor:pointer; white-space:nowrap;">{{ aMovDueButton }}</button>
             <sc-if value="{{ aMovPayoffShow }}" hint-placeholder-val="{{ false }}">
               <button onClick="{{ aMovFillPayoff }}" style="font-family:inherit; font-size:13px; font-weight:700; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:9px 16px; cursor:pointer; white-space:nowrap;">{{ aMovPayoffBtn }}</button>
             </sc-if>
@@ -1547,7 +1547,7 @@
           </div>
         </sc-for>
       </div></details>
-      <details class="iclub-fold"><summary>Cuentas por cobrar</summary><div class="iclub-fold-body" style="max-height:480px;overflow:auto;">
+      <details class="iclub-fold"><summary>Cuentas por cobrar</summary><label class="frequency-filter">Frecuencia de cobro<select value="{{ collectionFrequency }}" onChange="{{ setCollectionFrequency }}"><option value="all">Todos los pendientes</option><option value="weekly">Semanales</option><option value="monthly">Mensuales</option></select></label><div class="iclub-fold-body" style="max-height:480px;overflow:auto;">
         
         <sc-if value="{{ cobrarEmpty }}" hint-placeholder-val="{{ false }}">
           <div style="font-size:13.5px; color:#A1A1A6;">Ningún cliente tiene saldo pendiente. 🎉</div>
@@ -2053,7 +2053,7 @@ class Component extends DCLogic {
     user: null, loginPhone: '', loginPass: '', error: false, errorMsg: '',
     view: 'dash', receipt: null, payOpen: false,
     cloud: 'init',
-    atab: new URLSearchParams(location.search).get('tab') || 'clientes', clientFilter: 'debt', clientSort: 'late', clientSearch: '', invMode: 'list', invFormData: null, invEdit: null, invError: '',
+    atab: new URLSearchParams(location.search).get('tab') || 'clientes', clientFrequency: 'all', collectionFrequency: 'all', clientFilter: 'debt', clientSort: 'late', clientSearch: '', invMode: 'list', invFormData: null, invEdit: null, invError: '',
     search: '', filter: 'todos', calcPago: '', calcCompra: '',
     amode: 'list', editKey: null, form: null, formError: '', adminView: null,
     movAmount: '', movDet: '', movMet: 'Transferencia', movPlan: '', movFin: 'contado', movFreq: 'Mensual', movN: '', movRec: '', movPlanSel: '', movSinInt: false, movPlanSel: '', movSinInt: false,
@@ -2300,10 +2300,17 @@ class Component extends DCLogic {
   }
 
   _fmt(n) {
-    const neg = n < 0; n = Math.abs(Math.round(n));
-    return (neg ? '-$' : '$') + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return new Intl.NumberFormat('es-AR', { style:'currency', currency:'ARS', minimumFractionDigits:0, maximumFractionDigits:2 }).format(Number(n)||0);
   }
   _num(s) { return parseInt(String(s).replace(/[^0-9]/g, ''), 10) || 0; }
+  _amountNum(value) {
+    if(typeof value==='number') return Number.isFinite(value)?Math.round(value*100)/100:0;
+    let s=String(value||'').trim().replace(/[$\s]/g,'');
+    if(s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
+    else if(/^\d{1,3}(\.\d{3})+$/.test(s)) s=s.replace(/\./g,'');
+    if(!/^\d+(\.\d{1,2})?$/.test(s)) return 0;
+    const n=Number(s);return Number.isFinite(n)?Math.round(n*100)/100:0;
+  }
   _numF(s) { const v = parseFloat(String(s).replace(',', '.').replace(/[^0-9.]/g, '')); return isNaN(v) ? 0 : v; }
   _invStock(idx, delta) {
     const db = this.state.db; const arr = (db.inventory || []).slice(); const it = arr[idx]; if (!it) return;
@@ -2801,70 +2808,7 @@ class Component extends DCLogic {
      cuota, el excedente cubre las siguientes. La cuota siempre vale con el
      recargo del plan; sólo se cobra a valor contado cuando el pago se registró
      como "adelanto sin interés" (mov.sinInt), decisión que se toma al cobrar. */
-  _planCalc(client, pm) {
-    const n = pm.finan.n;
-    const freq = pm.finan.freq || 'Mensual';
-    const base = pm.finan.base != null ? pm.finan.base : -pm.imp;
-    const recUnset = pm.finan.rec == null;
-    const recPct = recUnset ? 0 : this._num(pm.finan.rec);
-    const contado = recPct > 0 ? base / (1 + recPct / 100) : base;
-    const cuotaImp = pm.finan.exact ? Math.round(base / n * 100)/100 : Math.round(base / n);
-    const capImp = Math.round(contado / n);
-    const vencs = pm.finan.vencs || {};
-    const dates = this._schedule(pm.f, n, freq).map((d, i) => vencs[i] || d);
-    /* Si el cliente tiene un solo plan financiado, los pagos sueltos (cargados
-       sin elegir "Aplicar a") también se imputan a ese plan — salvo el adelanto
-       de la propia compra, que ya está descontado del monto financiado. */
-    const planesCount = (client.movs || []).filter((x) => x.finan).length;
-    /* Un adelanto NO paga cuotas: ya está descontado del monto financiado.
-       Se reconoce por la marca, por el grupo de la compra, por el detalle, o
-       porque se cobró el mismo día de la venta (datos viejos sin marca). */
-    const esAdelanto = (x) => !!x.adel || /adelanto/i.test(String(x.det || ''))
-      || (x.grp && x.grp === pm.grp) || x.f === pm.f;
-    const pagos = (client.movs || []).filter((x) => x.tipo === 'Pago' && (
-      x.plan === pm.doc || (planesCount === 1 && !x.plan && !esAdelanto(x))
-    )).slice().sort((a, b) => (this._parseDate(a.f) || 0) - (this._parseDate(b.f) || 0));
-    /* Plan liquidado a contado: el cliente pagó (o paga) en efectivo y se le
-       saca el recargo entero, sin importar la fecha de cada cuota. */
-    const esContado = !!pm.finan.contado;
-    const cuotaBase = esContado ? capImp : cuotaImp;
-    const cuotas = dates.map((d, i) => ({ n: i + 1, i: i, d: d, dt: this._parseDate(d), req: pm.finan.exact ? (i===n-1 ? Math.round((base-cuotaBase*(n-1))*100)/100 : cuotaBase) : cuotaBase, paid: 0, pay: null, sinInt: esContado, done: false }));
-    const TOL = pm.finan.exact ? 0.005 : 2;
-    let ahorro = esContado ? Math.round(base - contado) : 0, credito = 0;
-    pagos.forEach((p) => {
-      let rest = p.imp;
-      const pd = this._parseDate(p.f) || new Date();
-      let primera = true;
-      for (let i = 0; i < cuotas.length && rest > 0; i++) {
-        const q = cuotas[i];
-        if (q.done) continue;
-        /* El adelanto sin interés aplica a las cuotas que este pago adelanta
-           (no a la que ya estaba vencida o en curso). */
-        if (p.sinInt && q.paid === 0 && !primera && q.dt && pd < q.dt) { q.req = capImp; q.sinInt = true; }
-        primera = false;
-        const take = Math.min(q.req - q.paid, rest);
-        q.paid += take; rest -= take;
-        if (q.paid >= q.req - TOL) { q.done = true; q.pay = p; if (q.sinInt && !esContado) ahorro += (cuotaImp - capImp); }
-      }
-      if (rest > 0) credito += rest;
-    });
-    let pendiente = 0, vencidoAhora = 0;
-    const hoy = new Date();
-    cuotas.forEach((q) => {
-      if (q.done) return;
-      const falta = Math.max(0, q.req - q.paid);
-      pendiente += falta;
-      if (q.dt && q.dt < hoy) vencidoAhora += falta;
-    });
-    const pagadas = cuotas.filter((q) => q.done).length;
-    const prox = cuotas.find((q) => !q.done) || null;
-    return {
-      n: n, freq: freq, base: base, contado: Math.round(contado), recPct: recPct, recUnset: recUnset, esContado: esContado,
-      cuotaImp: cuotaImp, capImp: capImp, cuotas: cuotas, ahorro: ahorro, credito: credito,
-      pendiente: pendiente, vencidoAhora: vencidoAhora,
-      pagadas: pagadas, pagadoTotal: pagos.reduce((a, x) => a + x.imp, 0), prox: prox
-    };
-  }
+  _planCalc(client, pm) { return window.ICLUBCollectionPlan._planCalc(client, pm); }
   /* Número en formato wa.me: sin símbolos, con 549 adelante si es argentino. */
   _wa(phone) {
     let d = String(phone || '').replace(/\D/g, '');
@@ -2881,6 +2825,7 @@ class Component extends DCLogic {
     const out = [];
     Object.keys(db.clients || {}).forEach((k) => {
       const c = db.clients[k];
+      if (this._saldo(c) <= 0) return;
       (c.movs || []).filter((m) => m.finan).forEach((pm) => {
         const pc = this._planCalc(c, pm);
         if (!pc || pc.pendiente <= 0) return;
@@ -3397,7 +3342,7 @@ class Component extends DCLogic {
         }
         return {key: key, name: c.name || '', balance: this._saldo(c), daysLate: daysLate, blocked: !!c.blocked, createdAt: c.createdAt || null};
       });
-      const visibleClients = window.ICLUBClientList.select(clientMetrics, this.state.clientFilter || 'debt', this.state.clientSort || 'late', this.state.clientSearch || '');
+      const visibleClients = window.ICLUBClientList.select(clientMetrics, this.state.clientFilter || 'debt', this.state.clientSort || 'late', this.state.clientSearch || '').filter(row=>window.ICLUBCollectionView.clientMatches(db.clients[row.key],this.state.clientFrequency,(c,m)=>this._planCalc(c,m)));
       const amode = this.state.amode;
       const editC = this.state.editKey ? db.clients[this.state.editKey] : null;
       const form = this.state.form || this._blankForm();
@@ -3412,7 +3357,7 @@ class Component extends DCLogic {
       ];
       const dowNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
       const editPlanes = editC ? (editC.movs || []).filter((m) => m.tipo === 'Compra' && m.finan) : [];
-      const movAmountN = this._num(this.state.movAmount);
+      const movAmountN = this._amountNum(this.state.movAmount);
       const movNN = this._num(this.state.movN) || 1;
 
       // ===== inventario y finanzas =====
@@ -3468,7 +3413,7 @@ class Component extends DCLogic {
 
       /* ===== cobranzas: agenda de cuotas a cobrar ===== */
       const cobDias = this.state.cobDias || 7;
-      const cobRaw = this._cobranzas(db, cobDias);
+      const cobRaw = this._cobranzas(db, cobDias).filter(r=>(this.state.collectionFrequency||'all')==='all'||window.ICLUBCollectionView.frequency(r.pm.finan.freq)===this.state.collectionFrequency);
       let cobVencido = 0, cobPorVencer = 0, cobVencidasN = 0;
       cobRaw.forEach((r) => { if (r.dias < 0) { cobVencido += r.falta; cobVencidasN++; } else cobPorVencer += r.falta; });
       let cobMoraTot = 0;
@@ -3508,7 +3453,7 @@ class Component extends DCLogic {
           eB: venc ? 'rgba(217,48,37,.12)' : hoyEs ? 'rgba(176,112,15,.12)' : '#F5F4F1',
           bd: venc ? 'rgba(217,48,37,.28)' : 'rgba(0,0,0,.05)',
           waHref: waN ? 'https://wa.me/' + waN + '?text=' + encodeURIComponent(msg) : 'https://wa.me/?text=' + encodeURIComponent(msg),
-          pay: () => this.setState({ amode: 'pago', editKey: r.key, movAmount: String(r.falta), movDet: '', movMet: 'Transferencia', movPlan: r.pm.doc, movEfec: '', movTransf: '', formError: '' }),
+          pay: () => this.setState({ amode: 'pago', editKey: r.key, movAmount: (Math.round(r.falta*100)/100).toFixed(2), movDet: '', movMet: 'Transferencia', movPlan: r.pm.doc, movEfec: '', movTransf: '', formError: '' }),
           view: () => this.setState({ adminView: r.key, view: 'cuotas' })
         };
       });
@@ -3528,7 +3473,7 @@ class Component extends DCLogic {
             const blob = new Blob([data], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = 'ICLUB copia de seguridad ' + this._today().replace(/\//g, '-') + '.json';
+            a.href = url; a.download = 'ICLUB datos parciales del portal ' + this._today().replace(/\//g, '-') + '.json';
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
             setTimeout(() => URL.revokeObjectURL(url), 1500);
           } catch (e) { window.alert('No se pudo exportar la copia.'); }
@@ -3541,7 +3486,7 @@ class Component extends DCLogic {
             try {
               const db2 = JSON.parse(reader.result);
               if (db2 && db2.clients) {
-                if (window.confirm('¿Restaurar esta copia? Reemplaza los clientes e inventario actuales de este dispositivo.')) this._save(db2);
+                if (window.confirm('¿Importar esta copia antigua del portal? Reemplaza datos comerciales y se guarda en la nube. No incluye los referidos. Para copias nuevas usá Respaldo y recuperación.')) this._save(db2);
               } else window.alert('El archivo no es una copia válida de ICLUB.');
             } catch (err) { window.alert('No se pudo leer el archivo.'); }
           };
@@ -3709,6 +3654,8 @@ class Component extends DCLogic {
           this._save(nextDb);
           this.setState({ invMode: 'list', invEdit: null, invFormData: null, invError: '' });
         },
+        aClientFrequency: this.state.clientFrequency || 'all', aSetClientFrequency: e=>this.setState({clientFrequency:e.target.value}),
+        collectionFrequency: this.state.collectionFrequency || 'all', setCollectionFrequency: e=>this.setState({collectionFrequency:e.target.value}),
         aClientFilter: this.state.clientFilter || 'debt',
         aSetClientFilter: (e) => this.setState({clientFilter: e.target.value}),
         aClientSort: this.state.clientSort || 'late',
@@ -3825,8 +3772,8 @@ class Component extends DCLogic {
         aMovIsComb: this.state.movMet === 'Combinado',
         aMovEfec: this.state.movEfec, setAMovEfec: (e) => this.setState({ movEfec: e.target.value }),
         aMovTransf: this.state.movTransf, setAMovTransf: (e) => this.setState({ movTransf: e.target.value }),
-        aMovCombHint: (() => { const ef = this._num(this.state.movEfec), tr = this._num(this.state.movTransf), tot = this._num(this.state.movAmount); const suma = ef + tr; if (suma === 0) return 'Repartí el importe entre efectivo y transferencia.'; if (suma === tot) return '✓ Suma ' + this._fmt(suma) + ', coincide con el importe.'; return 'Suma ' + this._fmt(suma) + ' · el importe es ' + this._fmt(tot) + ' (diferencia ' + this._fmt(Math.abs(tot - suma)) + ')'; })(),
-        aMovCombColor: (() => { const s = this._num(this.state.movEfec) + this._num(this.state.movTransf); return s > 0 && s === this._num(this.state.movAmount) ? '#1F8A5B' : '#0A84FF'; })(),
+        aMovCombHint: (() => { const ef = this._amountNum(this.state.movEfec), tr = this._amountNum(this.state.movTransf), tot = this._amountNum(this.state.movAmount); const suma = ef + tr; if (suma === 0) return 'Repartí el importe entre efectivo y transferencia.'; if (suma === tot) return '✓ Suma ' + this._fmt(suma) + ', coincide con el importe.'; return 'Suma ' + this._fmt(suma) + ' · el importe es ' + this._fmt(tot) + ' (diferencia ' + this._fmt(Math.abs(tot - suma)) + ')'; })(),
+        aMovCombColor: (() => { const s = this._amountNum(this.state.movEfec) + this._amountNum(this.state.movTransf); return s > 0 && s === this._amountNum(this.state.movAmount) ? '#1F8A5B' : '#0A84FF'; })(),
         aMovPlan: this.state.movPlan, aMovFin: this.state.movFin, aMovFreq: this.state.movFreq, aMovN: this.state.movN,
         aMovFinCuotas: this.state.movFin === 'cuotas',
         aStockOpts: invArr.map((it, idx) => ({ value: 'inv:' + idx, label: 'STOCK · ' + it.name + ' — ' + (it.moneda === 'ARS' ? this._ars(it.venta) : this._usd(it.venta)) + ' · ' + (it.stock || 0) + ' u.' }))
@@ -3845,7 +3792,7 @@ class Component extends DCLogic {
         aMovAdelSi: this.state.movAdel === 'si',
         aMovAdelMonto: this.state.movAdelMonto,
         setAMovAdel: (e) => this.setState({ movAdelMonto: e.target.value }),
-        aMovAdelHint: (() => { const total = this._num(this.state.movAmount); const adel = this._num(this.state.movAdelMonto); const resta = Math.max(0, total - adel); return 'Paga ahora ' + this._fmt(adel) + ' · Queda debiendo ' + this._fmt(resta); })(),
+        aMovAdelHint: (() => { const total = this._amountNum(this.state.movAmount); const adel = this._num(this.state.movAdelMonto); const resta = Math.max(0, total - adel); return 'Paga ahora ' + this._fmt(adel) + ' · Queda debiendo ' + this._fmt(resta); })(),
         aMovCuotaInfo: (() => {
           const adel = this.state.movAdel === 'si' ? this._num(this.state.movAdelMonto) : 0;
           const financiado = Math.max(0, movAmountN - adel);
@@ -3904,6 +3851,7 @@ class Component extends DCLogic {
           if (usd) this.setState({ movAmount: String(Math.round(usd * invRate)) });
         },
         aPlanOpts: editPlanes.map((m) => ({ value: m.doc, label: 'Plan ' + this._planTitle(m).slice(0, 28) + ' (' + m.doc + ')' })),
+        aMovDueButton: (()=>{const p=this._selPlanCalc(db);return p?.prox?'Saldar resto de cuota · '+this._fmt(p.prox.req-p.prox.paid):'Cuota saldada';})(),
         aMovPlanShow: !!this._selPlanCalc(db),
         aMovPlanDue: (() => {
           const p = this._selPlanCalc(db); if (!p) return '';
@@ -3952,11 +3900,11 @@ class Component extends DCLogic {
           : 'El excedente cubre las cuotas siguientes a su valor normal.',
         aMovFillDue: () => {
           const p = this._selPlanCalc(db); if (!p || !p.prox) return;
-          this.setState({ movAmount: String(p.prox.req - p.prox.paid) });
+          this.setState({ movAmount: Math.max(0,Math.round((p.prox.req-p.prox.paid)*100)/100).toFixed(2) });
         },
         aMovFillPayoff: () => {
           const p = this._selPlanCalc(db); if (!p) return;
-          this.setState({ movAmount: String(p.pendiente) });
+          this.setState({ movAmount: p.pendiente.toFixed(2) });
         },
         aMovRec: this.state.movRec,
         setAMovRec: (e) => this.setState({ movRec: e.target.value }),
@@ -3996,7 +3944,7 @@ class Component extends DCLogic {
         },
         setAMovN: (e) => this.setState({ movN: e.target.value }),
         aSaveMov: () => {
-          const amount = this._num(this.state.movAmount);
+          const amount = this._amountNum(this.state.movAmount);
           if (amount <= 0) { this.setState({ formError: 'Ingresá un importe válido.' }); return; }
           const k = this.state.editKey;
           const c = db.clients[k];
@@ -4006,6 +3954,9 @@ class Component extends DCLogic {
           const extraMovs = [];
           let mov;
           if (isPago) {
+            const accountBalance=Math.round(this._saldo(c)*100)/100;
+            if(amount>accountBalance+0.005){this.setState({formError:'El pago supera el saldo actual de '+this._fmt(accountBalance)+'. Revisá el importe.'});return;}
+            if(this.state.movPlan){const selected=(c.movs||[]).find(m=>m.doc===this.state.movPlan&&m.finan);if(!selected){this.setState({formError:'Seleccioná un plan vigente.'});return;}const balance=this._planCalc(c,selected).pendiente;if(amount>balance+0.005){this.setState({formError:'El pago supera el saldo del plan: '+this._fmt(balance)+'.'});return;}}
             const num = 'RC 0002-' + this._pad(db.nextRc || 1);
             next.nextRc = (db.nextRc || 1) + 1;
             let det = this.state.movDet;
@@ -4023,7 +3974,7 @@ class Component extends DCLogic {
             }
             let metLabel = this.state.movMet;
             if (this.state.movMet === 'Combinado') {
-              const ef = this._num(this.state.movEfec), tr = this._num(this.state.movTransf);
+              const ef = this._amountNum(this.state.movEfec), tr = this._amountNum(this.state.movTransf);
               metLabel = 'Combinado (efectivo ' + this._fmt(ef) + ' + transferencia ' + this._fmt(tr) + ')';
             }
             mov = { f: this._today(), tipo: 'Pago', doc: num, det: det || (metLabel + ' registrada por administración'), imp: amount, met: metLabel, plan: plan };
@@ -4418,7 +4369,7 @@ class Component extends DCLogic {
       const finCuotas = cur.finCount;
       const fMonths = report.buckets;
       const fMax = Math.max(1, ...fMonths.map((x) => Math.max(x.ing, x.gas)));
-      const porCobrar = Object.keys(db.clients).map((k) => ({ k: k, c: db.clients[k], saldo: this._saldo(db.clients[k]) })).filter((x) => x.saldo > 0);
+      const porCobrar = Object.keys(db.clients).map((k) => ({ k: k, c: db.clients[k], saldo: this._saldo(db.clients[k]) })).filter((x) => x.saldo > 0 && window.ICLUBCollectionView.clientMatches(x.c,this.state.collectionFrequency,(c,m)=>this._planCalc(c,m)));
       const totCobrar = porCobrar.reduce((a, x) => a + x.saldo, 0);
       // stats
       const stats = db.stats || {};

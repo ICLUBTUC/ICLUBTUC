@@ -1,0 +1,27 @@
+ICLUB · 27/10/2026 · 19 suites locales aprobadas
+Entorno: Node, JSDOM y PostgreSQL local/PGlite. No producción.
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> test
+> node security.cjs && node frontend.cjs && node referrals.cjs && node quote.cjs && node client-list.cjs && node catalog-filters.cjs && node finance-reports.cjs && node business.cjs && node gestion-sql.cjs && node gestion-dom.cjs && node upgrade6.cjs && node workflows6-dom.cjs && node documents.cjs && node referral-integration.cjs && node collection-view.cjs && node backup.cjs && node backup-ui.cjs && node sale-flow.cjs && node small-balances.cjs
+
+OK: migración, permisos anónimos, cuentas aisladas, claves, sesiones, bloqueo, solicitudes y conflictos de guardado.
+OK: caché, consultas compartidas, cambios de catálogo, modo sin conexión, sesiones y versiones del portal.
+OK referidos: permisos, aislamiento, comisión congelada, cobros parciales, entrega, pagos y conflictos.
+OK cotizador: contado, adelanto USD/ARS, semanal/mensual, tarjeta separada, redondeo y validaciones.
+OK clientes: deuda por defecto, atraso, saldo, altas, búsqueda, bloqueados y lista sin mutar.
+OK catálogo: ventas reales, período, variantes ambiguas, stock, visibilidad y precios.
+OK reportes: historial, período, límites inclusivos, fechas inválidas, cobros separados y CSV seguro.
+OK negocio: contado, financiación, canje, cliente nuevo, comisión, fechas, caja y tarjeta pendiente.
+OK gestión SQL: transacción completa, rollback, permisos, cobros sincronizados, caja, gastos, comisión porcentual e instalación repetible.
+OK DOM: inicio, formularios, canje, confirmación, registro y acceso admin/preview de Referidos.
+OK actualización 06: altas reales, conservación de cuentas, claves, rollback, permisos, producto personalizado, stock, comisión y reinstalación segura.
+OK interfaz 06: clientes existentes, producto nuevo/catálogo, comprobante, imprimir/PDF, reporte, errores conservados, alta de referidor y buscador de comisiones.
+OK documentos: comprobante, canje, cuotas, identidad histórica, privacidad y reporte mensual multipágina.
+OK integración Referidos: clic real DOM → PostgreSQL, validación, colisión id, doble clic, alta, login, duplicado, cliente existente, producto/comisión, cotización WhatsApp, venta, cobros, pagos, límites, aislamiento y persistencia.
+OK cobranzas: pagados ocultos, cuotas pendientes, filtro semanal/mensual, calendario y acordeón conservado.
+OK respaldo: export/preview/restore SQL real, roles, firma, rollback, cuentas, claves, habilitaciones, trazabilidad y reinstalación.
+OK interfaz respaldo: validación, comparación, confirmación obligatoria, cancelar, restaurar, recargar y backend ausente.
+OK venta completa DOM → PostgreSQL: bloqueo explicado, conversión ÷4, registro, stock, saldo, comprobante, copiar permitido/denegado/ausente, PDF éxito/error e impresión.
+OK saldos pequeños: resto $416,67, parseo de centavos, acción real del portal, cuota siguiente intacta y liquidación de $0,01 con plan antiguo.

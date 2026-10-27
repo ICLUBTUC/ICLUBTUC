@@ -49,8 +49,8 @@
        saca el recargo entero, sin importar la fecha de cada cuota. */
     const esContado = !!pm.finan.contado;
     const cuotaBase = esContado ? capImp : cuotaImp;
-    const cuotas = dates.map((d, i) => ({ n: i + 1, i: i, d: d, dt: this._parseDate(d), req: pm.finan.exact ? (i===n-1 ? Math.round((base-cuotaBase*(n-1))*100)/100 : cuotaBase) : cuotaBase, paid: 0, pay: null, sinInt: esContado, done: false }));
-    const TOL = pm.finan.exact ? 0.005 : 2;
+    const cuotas = dates.map((d, i) => ({ n: i + 1, i: i, d: d, dt: this._parseDate(d), req: i===n-1 ? Math.round(((esContado?Math.round(contado):base)-cuotaBase*(n-1))*100)/100 : cuotaBase, paid: 0, pay: null, sinInt: esContado, done: false }));
+    const TOL = 0.005;
     let ahorro = esContado ? Math.round(base - contado) : 0, credito = 0;
     pagos.forEach((p) => {
       let rest = p.imp;
@@ -64,7 +64,7 @@
         if (p.sinInt && q.paid === 0 && !primera && q.dt && pd < q.dt) { q.req = capImp; q.sinInt = true; }
         primera = false;
         const take = Math.min(q.req - q.paid, rest);
-        q.paid += take; rest -= take;
+        q.paid = Math.round((q.paid + take)*100)/100; rest = Math.round((rest - take)*100)/100;
         if (q.paid >= q.req - TOL) { q.done = true; q.pay = p; if (q.sinInt && !esContado) ahorro += (cuotaImp - capImp); }
       }
       if (rest > 0) credito += rest;
@@ -82,7 +82,7 @@
     return {
       n: n, freq: freq, base: base, contado: Math.round(contado), recPct: recPct, recUnset: recUnset, esContado: esContado,
       cuotaImp: cuotaImp, capImp: capImp, cuotas: cuotas, ahorro: ahorro, credito: credito,
-      pendiente: pendiente, vencidoAhora: vencidoAhora,
+      pendiente: Math.round(pendiente*100)/100, vencidoAhora: Math.round(vencidoAhora*100)/100,
       pagadas: pagadas, pagadoTotal: pagos.reduce((a, x) => a + x.imp, 0), prox: prox
     };
   }
