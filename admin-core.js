@@ -10,6 +10,8 @@
   A.usd = (v) => 'USD ' + nf.format(M.r2(Number(v) || 0));
   A.money = (v, cur) => (cur === 'USD' ? A.usd(v) : A.ars(v));
   A.num = (v) => { const s = String(v ?? '').trim().replace(/\s|\$/g, ''); if (!s) return 0; if (/^\d{1,3}(\.\d{3})+(,\d{1,2})?$/.test(s)) return Number(s.replace(/\./g, '').replace(',', '.')); if (/,\d{1,2}$/.test(s)) return Number(s.replace(/\./g, '').replace(',', '.')); return Number(s.replace(/,/g, '')); };
+  /* Porcentajes: punto o coma siempre son decimales (27.675% no es 27675%). */
+  A.pct = (v) => { const t = String(v ?? '').trim().replace('%', '').replace(',', '.'); return t === '' ? 0 : Number(t); };
   A.initials = (n) => String(n || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0] || '').join('').toUpperCase() || '?';
   A.first = (n) => String(n || '').trim().split(/\s+/)[0] || '';
   A.uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
@@ -86,7 +88,9 @@
     const body = '<div class="chosen"><div class="avatar">' + A.esc(A.initials(c.name)) + '</div><div class="grow"><div class="strong">' + A.esc(c.name) + '</div><div class="small muted">' + A.esc((pm.prodName || String(pm.det || '').split(' · ')[0]) + ' · ' + doc) + '</div></div><div class="right"><div class="small muted">Saldo</div><div class="strong">' + A.ars(balance) + '</div></div></div>' +
       (q ? '<p class="small">' + (q.paid > 0 ? 'Resto de la cuota ' : 'Cuota ') + q.n + ' de ' + pc.n + ' · ' + (q.dt < M.startOfDay(new Date()) ? '<b class="bad">venció el ' + q.d + '</b>' : 'vence el ' + q.d) + ' · falta <b>' + A.ars(due) + '</b></p>' : '') +
       (resto ? '<div class="note warn">La cuota ' + resto.n + ' tiene un resto de <b>' + A.ars(resto.monto) + '</b>. Si no lo debe, resolvelo sin cobrar:<div class="row-flex" style="margin-top:8px">' + (resto.esUltima ? '' : '<button class="btn-2 btn-sm" data-act="resto-now" data-dest="next">Sumar a la próxima</button><button class="btn-2 btn-sm" data-act="resto-now" data-dest="last">Pasar a la última</button>') + '<button class="btn-2 btn-sm" data-act="resto-now" data-dest="perdon">Perdonar</button></div></div>' : '') +
-      '<form id="payForm" data-phone="' + A.esc(phone) + '" data-doc="' + A.esc(doc) + '" class="grid"><div class="grid g2"><label class="f">Importe recibido<input name="amount" inputmode="decimal" value="' + due + '" required></label><label class="f">Medio<select name="method"><option>Efectivo</option><option>Transferencia</option></select></label></div>' +
+      '<form id="payForm" data-phone="' + A.esc(phone) + '" data-doc="' + A.esc(doc) + '" class="grid"><div class="grid g2"><label class="f">Importe recibido<input name="amount" inputmode="decimal" value="' + due + '" required></label><label class="f">Medio<select name="method"><option>Efectivo</option><option>Transferencia</option><option>Combinado</option></select></label></div>' +
+      '<div id="combBox" class="grid g2" hidden><label class="f">En efectivo<input name="efec" inputmode="decimal"></label><label class="f">Por transferencia<input name="transf" inputmode="decimal"><small id="combHint"></small></label></div>' +
+      '<div id="adelBox" hidden class="note"><b id="adelTitle"></b><div class="options" style="margin-top:8px"><button type="button" class="on" data-sinint="0">Con interés: cada cuota adelantada vale ' + (pc ? A.ars(pc.cuotaImp) : '') + '</button><button type="button" data-sinint="1">Sin interés: se cobran a valor contado ' + (pc ? A.ars(pc.capImp) : '') + '</button></div><input type="hidden" name="sinInt" value="0"><small id="adelHint" class="muted"></small></div>' +
       '<div class="options">' + (q ? '<button type="button" class="btn-sm" data-fill="' + due + '">' + (q.paid > 0 ? 'Resto de cuota' : 'Cuota ' + q.n) + ' · ' + A.ars(due) + '</button>' : '') + '<button type="button" class="btn-sm" data-fill="' + balance + '">Todo · ' + A.ars(balance) + '</button></div>' +
       '<div id="restoBox" hidden><label class="f">Queda un resto en la cuota. ¿Qué hacemos?<select name="resto"><option value="">Dejarlo pendiente en esa cuota</option><option value="next">Sumarlo a la próxima cuota</option><option value="last">Pasarlo a la última cuota</option><option value="perdon">Perdonarlo (nota de crédito)</option></select></label><p id="restoHint" class="small muted"></p></div>' +
       '<p class="small muted">Registrá solo dinero que efectivamente recibiste.</p><button class="btn-good">Registrar pago</button></form>';
@@ -94,6 +98,9 @@
   };
   A.payHint = () => {
     const f = A.$('#payForm'); if (!f) return; const c = A.db.clients[f.dataset.phone], pm = A.planOf(f.dataset.phone, f.dataset.doc); const box = A.$('#restoBox');
+    const comb = f.elements.method.value === 'Combinado'; A.$('#combBox').hidden = !comb;
+    if (comb) { const sum = A.num(f.elements.efec.value) + A.num(f.elements.transf.value), tot = A.num(f.elements.amount.value); A.$('#combHint').textContent = !sum ? 'Repartí el importe entre efectivo y transferencia.' : Math.abs(sum - tot) < 0.005 ? '✓ Coincide con el importe.' : 'Suman ' + A.ars(sum) + ' · diferencia ' + A.ars(Math.abs(tot - sum)); }
+    if (pm && pm.finan) { const pc = P._planCalc(c, pm), q = pc.prox, a = A.num(f.elements.amount.value); const falta = q ? q.req - q.paid : 0; const show = q && a > falta + 2 && pc.recPct > 0 && !pc.esContado; A.$('#adelBox').hidden = !show; if (show) { A.$('#adelTitle').textContent = 'Este pago cubre ' + A.ars(falta) + ' de la cuota ' + q.n + ' y adelanta ' + A.ars(a - falta) + '. ¿Cómo tomás el adelanto?'; A.$('#adelHint').textContent = f.elements.sinInt.value === '1' ? 'Se emite una nota de crédito por el recargo que le perdonás.' : 'El excedente cubre las cuotas siguientes a su valor normal.'; } else f.elements.sinInt.value = '0'; }
     if (!pm || !pm.finan) { box.hidden = true; return; }
     const a = A.num(f.elements.amount.value), r = a > 0 ? P._restoTras(c, pm, a) : null, before = P._restoTras(c, pm, 0);
     const show = r && !(before && before.i === r.i && Math.abs(before.monto - r.monto) < 0.005);
@@ -111,9 +118,12 @@
     let det = 'Pago de ' + doc, label = pm.prodName || String(pm.det || '').split(' · ')[0];
     if (pm.finan) { const before = P._planCalc(c, pm); const after = P._planCalc({ ...c, movs: c.movs.concat([{ f: A.today(), tipo: 'Pago', imp: amount, plan: doc }]) }, pm); const from = before.pagadas + 1, to = after.pagadas; det = (to > from ? 'Cuotas ' + from + ' a ' + to : to === from ? 'Cuota ' + from : 'Pago parcial de la cuota ' + from) + ' de ' + pm.finan.n + ' · ' + label; }
     const rc = 'RC 0002-' + String(next.nextRc || 1).padStart(8, '0'); next.nextRc = (next.nextRc || 1) + 1;
-    c.movs.push({ f: A.today(), tipo: 'Pago', doc: rc, imp: amount, met: f.elements.method.value, plan: doc, det });
+    let met = f.elements.method.value;
+    if (met === 'Combinado') { const ef = A.num(f.elements.efec.value), tr = A.num(f.elements.transf.value); if (Math.abs(ef + tr - amount) > 0.005) throw Error('Efectivo + transferencia deben sumar ' + A.ars(amount) + '.'); met = 'Combinado (efectivo ' + A.ars(ef) + ' + transferencia ' + A.ars(tr) + ')'; }
+    const pay = { f: A.today(), tipo: 'Pago', doc: rc, imp: amount, met, plan: doc, det }; if (f.elements.sinInt && f.elements.sinInt.value === '1') { pay.sinInt = true; pay.det += ' · adelanto sin interés'; }
+    c.movs.push(pay);
     const r = A.applyResto(next, phone, doc, f.elements.resto && f.elements.resto.value); if (r) c.movs[c.movs.length - (f.elements.resto.value === 'perdon' ? 2 : 1)].det += ' · ' + P._restoTexto(f.elements.resto.value, r).toLowerCase();
-    await A.saveDb(next); if (A.refs) await A.reloadRefs();
+    await A.saveDb(A.syncRecNC(next, phone)); if (A.refs) await A.reloadRefs();
     A.paymentReceipt(phone, doc, amount, rc); A.render();
   });
   A.paymentReceipt = (phone, doc, amount, rc) => {
@@ -168,4 +178,30 @@
     if (!c || !pm || !pm.finan) return ''; const pc = P._planCalc(c, pm), t = M.startOfDay(new Date());
     return '<div class="cuotas">' + pc.cuotas.map((q) => { const late = !q.done && q.dt && q.dt < t, cls = q.done ? 'paid' : late ? 'late' : q.paid > 0 ? 'partial' : pc.prox && pc.prox.i === q.i ? 'next' : ''; return '<div class="cuota ' + cls + '"><span class="muted">Cuota ' + q.n + '</span><b>' + A.ars(q.done ? q.req : q.req - q.paid) + '</b>' + A.esc(q.d) + '<br>' + (q.done ? (q.req <= 0.005 && q.desc ? '<span class="disc">Cubierta con comisión</span>' : 'Pagada') : late ? '<span class="bad">Atrasada</span>' + (q.paid > 0 ? '<br>pagó ' + A.ars(q.paid) : '') : q.paid > 0 ? 'Pagó ' + A.ars(q.paid) : 'Pendiente') + (q.desc ? '<br><span class="disc">−' + A.ars(q.desc) + ' comisión</span>' : '') + (q.recibe ? '<br><span class="warn">+' + A.ars(q.recibe) + ' resto</span>' : '') + '</div>'; }).join('') + '</div>';
   };
+  /* Nota de crédito automática por recargo perdonado (adelanto sin interés o plan pasado a contado). Igual que el portal anterior. */
+  A.syncRecNC = (db, key) => {
+    const c = db.clients[key]; if (!c) return db; const limpios = (c.movs || []).filter((m) => !(m.tipo === 'Nota de Crédito' && m.auto === 'rec'));
+    const tmp = { ...c, movs: limpios }; let movs = limpios, nc = db.nextNc || 1;
+    limpios.filter((m) => m.tipo === 'Compra' && m.finan).forEach((pm) => { const dif = Math.round(P._planCalc(tmp, pm).ahorro); if (dif <= 0) return; movs = movs.concat([{ f: A.today(), tipo: 'Nota de Crédito', doc: 'NC 0003-' + String(nc).padStart(6, '0'), imp: dif, det: 'Descuento de recargo por pago adelantado · ' + (pm.prodName || String(pm.det || '').split(' · ')[0]), plan: pm.doc, auto: 'rec' }]); nc++; });
+    db.nextNc = nc; db.clients[key] = { ...c, movs }; return db;
+  };
+  /* Mora configurada en Ajustes: % por día de atraso, con días de gracia y tope. */
+  A.mora = (falta, dias) => { const st = A.db.settings || {}, pct = A.pct(st.mora); if (!(pct > 0) || !(dias > 0)) return 0; const d = Math.max(0, dias - A.num(st.moraGracia ?? 3)); if (!d) return 0; let p = pct * d; const tope = A.pct(st.moraTope ?? 20); if (tope > 0) p = Math.min(p, tope); return Math.round(falta * p / 100); };
+  /* Contrato de financiación en PDF (mismo contenido que el portal anterior). */
+  A.planPdf = (phone, doc) => {
+    try {
+      const { jsPDF } = window.jspdf; const c = A.db.clients[phone], pm = A.planOf(phone, doc), pc = P._planCalc(c, pm), st = A.db.settings || {}; const d = new jsPDF({ unit: 'pt', format: 'a4' }); let y = 60;
+      const S = (x) => String(x == null ? '' : x).replace(/−/g, '-'); const title = (t) => { if (y > 730) { d.addPage(); y = 60; } y += 8; d.setFont('helvetica', 'bold'); d.setFontSize(11); d.setTextColor(29, 29, 31); d.text(S(t), 40, y); y += 10; d.setDrawColor(225); d.line(40, y, 555, y); y += 22; };
+      const line = (l, v, bold) => { if (y > 770) { d.addPage(); y = 60; } d.setFont('helvetica', 'normal'); d.setFontSize(9.5); d.setTextColor(110, 110, 115); d.text(S(l), 40, y); d.setFont('helvetica', bold ? 'bold' : 'normal'); d.setFontSize(bold ? 11 : 10); d.setTextColor(29, 29, 31); d.text(S(v), 555, y, { align: 'right' }); d.setDrawColor(240); d.line(40, y + 8, 555, y + 8); y += 25; };
+      d.setFont('helvetica', 'bold'); d.setFontSize(24); d.text('ICLUB', 40, y); d.setFontSize(10); d.setFont('helvetica', 'normal'); d.setTextColor(110); d.text('CONTRATO DE FINANCIACIÓN · ' + S(doc), 555, y, { align: 'right' }); y += 40;
+      title('Datos de la operación'); line('Comprador', c.name || '—'); line('Teléfono', phone); line('Documento de venta', pm.doc); line('Fecha de la venta', pm.f); line('Producto', pm.prodName || String(pm.det || '').split(' · ')[0]);
+      title('Condiciones de pago'); line('Precio de contado', A.ars(pc.contado)); if (!pc.esContado && pc.recPct > 0) line('Recargo por financiación', pc.recPct + '%'); line('Total financiado', A.ars(pc.esContado ? pc.contado : pc.base), true); line('Cantidad de cuotas', pc.n + ' ' + (pc.freq === 'Semanal' ? 'semanales' : 'mensuales')); line('Importe de cada cuota', A.ars(pc.esContado ? pc.capImp : pc.cuotaImp), true);
+      if (A.pct(st.mora) > 0) line('Recargo por mora', st.mora + '% por día, con ' + (st.moraGracia ?? 3) + ' días de gracia y tope del ' + (st.moraTope ?? 20) + '%');
+      title('Cronograma de vencimientos'); d.setFont('helvetica', 'bold'); d.setFontSize(8); d.setTextColor(140); d.text('CUOTA', 40, y); d.text('VENCIMIENTO', 150, y); d.text('IMPORTE', 340, y, { align: 'right' }); d.text('ESTADO', 555, y, { align: 'right' }); y += 16;
+      pc.cuotas.forEach((q) => { if (y > 760) { d.addPage(); y = 60; } d.setFont('helvetica', 'normal'); d.setFontSize(9.5); d.setTextColor(29, 29, 31); d.text(S(q.n + ' de ' + pc.n), 40, y); d.text(S(q.d), 150, y); d.text(S(A.ars(q.req)), 340, y, { align: 'right' }); d.setTextColor(q.done ? 31 : 161, q.done ? 138 : 161, q.done ? 91 : 166); d.text(q.done ? 'Pagada' : q.paid > 0 ? 'Parcial' : 'Pendiente', 555, y, { align: 'right' }); y += 18; });
+      y += 30; if (y > 700) { d.addPage(); y = 80; } d.setTextColor(110); d.setFontSize(9); d.text('El comprador se compromete a abonar cada cuota en la fecha indicada. Comprobante interno, no válido como factura fiscal.', 40, y, { maxWidth: 515 }); y += 70; d.setDrawColor(150); d.line(60, y, 250, y); d.line(345, y, 535, y); d.text('Firma del comprador', 155, y + 14, { align: 'center' }); d.text('ICLUB', 440, y + 14, { align: 'center' });
+      d.save('ICLUB-contrato-' + String(doc).replace(/[^A-Za-z0-9-]/g, '-') + '.pdf'); A.toast('Contrato descargado.');
+    } catch (e) { A.toast('No se pudo generar el PDF: ' + e.message, true); }
+  };
+
 })();

@@ -2,6 +2,21 @@
 
 Incluye la Etapa 1 (sesión única, logo en pestañas, restos de cuota) y todo el rediseño: panel nuevo, referidos, inversores, finanzas, estadísticas y respaldo.
 
+## Actualización del 30/10 · Inicio con widgets, Ajustes y ficha completa del cliente
+
+Se comparó cada sección con el portal anterior y se recuperaron todas sus herramientas con el diseño nuevo. No requiere SQL nuevo (sigue siendo el 11).
+
+- **Inicio como tablero:** widgets que elegís y ordenás con "Personalizar inicio" (se guarda para todos tus dispositivos): cobros de hoy/semana/mes/atrasado, **calendario de cobros** (tocás un día y ves quién paga, con filtro semanales/mensuales, cobradas en verde y atrasadas en rojo), **tareas**, atrasados, próximos 7 días, ventas del mes, **top referidores**, stock (queda 1 / sin stock), interesados, clientes, inversores, caja, cobros esperados, equipos que más dejan, actividad de referidores, visitas y copia de seguridad.
+- **Ajustes (vuelve, como estaba):** cotización del dólar con el impacto antes de guardar, recargos de la financiación propia por meses (podés agregar planes de 9, 12, 24…), tabla de tarjeta con "Quiero cobrar" para controlar contra Mercado Pago, tarjetas que aceptás y **recargo por mora** (% diario, días de gracia y tope). La portada y fotos de la página siguen en la vista anterior.
+- **Ficha del cliente con secciones:** Resumen · **Pagos** (registrar, editar fecha/importe/medio, anular, recibo por WhatsApp) · **Compras** (cobrar, comprobante, descargar factura, **contrato PDF**, **cambiar fechas de cuotas** —también tocando la cuota—, cambiar fecha de la compra, **deshacer compra** para volver a cargarla, **compra manual / saldo anterior**) · **Comprobantes** (todos, para reenviar) · **Datos** (teléfono, clave, CUIT, IVA, email, dirección, vendedor, límite de crédito, notas, próximo pago acordado, bloqueo).
+- **En cada plan:** recargo del plan, **pasar a precio de contado** (nota de crédito automática por el recargo) y mora calculada en cuotas atrasadas.
+- **Al cobrar:** pago **combinado** (efectivo + transferencia) y **adelanto de cuotas con o sin interés**, como en el portal anterior.
+- **Cotización rápida** (en Inventario y en Registrar venta): contado, financiación propia (mensual y semanal) y tarjeta, lista para WhatsApp.
+- **Finanzas:** exportar movimientos a **CSV** por mes, 90 días, año o fechas elegidas. Clientes: ordenar por atraso, próximo pago, saldo o nombre.
+- Corregido: un porcentaje con tres decimales (ej. 27,675% de tarjeta) ya no se guarda como 27675%.
+
+Pruebas agregadas: `e2e-ficha.cjs` (Chromium + base real): widgets, calendario y tareas; ajustes y página pública con el dólar nuevo; fechas de cuotas, recargo, contado con nota de crédito, contrato PDF, pago combinado y editado, comprobantes, datos, deshacer compra, compra manual, cotización rápida y CSV.
+
 ## Cómo instalarlo (en este orden)
 
 1. **Copia de seguridad antes de tocar nada.** En el panel actual: Respaldo y recuperación → descargar copia. Guardá también un ZIP de la carpeta ICLUBTUC como está hoy.

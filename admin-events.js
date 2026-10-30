@@ -12,12 +12,16 @@
       if (name === 'pos-mode') { pos.mode = v; return rerender(); } if (name === 'pos-freq') { pos.freq = v; pos.firstDue = ''; return rerender(); } if (name === 'pos-trade') { pos.trade = v === 'si'; return rerender(); }
       if (name === 'listKind') { ui.listKind = v; return rerender(); }
       if (name === 'cfgMode') { seg.parentElement.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b === seg)); A.$('#memberCfgForm').elements.mode.value = v; return; }
+      if (name === 'mbType') { seg.parentElement.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b === seg)); A.$('#manualBuyForm').elements.type.value = v; A.mbHint(); return; }
       if (name === 'payWay') { seg.parentElement.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b === seg)); A.$('#refPayForm').elements.way.value = v; A.$('#cuotasWay').hidden = v !== 'cuotas'; return; }
       if (name in ui) { ui[name] = v; return rerender(); }
     }
+    const si = e.target.closest('[data-sinint]'); if (si) { const f = A.$('#payForm'); f.elements.sinInt.value = si.dataset.sinint; si.parentElement.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b === si)); A.payHint(); return; }
     const fill = e.target.closest('[data-fill]'); if (fill) { const f = A.$('#payForm'); f.elements.amount.value = fill.dataset.fill; A.payHint(); return; }
     const b = e.target.closest('[data-act]'); if (!b || b.tagName === 'INPUT') return;
     const d = b.dataset, act = d.act;
+    if (act === 'sell-to') { A.pos.reset(); A.pos.client = d.phone; return; }
+    if (act === 'go-late') { ui.cliFilter = 'atrasado'; return; }
     if (b.tagName === 'A' && !['all-dues'].includes(act)) return;
     e.preventDefault();
     switch (act) {
@@ -89,6 +93,29 @@
       /* Respaldo */
       case 'snap-get': A.snapGet(d.id); break;
       case 'snap-now': A.act(async () => { A.snap = await A.rpc('iclub_snapshot_weekly', { p_force: true }); await A.reloadNet(); rerender(); }, 'Copia guardada.'); break;
+      /* Inicio: tablero */
+      case 'dash-edit': A.dashEdit(); break;
+      case 'dash-move': { const it = b.closest('.item'), sib = Number(d.d) < 0 ? it.previousElementSibling : it.nextElementSibling; if (sib) { if (Number(d.d) < 0) sib.before(it); else sib.after(it); } break; }
+      case 'dash-reset': A.act(async () => { const next = A.clone(A.db); next.panel = { ...(next.panel || {}), widgets: [] }; await A.saveDb(next); A.closeModal(); rerender(); }, 'Inicio restablecido.'); break;
+      case 'cal-day': ui.calDay = d.d; rerender(); break;
+      case 'cal-move': { const [y, m] = ui.calMonth.split('-').map(Number); const dt = new Date(y, m - 1 + Number(d.d), 1); ui.calMonth = M.monthKey(dt); ui.calDay = M.iso(dt.getMonth() === new Date().getMonth() && dt.getFullYear() === new Date().getFullYear() ? new Date() : dt); rerender(); break; }
+      case 'task-del': A.act(async () => { const next = A.clone(A.db); next.panel = { ...(next.panel || {}), tareas: ((next.panel || {}).tareas || []).filter((t) => t.id !== d.id) }; await A.saveDb(next); rerender(); }); break;
+      /* Ficha del cliente */
+      case 'plan-rec': A.planRec(d.phone, d.doc); break;
+      case 'plan-contado': A.planContado(d.phone, d.doc); break;
+      case 'plan-dates': A.planDates(d.phone, d.doc); break;
+      case 'cuota-date': A.planDates(d.phone, d.doc, d.i); break;
+      case 'dates-reset': if (confirm('¿Volver a las fechas automáticas' + (d.only !== '' ? ' para esta cuota y las siguientes' : '') + '?')) A.act(async () => { const next = A.clone(A.db), c = next.clients[d.phone]; c.movs = c.movs.map((m) => { if (m.doc !== d.doc || !m.finan) return m; const v = { ...(m.finan.vencs || {}) }; if (d.only === '') return { ...m, finan: { ...m.finan, vencs: {} } }; for (let k = Number(d.only); k < m.finan.n; k++) delete v[k]; return { ...m, finan: { ...m.finan, vencs: v } }; }); await A.saveDb(next); A.closeModal(); rerender(); }, 'Fechas restablecidas.'); break;
+      case 'plan-pdf': A.planPdf(d.phone, d.doc); break;
+      case 'pay-receipt': A.docSend(d.phone, Number(d.i)); break;
+      case 'pay-edit': A.payEdit(d.phone, Number(d.i)); break;
+      case 'doc-send': A.docSend(d.phone, Number(d.i)); break;
+      case 'undo-buy': A.undoBuy(d.phone, Number(d.i)); break;
+      case 'manual-buy': A.manualBuy(d.phone); A.mbHint(); break;
+      case 'buy-date': { const m = A.db.clients[d.phone].movs[Number(d.i)]; A.modal('Cambiar fecha de la compra ' + (m.doc || ''), '<form id="buyDateForm" data-phone="' + A.esc(d.phone) + '" data-i="' + d.i + '" class="grid"><label class="f">Fecha<input type="date" name="f" value="' + A.esc(String(m.f).split('/').reverse().join('-')) + '"></label><p class="small muted">' + (m.finan && !(m.finan.vencs && Object.keys(m.finan.vencs).length) ? 'Las cuotas sin fecha manual se recalculan desde la nueva fecha.' : 'Las fechas de las cuotas no cambian (usá Cambiar fechas).') + '</p><button class="btn-good">Guardar</button></form>'); break; }
+      /* Otros */
+      case 'quick-quote': A.quickQuote(); A.qqRender(); break;
+      case 'csv': A.csvExport(); break;
       case 'menu': A.$('.side').classList.toggle('open'); break;
       case 'reload': A.act(A.load, 'Datos actualizados.'); break;
       case 'logout': A.act(async () => { await A.api.logout(); location.assign('/portal'); }); break;
@@ -108,6 +135,9 @@
     if (t.closest('#payForm')) { A.payHint(); return; }
     if (t.dataset.li != null) { const it = ui.listDraft.items[Number(t.dataset.li)]; it[t.dataset.f] = t.type === 'checkbox' ? t.checked : t.value; return; }
     if (t.id === 'itemPickQ') { A.$('#itemPick').innerHTML = A.itemPick(t.value); return; }
+    if (t.closest('#qqForm')) { A.qqRender(); return; }
+    if (t.closest('#manualBuyForm')) { A.mbHint(); return; }
+    if (t.closest('#rateForm')) { A.$('#rateImpact').innerHTML = A.rateImpact(t.value); return; }
     const sim = t.closest('.sim-form'); if (sim) { const f = sim.elements; sim.querySelector('.sim-out').innerHTML = A.simOut(f.monto.value, f.rate.value, f.meses.value, f.tna.value); }
   });
   document.addEventListener('change', (e) => {
@@ -118,19 +148,35 @@
     if (t.dataset.actChange === 'cat-price') { const v = A.num(t.value); if (!(v > 0)) { A.toast('Precio inválido.', true); return; } A.catSet(t.dataset.id, { usd: v }); return; }
     if (t.dataset.li != null) { const it = ui.listDraft.items[Number(t.dataset.li)]; it[t.dataset.f] = t.type === 'checkbox' ? t.checked : t.value; return; }
     if (t.closest('#payForm')) A.payHint();
+    if (t.closest('#qqForm')) { if (t.name === 'equipo') { const o = t.selectedOptions[0]; if (o && o.dataset.usd) t.form.elements.usd.value = Math.round(Number(o.dataset.usd) * 100) / 100; } A.qqRender(); }
+    if (t.closest('#manualBuyForm')) A.mbHint();
+    if (t.dataset.actTask === 'toggle') A.act(async () => { const next = A.clone(A.db); const ts = ((next.panel || {}).tareas || []).map((x) => x.id === t.dataset.id ? { ...x, done: t.checked } : x); next.panel = { ...(next.panel || {}), tareas: ts }; await A.saveDb(next); rerender(); });
   });
 
   document.addEventListener('submit', (e) => {
     const f = e.target; if (f.dataset.backupForm) return; e.preventDefault(); const el = f.elements;
     switch (f.id) {
       case 'payForm': A.savePayment(f); break;
+      case 'dashForm': { const order = [...f.querySelectorAll('.item')].map((it) => it.dataset.k).filter((k) => f.querySelector('input[value="' + k + '"]').checked); if (!order.length) { A.toast('Elegí al menos un widget.', true); break; } A.act(async () => { const next = A.clone(A.db); next.panel = { ...(next.panel || {}), widgets: order }; await A.saveDb(next); A.closeModal(); rerender(); }, 'Inicio guardado.'); break; }
+      case 'taskForm': A.act(async () => { const t = el.t.value.trim(); if (!t) return false; const next = A.clone(A.db); next.panel = { ...(next.panel || {}), tareas: ((next.panel || {}).tareas || []).concat([{ id: A.uid(), t: t.slice(0, 200), f: el.f.value || '', done: false, at: new Date().toISOString() }]) }; await A.saveDb(next); rerender(); const n = A.$('#taskForm [name=t]'); if (n) n.focus(); }); break;
+      case 'rateForm': { const r = A.num(el.rate.value); if (!(r >= 100)) { A.toast('Ingresá un valor válido (mayor a 100).', true); break; } if (confirm('¿Cambiar el dólar a ' + A.ars(r) + '? Cambian todos los precios en pesos de la página.')) A.saveSettings({ rate: r }, 'Dólar actualizado a ' + A.ars(r) + '.'); break; }
+      case 'moraForm': A.saveSettings({ mora: el.mora.value.replace(/[^0-9.,]/g, ''), moraGracia: A.num(el.moraGracia.value), moraTope: A.pct(el.moraTope.value) }, 'Mora guardada.'); break;
+      case 'recForm': { const cur = A.settingsFull().recargos, rec = {}; Object.keys(cur).forEach((n) => { const v = el['r' + n] ? el['r' + n].value.trim() : ''; if (v !== '') rec[n] = A.pct(v); }); const nm = Math.round(A.num(el.newM.value)); if (nm >= 2 && nm <= 36 && rec[nm] == null) rec[nm] = 0; if (Object.values(rec).some((v) => !Number.isFinite(v) || v < 0 || v > 1000)) { A.toast('Revisá los porcentajes.', true); break; } A.saveSettings({ recargos: rec }, 'Recargos guardados.'); break; }
+      case 'tjForm': { const tj = {}; for (const inp of f.querySelectorAll('input[name^="t"]')) { if (inp.name === 'tjRef' || inp.name === 'tjMarcas') continue; tj[inp.name.slice(1)] = A.pct(inp.value) || 0; } A.saveSettings({ tarjeta: tj, tjRef: A.num(el.tjRef.value) || 1000000, tjMarcas: el.tjMarcas.value }, 'Tarjeta guardada.'); break; }
+      case 'recPlanForm': { const v = A.pct(el.rec.value); if (!(v >= 0 && v <= 1000)) { A.toast('Recargo inválido.', true); break; } A.closeModal(); A.act(async () => { const next = A.clone(A.db), c = next.clients[f.dataset.phone]; c.movs = c.movs.map((m) => m.doc === f.dataset.doc && m.finan ? { ...m, finan: { ...m.finan, rec: v } } : m); await A.saveDb(A.syncRecNC(next, f.dataset.phone)); rerender(); }, 'Recargo guardado.'); break; }
+      case 'datesForm': A.saveDates(f); break;
+      case 'payEditForm': A.act(async () => { const next = A.clone(A.db), c = next.clients[f.dataset.phone], m = c.movs[Number(f.dataset.i)], imp = A.num(el.imp.value); if (!(imp > 0)) throw Error('Importe inválido.'); if (!el.f.value) throw Error('Elegí la fecha.'); Object.assign(m, { f: el.f.value.split('-').reverse().join('/'), imp, met: el.met.value.trim(), det: el.det.value.trim() }); await A.saveDb(A.syncRecNC(next, f.dataset.phone)); if (A.refs) await A.reloadRefs(); A.closeModal(); rerender(); }, 'Pago actualizado.'); break;
+      case 'buyDateForm': A.act(async () => { const next = A.clone(A.db), c = next.clients[f.dataset.phone], m = c.movs[Number(f.dataset.i)]; if (!el.f.value) throw Error('Elegí la fecha.'); const nf = el.f.value.split('-').reverse().join('/'); const old = m.f; m.f = nf; c.movs.forEach((x) => { if (x.grp && x.grp === m.grp && x.adel && x.f === old) x.f = nf; }); const s = next.ventas.find((v) => v.id === m.grp || (v.invoice && v.invoice === m.doc)); if (s) s.fecha = nf; await A.saveDb(next); A.closeModal(); rerender(); }, 'Fecha actualizada.'); break;
+      case 'manualBuyForm': A.saveManualBuy(f); break;
+      case 'clientFull': A.saveClientFull(f); break;
+      case 'qqForm': break;
       case 'clientForm': A.saveClient(f); break;
       case 'itemForm': A.saveItem(f); break;
       case 'gastoForm': A.act(async () => { const monto = A.num(el.monto.value); if (!(monto > 0) || !el.concepto.value.trim()) throw Error('Completá concepto y monto.'); const next = A.clone(A.db); next.gastos = (next.gastos || []).concat([{ id: A.uid(), f: A.today(), concepto: el.concepto.value.trim(), cat: el.cat.value, monto }]); await A.saveDb(next); rerender(); }, 'Gasto agregado.'); break;
       case 'cashStart': A.act(async () => { if (A.db.cashOpening) throw Error('La caja ya fue inicializada.'); const balances = {}; for (const [w, v] of new FormData(f)) { const n = A.num(v); if (!Number.isFinite(n) || n < 0) throw Error('Saldo inválido.'); balances[w] = n; } await A.saveDb({ ...A.clone(A.db), cashOpening: { at: new Date().toISOString(), balances }, cashEntries: [] }); rerender(); }, 'Caja configurada.'); break;
       case 'cashAdjust': A.act(async () => { const n = A.num(el.amount.value); if (!(n > 0) || !el.reason.value.trim()) throw Error('Completá importe y motivo.'); const next = A.clone(A.db); next.cashEntries = (next.cashEntries || []).concat([{ id: A.uid(), wallet: el.wallet.value, amount: n * (el.kind.value === 'out' ? -1 : 1), reason: el.reason.value.trim(), at: new Date().toISOString() }]); await A.saveDb(next); rerender(); }, 'Movimiento registrado.'); break;
       case 'memberForm': A.act(async () => { await A.rpc('iclub_ref_member_create', { p_revision: A.refs.revision, p_name: el.name.value.trim(), p_phone: el.phone.value.replace(/\D/g, ''), p_password: el.existing.checked ? '' : el.password.value, p_existing: el.existing.checked }); await A.load(); A.closeModal(); A.memberCfg(el.phone.value.replace(/\D/g, '')); }, 'Referidor creado. Ahora configurá su comisión.'); break;
-      case 'memberCfgForm': A.act(async () => { await A.netChange('member_settings', { id: f.dataset.id, mode: el.mode.value, usd: A.num(el.usd.value), percent: A.num(el.percent.value), allowExtra: el.allowExtra.checked }); A.closeModal(); rerender(); }, 'Comisión guardada.'); break;
+      case 'memberCfgForm': A.act(async () => { await A.netChange('member_settings', { id: f.dataset.id, mode: el.mode.value, usd: A.num(el.usd.value), percent: A.pct(el.percent.value), allowExtra: el.allowExtra.checked }); A.closeModal(); rerender(); }, 'Comisión guardada.'); break;
       case 'noteForm': A.act(async () => { await A.rpc('iclub_ref_configure', { p_revision: A.refs.revision, p_action: 'note', p_item: { seller: el.seller.value, note: el.note.value } }); await A.reloadRefs(); A.closeModal(); }, 'Nota guardada.'); break;
       case 'programForm': A.act(async () => { await A.rpc('iclub_ref_configure', { p_revision: A.refs.revision, p_action: 'program', p_item: { title: el.title.value, welcome: el.welcome.value, instructions: el.instructions.value, fields: (A.refs.data.program && A.refs.data.program.fields) || [] } }); await A.reloadRefs(); rerender(); }, 'Textos guardados.'); break;
       case 'refPayForm': {
@@ -139,12 +185,12 @@
         else A.act(async () => { if (!confirm('¿Confirmás que le pagaste ' + A.money(amount, s.commissionCurrency) + ' en efectivo?')) return false; await A.refChange('payout', { id, amount }); const st = await A.api.read(); A.db = A.normalize(st.data); A.closeModal(); rerender(); }, 'Pago registrado como gasto de comisiones.');
         break;
       }
-      case 'assignForm': A.act(async () => { const pct = el.mode.value === 'percent'; await A.rpc('iclub_ref_assign', { p_revision: A.refs.revision, p_item: { id: A.uid(), referrer: el.referrer.value, label: el.label.value, client: el.client.value, total: A.num(el.total.value), currency: el.currency.value, mode: el.mode.value, commission: pct ? 0 : A.num(el.value.value), percent: pct ? A.num(el.value.value) : 0, extras: {} } }); await A.reloadRefs(); A.closeModal(); rerender(); }, 'Venta registrada.'); break;
-      case 'investorForm': A.act(async () => { await A.rpc('iclub_inv_create', { p_revision: A.net.revision, p_name: el.name.value.trim(), p_phone: el.phone.value.replace(/\D/g, ''), p_password: el.existing.checked ? '' : el.password.value, p_existing: el.existing.checked, p_rate: A.num(el.rate.value) }); await A.load(); A.closeModal(); A.investor(el.phone.value.replace(/\D/g, '')); }, 'Inversor creado. Cargá su primer aporte.'); break;
-      case 'invEditForm': A.act(async () => { await A.netChange('investor_update', { id: f.dataset.id, name: el.name.value, rate: A.num(el.rate.value), notes: el.notes.value, active: el.active.checked }); A.investor(f.dataset.id); rerender(); }, 'Datos guardados.'); break;
+      case 'assignForm': A.act(async () => { const pct = el.mode.value === 'percent'; await A.rpc('iclub_ref_assign', { p_revision: A.refs.revision, p_item: { id: A.uid(), referrer: el.referrer.value, label: el.label.value, client: el.client.value, total: A.num(el.total.value), currency: el.currency.value, mode: el.mode.value, commission: pct ? 0 : A.num(el.value.value), percent: pct ? A.pct(el.value.value) : 0, extras: {} } }); await A.reloadRefs(); A.closeModal(); rerender(); }, 'Venta registrada.'); break;
+      case 'investorForm': A.act(async () => { await A.rpc('iclub_inv_create', { p_revision: A.net.revision, p_name: el.name.value.trim(), p_phone: el.phone.value.replace(/\D/g, ''), p_password: el.existing.checked ? '' : el.password.value, p_existing: el.existing.checked, p_rate: A.pct(el.rate.value) }); await A.load(); A.closeModal(); A.investor(el.phone.value.replace(/\D/g, '')); }, 'Inversor creado. Cargá su primer aporte.'); break;
+      case 'invEditForm': A.act(async () => { await A.netChange('investor_update', { id: f.dataset.id, name: el.name.value, rate: A.pct(el.rate.value), notes: el.notes.value, active: el.active.checked }); A.investor(f.dataset.id); rerender(); }, 'Datos guardados.'); break;
       case 'invMoveForm': A.act(async () => { await A.netChange('investor_move', { id: A.uid(), phone: f.dataset.id, type: el.type.value, amount: A.num(el.amount.value), f: el.f.value, note: el.note.value }); A.investor(f.dataset.id); rerender(); }, 'Movimiento agregado.'); break;
       case 'invAllocForm': A.act(async () => { await A.netChange('allocation', { id: A.uid(), phone: f.dataset.id, saleId: el.saleId.value, amount: A.num(el.amount.value) }); A.investor(f.dataset.id); }, 'Venta asignada.'); break;
-      case 'netSettingsForm': A.act(async () => { await A.netChange('settings', { plazoFijoTna: el.plazoFijoTna.value.trim() === '' ? '' : A.num(el.plazoFijoTna.value), investorNote: el.investorNote.value }); rerender(); }, 'Ajustes guardados.'); break;
+      case 'netSettingsForm': A.act(async () => { await A.netChange('settings', { plazoFijoTna: el.plazoFijoTna.value.trim() === '' ? '' : A.pct(el.plazoFijoTna.value), investorNote: el.investorNote.value }); rerender(); }, 'Ajustes guardados.'); break;
     }
   });
   window.addEventListener('hashchange', () => { window.scrollTo(0, 0); A.render(); });

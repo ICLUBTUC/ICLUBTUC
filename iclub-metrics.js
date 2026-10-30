@@ -200,6 +200,17 @@
     }
     return sheets;
   }
-  const api = { r2, parseDate, fmtDate, iso, monthKey, startOfDay, saldo, dues, collectionTotals, client, sale, brand, naturalCompare, finance, investor, simulate, referrerGain, excelSheets, freqKey };
+
+  /* Todas las cuotas (pagadas y pendientes) de un mes para el calendario. */
+  function calendar(db, month, freq, today) {
+    today = startOfDay(today || new Date()); const out = [];
+    for (const [phone, c] of Object.entries(db.clients || {})) for (const pm of (c.movs || []).filter((m) => m.finan)) {
+      if (freq && freq !== 'all' && freqKey(pm.finan.freq) !== freq) continue;
+      const pc = P()._planCalc(c, pm);
+      for (const q of pc.cuotas) { if (!q.dt || monthKey(q.dt) !== month) continue; const falta = r2(Math.max(0, q.req - q.paid)); out.push({ phone, client: c.name || 'Cliente', doc: pm.doc, product: pm.prodName || String(pm.det || pm.doc).split(' · ')[0], n: q.n, total: pc.n, iso: iso(q.dt), date: q.d, dt: q.dt, done: q.done || falta <= 0.005, amount: q.done ? r2(q.req) : falta, late: !q.done && q.dt < today, freq: pm.finan.freq || 'Mensual' }); }
+    }
+    return out.sort((a, b) => a.dt - b.dt || a.client.localeCompare(b.client));
+  }
+  const api = { calendar, r2, parseDate, fmtDate, iso, monthKey, startOfDay, saldo, dues, collectionTotals, client, sale, brand, naturalCompare, finance, investor, simulate, referrerGain, excelSheets, freqKey };
   root.ICLUBMetrics = api; if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
