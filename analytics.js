@@ -20,3 +20,31 @@ var ICLUB_GA_ID = 'G-6P3V965ER2';
     if (a) gtag('event', 'contacto_whatsapp', { link_url: a.href });
   }, true);
 })();
+
+/* Estadísticas propias de ICLUB (panel → Estadísticas): conteos diarios sin datos personales.
+   Visitas por página, productos vistos, clics a WhatsApp y compras iniciadas. */
+(function () {
+  var URL_RPC = 'https://pbmsymvvemvbwhxmgddg.supabase.co/rest/v1/rpc/iclub_page_track';
+  var KEY = 'sb_publishable_dt4zRwkE4_NbZrXvbpZjIw_1Uhe7pFn';
+  function send(kind, key) {
+    try {
+      var once = 'iclub-st-' + kind + '-' + key;
+      if (kind !== 'whatsapp' && sessionStorage.getItem(once)) return; /* una vez por visita */
+      if (kind !== 'whatsapp') sessionStorage.setItem(once, '1');
+      fetch(URL_RPC, { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json', apikey: KEY, Authorization: 'Bearer ' + KEY }, body: JSON.stringify({ p_kind: kind, p_key: String(key || '-').slice(0, 120) }) }).catch(function () {});
+    } catch (e) {}
+  }
+  var path = location.pathname.replace(/\.dc\.html$/, '').replace(/%20/g, ' ') || '/';
+  send('view', path);
+  if (/^\/(comprar|Finalizar)/i.test(path)) send('checkout', path);
+  if (/^\/producto/i.test(path)) {
+    /* El nombre se toma del título visible cuando la ficha termina de cargar. */
+    setTimeout(function () { var h = document.querySelector('h1'); var p = new URLSearchParams(location.search).get('p'); send('product', (h && h.textContent.trim()) || p || path); }, 2500);
+  }
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest && e.target.closest('a[href*="wa.me"],a[href*="whatsapp"]');
+    if (a) send('whatsapp', path);
+    var f = e.target && e.target.closest && e.target.closest('a[href*="/comprar"],a[href*="Finalizar"]');
+    if (f) send('finance', path);
+  }, true);
+})();

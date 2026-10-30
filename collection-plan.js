@@ -17,7 +17,9 @@
     for (let i = 1; i <= n; i++) {
       const d = new Date(start);
       if (freq === 'Semanal') d.setDate(d.getDate() + 7 * i);
-      else d.setMonth(d.getMonth() + i);
+      else { /* Un vencimiento del 30 o 31 cae el último día de los meses más cortos (no se pasa al mes siguiente). */
+        const day = start.getDate(); d.setDate(1); d.setMonth(start.getMonth() + i);
+        d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate())); }
       out.push(this._fmtDate(d));
     }
     return out;
@@ -49,7 +51,36 @@
        saca el recargo entero, sin importar la fecha de cada cuota. */
     const esContado = !!pm.finan.contado;
     const cuotaBase = esContado ? capImp : cuotaImp;
-    const cuotas = dates.map((d, i) => ({ n: i + 1, i: i, d: d, dt: this._parseDate(d), req: i===n-1 ? Math.round(((esContado?Math.round(contado):base)-cuotaBase*(n-1))*100)/100 : cuotaBase, paid: 0, pay: null, sinInt: esContado, done: false }));
+    const cuotas = dates.map((d, i) => ({ n: i + 1, i: i, d: d, dt: this._parseDate(d), req: i===n-1 ? Math.round(((esContado?Math.round(contado):base)-cuotaBase*(n-1))*100)/100 : cuotaBase, paid: 0, pay: null, sinInt: esContado, done: false, adj: 0, restos: [] }));
+    /* Restos de cuota resueltos por administración: el faltante de una cuota
+       se suma a la próxima, se pasa a la última o se perdona (con nota de
+       crédito). Así un pago chico nunca arrastra el faltante cuota por cuota. */
+    (pm.finan.restos || []).forEach((r) => {
+      const q = cuotas[r.i], m = Math.round(Number(r.monto) * 100) / 100;
+      if (!q || !(m > 0)) return;
+      const dest = r.destino === 'next' ? cuotas[r.i + 1] : r.destino === 'last' ? cuotas[n - 1] : null;
+      q.adj = Math.round((q.adj - m) * 100) / 100; q.req = Math.round((q.req - m) * 100) / 100; q.restos.push(r);
+      if (dest && dest !== q) { dest.adj = Math.round((dest.adj + m) * 100) / 100; dest.req = Math.round((dest.req + m) * 100) / 100; dest.recibe = Math.round(((dest.recibe || 0) + m) * 100) / 100; }
+    });
+    /* Comisiones de referidos aplicadas a las cuotas propias: "ultimas" cancela desde
+       la última cuota hacia la primera; "repartir" baja el importe de las cuotas que
+       vencen desde la fecha del descuento. Cada cuota muestra cuánto se le descontó. */
+    (pm.finan.creditos || []).forEach((cr) => {
+      let rest = Math.round(Number(cr.monto) * 100) / 100;
+      if (!(rest > 0)) return;
+      const take = (q, m) => { m = Math.min(m, Math.max(0, q.req)); if (!(m > 0)) return 0; q.req = Math.round((q.req - m) * 100) / 100; q.adj = Math.round((q.adj - m) * 100) / 100; q.desc = Math.round(((q.desc || 0) + m) * 100) / 100; (q.creditos = q.creditos || []).push({ ref: cr.ref, monto: Math.round(m * 100) / 100, f: cr.f }); return m; };
+      if (cr.modo === 'repartir') {
+        const desde = this._parseDate(cr.f);
+        let pool = cuotas.filter((q) => q.req > 0 && (!desde || !q.dt || q.dt >= desde));
+        if (!pool.length) pool = cuotas.filter((q) => q.req > 0);
+        for (let guard = 0; rest > 0.004 && pool.length && guard < 200; guard++) {
+          const each = Math.floor(rest / pool.length * 100) / 100 || rest;
+          pool.forEach((q, k) => { if (rest > 0.004) rest = Math.round((rest - take(q, k === pool.length - 1 ? rest : Math.min(each, rest))) * 100) / 100; });
+          pool = pool.filter((q) => q.req > 0);
+        }
+      }
+      for (let i = cuotas.length - 1; i >= 0 && rest > 0.004; i--) rest = Math.round((rest - take(cuotas[i], rest)) * 100) / 100;
+    });
     const TOL = 0.005;
     let ahorro = esContado ? Math.round(base - contado) : 0, credito = 0;
     pagos.forEach((p) => {
@@ -61,7 +92,7 @@
         if (q.done) continue;
         /* El adelanto sin interés aplica a las cuotas que este pago adelanta
            (no a la que ya estaba vencida o en curso). */
-        if (p.sinInt && q.paid === 0 && !primera && q.dt && pd < q.dt) { q.req = capImp; q.sinInt = true; }
+        if (p.sinInt && q.paid === 0 && !primera && q.dt && pd < q.dt) { q.req = Math.round((capImp + q.adj) * 100) / 100; q.sinInt = true; }
         primera = false;
         const take = Math.min(q.req - q.paid, rest);
         q.paid = Math.round((q.paid + take)*100)/100; rest = Math.round((rest - take)*100)/100;
@@ -69,6 +100,7 @@
       }
       if (rest > 0) credito += rest;
     });
+    cuotas.forEach((q) => { if (!q.done && q.req <= TOL) q.done = true; });
     let pendiente = 0, vencidoAhora = 0;
     const hoy = new Date();
     cuotas.forEach((q) => {
@@ -86,4 +118,41 @@
       pagadas: pagadas, pagadoTotal: pagos.reduce((a, x) => a + x.imp, 0), prox: prox
     };
   }
+  /* Cuota que quedaría con resto si se registra un pago de `amount` (0 = estado actual). */
+  _restoTras(client, pm, amount) {
+    const movs = (client.movs || []).slice();
+    if (amount > 0) movs.push({ f: this._today(), tipo: 'Pago', imp: amount, plan: pm.doc, _sim: true });
+    const pc = this._planCalc(Object.assign({}, client, { movs: movs }), pm);
+    const q = pc.cuotas.find((x) => !x.done && x.paid > 0);
+    if (!q) return null;
+    const monto = Math.round((q.req - q.paid) * 100) / 100;
+    if (!(monto > 0)) return null;
+    return { i: q.i, n: q.n, total: pc.n, monto: monto, esUltima: q.i === pc.n - 1 };
+  }
+  /* Devuelve los movimientos del cliente con el resto resuelto. destino:
+     'next' (sumar a la próxima), 'last' (pasar a la última) o 'perdon'.
+     El perdón agrega una nota de crédito para que el saldo de la cuenta
+     coincida con el plan. */
+  _resolverResto(client, pm, resto, destino, ncDoc, motivo) {
+    if (!resto || !(resto.monto > 0)) throw new Error('No hay un resto para resolver.');
+    if (!['next', 'last', 'perdon'].includes(destino)) throw new Error('Elegí qué hacer con el resto.');
+    if (destino !== 'perdon' && resto.esUltima) throw new Error('Es la última cuota: el resto solo puede quedar pendiente o perdonarse.');
+    const r = { i: resto.i, monto: resto.monto, destino: destino, f: this._today() };
+    if (motivo) r.motivo = String(motivo).slice(0, 200);
+    const pm2 = Object.assign({}, pm, { finan: Object.assign({}, pm.finan, { restos: (pm.finan.restos || []).concat([r]) }) });
+    let movs = (client.movs || []).map((m) => m === pm ? pm2 : m);
+    if (destino === 'perdon') {
+      if (!ncDoc) throw new Error('Falta el número de nota de crédito.');
+      movs = movs.concat([{ f: this._today(), tipo: 'Nota de Crédito', doc: ncDoc, imp: resto.monto, plan: pm.doc, auto: 'resto',
+        det: 'Resto perdonado de la cuota ' + resto.n + ' de ' + resto.total + ' · ' + pm.doc }]);
+    }
+    return movs;
+  }
+  _restoTexto(destino, resto) {
+    if (!resto) return '';
+    return destino === 'next' ? 'Se suma a la cuota ' + (resto.n + 1)
+      : destino === 'last' ? 'Se suma a la cuota ' + resto.total + ' (última)'
+      : destino === 'perdon' ? 'Se perdona con nota de crédito' : 'Queda pendiente en la cuota ' + resto.n;
+  }
+
 }root.ICLUBCollectionPlan=new Plan();if(typeof module!=="undefined")module.exports=new Plan();})(typeof window!=="undefined"?window:globalThis);

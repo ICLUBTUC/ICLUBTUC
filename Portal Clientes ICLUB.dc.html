@@ -31,8 +31,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="secure-portal.js"></script>
-<script src="collection-plan.js?v=20261027-fix10"></script><script src="collection-view.js?v=20261027-fix10"></script><script src="client-list.js"></script>
+<script src="secure-portal.js?v=20261029-e1"></script>
+<script src="collection-plan.js?v=20261030-r2"></script><script src="collection-view.js?v=20261027-fix10"></script><script src="client-list.js"></script>
 <script src="catalog-filters.js"></script>
 <script src="finance-reports.js"></script>
 <link rel="stylesheet" href="iclub-ui.css?v=20261027-fix10"><link rel="stylesheet" href="design-system.css?v=20261027-fix10">
@@ -104,6 +104,9 @@
 </div>
 
 <!-- ══════════════ LOGIN ══════════════ -->
+<sc-if value="{{ showRestoring }}" hint-placeholder-val="{{ false }}">
+<section class="np" style="min-height:60vh; display:flex; align-items:center; justify-content:center;"><span style="font-size:15px; font-weight:600; color:#6E6E73;">Abriendo tu cuenta…</span></section>
+</sc-if>
 <sc-if value="{{ showLogin }}" hint-placeholder-val="{{ true }}">
 <section class="np" style="position:relative; z-index:2; min-height:70vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 24px 90px;">
   <div style="text-align:center; margin-bottom:40px; animation:ztReveal 1s .1s both;">
@@ -768,6 +771,28 @@
               <button onClick="{{ aMovFillPayoff }}" style="font-family:inherit; font-size:13px; font-weight:700; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:9px 16px; cursor:pointer; white-space:nowrap;">{{ aMovPayoffBtn }}</button>
             </sc-if>
           </div>
+          <sc-if value="{{ aRestoNowShow }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:10px; background:rgba(255,159,10,.10); border-radius:16px; padding:15px 18px;">
+              <span style="font-size:13.5px; font-weight:700; color:#1D1D1F;">{{ aRestoNowTxt }}</span>
+              <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                <sc-if value="{{ aRestoNowNextShow }}" hint-placeholder-val="{{ true }}"><button onClick="{{ aRestoNowNext }}" style="font-family:inherit; font-size:13px; font-weight:700; color:#1D1D1F; background:#fff; border:1px solid rgba(0,0,0,.12); border-radius:980px; padding:8px 14px; cursor:pointer;">Sumar a la próxima cuota</button></sc-if>
+                <sc-if value="{{ aRestoNowNextShow }}" hint-placeholder-val="{{ true }}"><button onClick="{{ aRestoNowLast }}" style="font-family:inherit; font-size:13px; font-weight:700; color:#1D1D1F; background:#fff; border:1px solid rgba(0,0,0,.12); border-radius:980px; padding:8px 14px; cursor:pointer;">Pasar a la última cuota</button></sc-if>
+                <button onClick="{{ aRestoNowPerdon }}" style="font-family:inherit; font-size:13px; font-weight:700; color:#1D1D1F; background:#fff; border:1px solid rgba(0,0,0,.12); border-radius:980px; padding:8px 14px; cursor:pointer;">Perdonar el resto</button>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ aRestoPayShow }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:10px; background:rgba(10,132,255,.07); border-radius:16px; padding:15px 18px;">
+              <span style="font-size:13.5px; font-weight:700; color:#1D1D1F;">{{ aRestoPayTxt }}</span>
+              <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                <button onClick="{{ aRestoOptKeep }}" style="font-family:inherit; font-size:13px; font-weight:700; color:{{ aRestoKeepFg }}; background:{{ aRestoKeepBg }}; border:1.5px solid rgba(0,0,0,.12); border-radius:980px; padding:9px 15px; cursor:pointer;">Dejar pendiente</button>
+                <sc-if value="{{ aRestoPayNextShow }}" hint-placeholder-val="{{ true }}"><button onClick="{{ aRestoOptNext }}" style="font-family:inherit; font-size:13px; font-weight:700; color:{{ aRestoNextFg }}; background:{{ aRestoNextBg }}; border:1.5px solid rgba(0,0,0,.12); border-radius:980px; padding:9px 15px; cursor:pointer;">Sumar a la próxima</button></sc-if>
+                <sc-if value="{{ aRestoPayNextShow }}" hint-placeholder-val="{{ true }}"><button onClick="{{ aRestoOptLast }}" style="font-family:inherit; font-size:13px; font-weight:700; color:{{ aRestoLastFg }}; background:{{ aRestoLastBg }}; border:1.5px solid rgba(0,0,0,.12); border-radius:980px; padding:9px 15px; cursor:pointer;">Pasar a la última</button></sc-if>
+                <button onClick="{{ aRestoOptPerdon }}" style="font-family:inherit; font-size:13px; font-weight:700; color:{{ aRestoPerdonFg }}; background:{{ aRestoPerdonBg }}; border:1.5px solid rgba(0,0,0,.12); border-radius:980px; padding:9px 15px; cursor:pointer;">Perdonar</button>
+              </div>
+              <span style="font-size:12.5px; color:#6E6E73;">{{ aRestoPayHint }}</span>
+            </div>
+          </sc-if>
           <sc-if value="{{ aMovAdelShow }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex; flex-direction:column; gap:10px; background:rgba(31,138,91,.07); border-radius:16px; padding:15px 18px;">
               <span style="font-size:13.5px; font-weight:700; color:#1D1D1F;">{{ aMovAdelTitle }}</span>
@@ -2053,7 +2078,7 @@ class Component extends DCLogic {
     user: null, loginPhone: '', loginPass: '', error: false, errorMsg: '',
     view: 'dash', receipt: null, payOpen: false,
     cloud: 'init',
-    atab: new URLSearchParams(location.search).get('tab') || 'clientes', clientFrequency: 'all', collectionFrequency: 'all', clientFilter: 'debt', clientSort: 'late', clientSearch: '', invMode: 'list', invFormData: null, invEdit: null, invError: '',
+    atab: new URLSearchParams(location.search).get('tab') || 'clientes', clientFrequency: 'all', movResto: '', collectionFrequency: 'all', clientFilter: 'debt', clientSort: 'late', clientSearch: '', invMode: 'list', invFormData: null, invEdit: null, invError: '',
     search: '', filter: 'todos', calcPago: '', calcCompra: '',
     amode: 'list', editKey: null, form: null, formError: '', adminView: null,
     movAmount: '', movDet: '', movMet: 'Transferencia', movPlan: '', movFin: 'contado', movFreq: 'Mensual', movN: '', movRec: '', movPlanSel: '', movSinInt: false, movPlanSel: '', movSinInt: false,
@@ -2135,11 +2160,16 @@ class Component extends DCLogic {
       if (!sb) throw new Error('No se pudo conectar al servidor.');
       // Clear the old cache that could contain all clients and plaintext keys.
       try { localStorage.removeItem('zt-portal-fin-db-v2'); localStorage.removeItem('zt-portal-fin-user'); } catch (e) {}
+      /* Con sesión guardada se lee la cuenta en paralelo al catálogo público y
+         no se muestra el formulario de ingreso mientras tanto. */
+      const hadToken = !!this._api().token;
+      const privP = hadToken ? this._api().read().then((x) => ({ ok: x }), (e) => ({ err: e })) : null;
       const pub = await window.ICLUBData.read();
-      if (!this.state.user) this.setState({ db: Object.assign({ clients: {} }, pub), cloud: 'ok' });
-      if (this._api().token) {
+      if (!this.state.user) this.setState({ db: Object.assign({ clients: {} }, pub), cloud: 'ok', restoring: hadToken });
+      if (hadToken) {
         try {
-          const state = await this._api().read();
+          const res = await privP; if (res.err) throw res.err;
+          const state = res.ok;
           this.setState({ db: state.data, user: state.user, cloud: 'ok' });
           if(state.user==='admin'&&!new URLSearchParams(location.search).has('tab')) location.assign('/gestion');
         } catch (e) {
@@ -2147,8 +2177,9 @@ class Component extends DCLogic {
           this.setState({ errorMsg: e.message, cloud: 'err' });
         }
       }
+      this.setState({ restoring: false });
       this._startPolling();
-    } catch (e) { this.setState({ cloud: 'err', errorMsg: e.message }); }
+    } catch (e) { this.setState({ cloud: 'err', errorMsg: e.message, restoring: false }); }
   }
   _startPolling() {
     if (this._pollT) return;
@@ -2480,6 +2511,31 @@ class Component extends DCLogic {
      perdonado por adelantos. Se recalcula ante cualquier cambio (pago nuevo,
      pago editado o borrado, o al declarar el recargo del plan) para que el
      saldo de cuenta y el estado del plan nunca se contradigan. */
+  _restoPay(db, amode) {
+    const c = (db.clients || {})[this.state.editKey];
+    const pm = c && (c.movs || []).find((x) => x.doc === this.state.movPlan && x.finan);
+    const a = this._amountNum(this.state.movAmount);
+    if (!pm || !(a > 0) || amode !== 'pago') return null;
+    const antes = window.ICLUBCollectionPlan._restoTras(c, pm, 0);
+    const r = window.ICLUBCollectionPlan._restoTras(c, pm, a);
+    /* Si el pago no toca la cuota con resto (no la cubre ni la deja corta), no hay nada que preguntar. */
+    if (!r || (antes && antes.i === r.i && Math.abs(antes.monto - r.monto) < 0.005)) return null;
+    return r;
+  }
+  _restoAhora(destino) {
+    const db = this.state.db; const k = this.state.editKey; const c = (db.clients || {})[k];
+    const pm = c && (c.movs || []).find((x) => x.doc === this.state.movPlan && x.finan);
+    if (!pm) return;
+    const P = window.ICLUBCollectionPlan; const r = P._restoTras(c, pm, 0);
+    if (!r) return;
+    if (!window.confirm('Resto de ' + this._fmt(r.monto) + ' de la cuota ' + r.n + '. ' + P._restoTexto(destino, r) + '. ¿Confirmás?')) return;
+    try {
+      const nc = 'NC 0003-' + this._pad(db.nextNc || 1);
+      const movs = P._resolverResto(c, pm, r, destino, nc);
+      const next = Object.assign({}, db, { nextNc: destino === 'perdon' ? (db.nextNc || 1) + 1 : db.nextNc, clients: Object.assign({}, db.clients, { [k]: Object.assign({}, c, { movs: movs }) }) });
+      this._save(next); this.setState({ formError: '', movResto: '' });
+    } catch (e) { this.setState({ formError: e.message }); }
+  }
   _syncRecNC(db, key) {
     const c = (db.clients || {})[key];
     if (!c) return db;
@@ -3851,6 +3907,24 @@ class Component extends DCLogic {
           if (usd) this.setState({ movAmount: String(Math.round(usd * invRate)) });
         },
         aPlanOpts: editPlanes.map((m) => ({ value: m.doc, label: 'Plan ' + this._planTitle(m).slice(0, 28) + ' (' + m.doc + ')' })),
+        aRestoNowShow: (() => { const c = db.clients[this.state.editKey]; const pm = c && (c.movs || []).find((x) => x.doc === this.state.movPlan && x.finan); return !!(pm && window.ICLUBCollectionPlan._restoTras(c, pm, 0)); })(),
+        aRestoNowTxt: (() => { const c = db.clients[this.state.editKey]; const pm = c && (c.movs || []).find((x) => x.doc === this.state.movPlan && x.finan); const r = pm && window.ICLUBCollectionPlan._restoTras(c, pm, 0); return r ? 'La cuota ' + r.n + ' tiene un resto de ' + this._fmt(r.monto) + '. Podés cobrarlo, o resolverlo sin cobrar:' : ''; })(),
+        aRestoNowNextShow: (() => { const c = db.clients[this.state.editKey]; const pm = c && (c.movs || []).find((x) => x.doc === this.state.movPlan && x.finan); const r = pm && window.ICLUBCollectionPlan._restoTras(c, pm, 0); return !!(r && !r.esUltima); })(),
+        aRestoNowNext: () => this._restoAhora('next'),
+        aRestoNowLast: () => this._restoAhora('last'),
+        aRestoNowPerdon: () => this._restoAhora('perdon'),
+        aRestoPayShow: !!this._restoPay(db, amode),
+        aRestoPayTxt: (() => { const r = this._restoPay(db, amode); return r ? 'Con este pago, la cuota ' + r.n + ' queda con un resto de ' + this._fmt(r.monto) + '. ¿Qué hacemos con ese resto?' : ''; })(),
+        aRestoPayHint: (() => { const r = this._restoPay(db, amode); return r ? window.ICLUBCollectionPlan._restoTexto(this.state.movResto, r) + '. Las demás cuotas no cambian de lugar.' : ''; })(),
+        aRestoPayNextShow: (() => { const r = this._restoPay(db, amode); return !!(r && !r.esUltima); })(),
+        aRestoOptKeep: () => this.setState({ movResto: '' }),
+        aRestoOptNext: () => this.setState({ movResto: 'next' }),
+        aRestoOptLast: () => this.setState({ movResto: 'last' }),
+        aRestoOptPerdon: () => this.setState({ movResto: 'perdon' }),
+        aRestoKeepBg: this.state.movResto === '' ? '#1D1D1F' : '#fff', aRestoKeepFg: this.state.movResto === '' ? '#fff' : '#1D1D1F',
+        aRestoNextBg: this.state.movResto === 'next' ? '#1D1D1F' : '#fff', aRestoNextFg: this.state.movResto === 'next' ? '#fff' : '#1D1D1F',
+        aRestoLastBg: this.state.movResto === 'last' ? '#1D1D1F' : '#fff', aRestoLastFg: this.state.movResto === 'last' ? '#fff' : '#1D1D1F',
+        aRestoPerdonBg: this.state.movResto === 'perdon' ? '#1F8A5B' : '#fff', aRestoPerdonFg: this.state.movResto === 'perdon' ? '#fff' : '#1D1D1F',
         aMovDueButton: (()=>{const p=this._selPlanCalc(db);return p?.prox?'Saldar resto de cuota · '+this._fmt(p.prox.req-p.prox.paid):'Cuota saldada';})(),
         aMovPlanShow: !!this._selPlanCalc(db),
         aMovPlanDue: (() => {
@@ -3929,7 +4003,7 @@ class Component extends DCLogic {
         },
         setAMovDet: (e) => this.setState({ movDet: e.target.value }),
         setAMovMet: (e) => this.setState({ movMet: e.target.value }),
-        setAMovPlan: (e) => this.setState({ movPlan: e.target.value }),
+        setAMovPlan: (e) => this.setState({ movPlan: e.target.value, movResto: '' }),
         setAMovFin: (e) => this.setState({ movFin: e.target.value }),
         setAMovFreq: (e) => {
           const freq = e.target.value;
@@ -4032,9 +4106,22 @@ class Component extends DCLogic {
             return;
           }
           next.clients[k] = Object.assign({}, c, { movs: (c.movs || []).concat([mov]).concat(extraMovs) });
+          if (isPago && mov.plan && this.state.movResto) {
+            try {
+              const P = window.ICLUBCollectionPlan; const c2 = next.clients[k];
+              const pm2 = (c2.movs || []).find((x) => x.doc === mov.plan && x.finan);
+              const r2 = pm2 && P._restoTras(c2, pm2, 0);
+              if (r2 && !(r2.esUltima && this.state.movResto !== 'perdon')) {
+                const nc = 'NC 0003-' + this._pad(next.nextNc || 1);
+                next.clients[k] = Object.assign({}, c2, { movs: P._resolverResto(c2, pm2, r2, this.state.movResto, nc) });
+                if (this.state.movResto === 'perdon') next.nextNc = (next.nextNc || 1) + 1;
+                mov.det = (mov.det || '') + ' · ' + P._restoTexto(this.state.movResto, r2).toLowerCase() + ' (' + this._fmt(r2.monto) + ')';
+              }
+            } catch (e) { this.setState({ formError: e.message }); return; }
+          }
           this._save(isPago ? this._syncRecNC(next, k) : next);
           if (isPago) {
-            this.setState({ amode: 'list', editKey: null, formError: '', movAmount: '', movDet: '', movPlan: '' });
+            this.setState({ amode: 'list', editKey: null, formError: '', movAmount: '', movDet: '', movPlan: '', movResto: '' });
             this._openReceipt(next.clients[k], mov);
           } else {
             this.setState({ amode: 'list', editKey: null, formError: '', movAmount: '', movDet: '', movN: '', movRec: '', movPlanSel: '', movSinInt: false });
@@ -4954,7 +5041,8 @@ class Component extends DCLogic {
 
     return Object.assign({
       loggedIn: loggedIn,
-      showLogin: !loggedIn && this.state.screen !== 'finan',
+      showLogin: !loggedIn && this.state.screen !== 'finan' && !(this.state.restoring !== false && this._api().token),
+      showRestoring: !loggedIn && this.state.screen !== 'finan' && this.state.restoring !== false && !!this._api().token,
       showApp: !!client && this.state.screen !== 'finan',
       showAdmin: isAdmin && !this.state.adminView && this.state.screen !== 'finan',
       openFinan: () => this.setState({ screen: 'finan' }),

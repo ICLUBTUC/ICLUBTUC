@@ -2,11 +2,21 @@
 (function (root) {
   'use strict';
   var TOKEN_KEY = 'iclub-session-v1';
+  /* La sesión se comparte entre Gestión, Clientes y Referidos, también en
+     otra pestaña. Vence en el servidor a las 8 horas y se borra al salir. */
+  function readToken() {
+    try { return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY) || null; } catch (_) { return null; }
+  }
+  function writeToken(token) {
+    try { if (token) localStorage.setItem(TOKEN_KEY, token); else localStorage.removeItem(TOKEN_KEY); } catch (_) {}
+    try { if (token) sessionStorage.setItem(TOKEN_KEY, token); else sessionStorage.removeItem(TOKEN_KEY); } catch (_) {}
+  }
+  root.ICLUBSession = { read: readToken, write: writeToken };
   function PortalApi(client) {
     this.client = client;
     this.version = null;
     this.currentUser = null;
-    try { this.token = sessionStorage.getItem(TOKEN_KEY); } catch (_) { this.token = null; }
+    this.token = readToken();
   }
   PortalApi.prototype.call = async function (name, args) {
     if (!this.client) throw new Error('No se pudo conectar al servidor.');
@@ -17,7 +27,7 @@
   };
   PortalApi.prototype.storeToken = function (token) {
     this.token = token || null;
-    try { if (token) sessionStorage.setItem(TOKEN_KEY, token); else sessionStorage.removeItem(TOKEN_KEY); } catch (_) {}
+    writeToken(token);
   };
   PortalApi.prototype.login = async function (phone, password) {
     var res = await this.call('iclub_login', { p_phone: phone, p_password: password });
