@@ -101,3 +101,4 @@ dialog.modal.wide{max-width:min(980px,96vw)}.modal-head{display:flex;align-items
 @media (max-width:700px){.w4{grid-column:span 12}.app .cal-d{min-height:50px}.cal-amt{font-size:10px}}
 
 .app button:focus-visible,.app a:focus-visible,.app [tabindex]:focus-visible{outline:3px solid #60a5fa;outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

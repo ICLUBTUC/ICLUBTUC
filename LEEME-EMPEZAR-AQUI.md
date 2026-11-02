@@ -1,3 +1,7 @@
+# ⚠ Entrega nueva del 30/10/2026
+
+Leé primero **ENTREGA-REDISENO.md**: hay que ejecutar `migraciones/11-red-comercial.sql` en Supabase. Lo de abajo es la entrega anterior.
+
 # ICLUB · Panel unificado y cobros pendientes
 
 ## Instalar esta entrega

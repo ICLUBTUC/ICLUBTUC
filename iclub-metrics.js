@@ -91,7 +91,7 @@
   function finance(db, opt) {
     opt = opt || {}; const today = startOfDay(opt.today || new Date()); const month = opt.month || monthKey(today);
     const rate = Number(db.settings && db.settings.rate) || 1520;
-    const ventas = (db.ventas || []).filter((s) => !s.devolucion).map((s) => ({ s, dt: parseDate(s.fecha) })).filter((x) => x.dt);
+    const ventas = (db.ventas || []).filter((s) => !s.devolucion && !s.sinStats).map((s) => ({ s, dt: parseDate(s.fecha) })).filter((x) => x.dt);
     const devueltas = (db.ventas || []).filter((s) => s.devolucion && s.devolucion.f && monthKey(parseDate(s.devolucion.f) || new Date(0)) === month);
     const ofMonth = ventas.filter((x) => monthKey(x.dt) === month).map((x) => x.s);
     const sum = (arr, f) => r2(arr.reduce((a, x) => a + (Number(f(x)) || 0), 0));

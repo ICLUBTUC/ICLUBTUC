@@ -1,0 +1,21 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require('jsdom');
+const tick=()=>new Promise(r=>setTimeout(r,20));
+(async()=>{
+const dom=new JSDOM('<div id="content"></div>',{url:'https://test.local/gestion#respaldo',runScripts:'outside-only'}),w=dom.window;
+w.eval(fs.readFileSync(require.resolve('../backup-ui.js'),'utf8'));
+const q=id=>w.document.getElementById(id);q('content').innerHTML=w.ICLUBBackupUI.html();
+let calls=[],reloads=0,notices=[],confirm=false;
+w.confirm=()=>confirm;
+const bundle={payload:{format:'iclub-business-backup'},signature:'signed'};
+const preview={version:'v1',revision:3,createdAt:'2026-10-26',current:{clients:1,inventory:2,sales:3,refSales:1,members:1},backup:{clients:1,inventory:2,sales:2,refSales:1,members:1}};
+w.ICLUBBackupUI.bind({rpc:async(name,args)=>{calls.push({name,args});if(name==='iclub_backup_preview')return preview;return{ok:true};},reload:async()=>reloads++,notice:t=>notices.push(t)});
+await tick();assert.equal(q('backupFile').disabled,false);
+Object.defineProperty(q('backupFile'),'files',{configurable:true,value:[{size:20,text:async()=>JSON.stringify(bundle)}]});q('backupFile').dispatchEvent(new w.Event('change'));await tick();
+assert(q('backupPreview').textContent.includes('No se suman ni se combinan'));
+const form=q('restoreBackupForm');const submit=()=>form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
+submit();await tick();assert(!calls.some(c=>c.name==='iclub_backup_restore'));
+form.elements.confirmation.value='RESTAURAR';submit();await tick();assert(!calls.some(c=>c.name==='iclub_backup_restore'));
+confirm=true;submit();await tick();const restore=calls.find(c=>c.name==='iclub_backup_restore');assert.equal(restore.args.p_expected_version,'v1');assert.equal(restore.args.p_revision,3);assert.equal(restore.args.p_confirmation,'RESTAURAR');assert.equal(reloads,1);assert.equal(notices.length,1);
+q('content').innerHTML=w.ICLUBBackupUI.html();w.ICLUBBackupUI.bind({rpc:async()=>{throw Error('function missing in schema cache')}});await tick();assert(q('backupExport').disabled);assert(q('backupStatus').textContent.includes('ACTUALIZAR-SUPABASE.sql'));dom.window.close();
+console.log('OK interfaz respaldo: validación, comparación, confirmación obligatoria, cancelar, restaurar, recargar y backend ausente.');
+})().catch(e=>{console.error(e);process.exitCode=1});

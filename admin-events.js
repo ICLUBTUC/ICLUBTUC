@@ -37,7 +37,11 @@
       /* Punto de venta */
       case 'pos-item': { pos.item = d.id || null; pos.imei = ''; pos.newProduct = false; const it = A.db.inventory.find((x) => x.id === pos.item); if (it) { pos.cash = String(M.r2(Number(it.venta || 0) * (it.moneda === 'ARS' ? 1 : A.rate()))); pos.paidTouched = false; } rerender(); break; }
       case 'pos-newprod': pos.newProduct = !d.off; pos.item = null; rerender(); break;
-      case 'pos-client': pos.client = d.id || ''; pos.newClient = false; rerender(); break;
+      case 'pos-client': { pos.client = d.id || ''; pos.newClient = false; const cc = A.db.clients[pos.client]; if (cc && cc.ref && !pos.referrer && A.refs && A.refs.data.members[cc.ref] && A.refs.data.members[cc.ref].active) { pos.referrer = cc.ref; A.toast('Cliente referido por ' + (A.refs.data.members[cc.ref].name || cc.ref) + ': ya quedó elegido como referidor.'); } rerender(); break; }
+      case 'ref-link': A.refLink(d.phone, d.doc); break;
+      case 'ref-unlink': A.refUnlink(d.phone, d.doc); break;
+      case 'ref-link-all': A.refLinkAll(d.phone); break;
+      case 'qp-focus': { const q = A.$('#qpQ'); if (q) { q.scrollIntoView({ block: 'center' }); q.focus(); } break; }
       case 'pos-newclient': pos.newClient = !d.off; pos.client = ''; if (!d.off && pos.cliQ && /\d{6,}/.test(pos.cliQ)) pos.nc.phone = pos.cliQ.replace(/\D/g, ''); else if (!d.off && pos.cliQ) pos.nc.name = pos.cliQ; rerender(); break;
       case 'pos-genpass': { const w = 'iclub' + Math.floor(1000 + Math.random() * 9000); pos.nc.password = w; A.$('[name="nc.password"]').value = w; A.posSummary(); break; }
       case 'pos-plan': case 'pos-noint': {
@@ -140,6 +144,7 @@
     if (t.closest('#qqForm')) { A.qqRender(); return; }
     if (t.closest('#manualBuyForm')) { A.mbHint(); return; }
     if (t.closest('#devForm')) { A.devHint(); return; }
+    if (t.id === 'qpQ') { A.qpSearch(t.value); return; }
     if (t.closest('#rateForm')) { A.$('#rateImpact').innerHTML = A.rateImpact(t.value); return; }
     const sim = t.closest('.sim-form'); if (sim) { const f = sim.elements; sim.querySelector('.sim-out').innerHTML = A.simOut(f.monto.value, f.rate.value, f.meses.value, f.tna.value); }
   });
@@ -173,6 +178,7 @@
       case 'buyDateForm': A.act(async () => { const next = A.clone(A.db), c = next.clients[f.dataset.phone], m = c.movs[Number(f.dataset.i)]; if (!el.f.value) throw Error('Elegí la fecha.'); const nf = el.f.value.split('-').reverse().join('/'); const old = m.f; m.f = nf; c.movs.forEach((x) => { if (x.grp && x.grp === m.grp && x.adel && x.f === old) x.f = nf; }); const s = next.ventas.find((v) => v.id === m.grp || (v.invoice && v.invoice === m.doc)); if (s) s.fecha = nf; await A.saveDb(next); A.closeModal(); rerender(); }, 'Fecha actualizada.'); break;
       case 'manualBuyForm': A.saveManualBuy(f); break;
       case 'devForm': A.saveDevolucion(f); break;
+      case 'refLinkForm': A.saveRefLink(f); break;
       case 'clientFull': A.saveClientFull(f); break;
       case 'qqForm': break;
       case 'clientForm': A.saveClient(f); break;

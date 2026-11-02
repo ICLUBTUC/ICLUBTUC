@@ -9,6 +9,10 @@
       "destination": "/referidos.html"
     },
     {
+      "source": "/inversores",
+      "destination": "/inversores.html"
+    },
+    {
       "source": "/",
       "destination": "/Inicio%20ICLUB.dc.html"
     },

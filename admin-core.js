@@ -150,6 +150,7 @@
     const r = A.applyResto(next, phone, doc, f.elements.resto && f.elements.resto.value); if (r) c.movs[c.movs.length - (f.elements.resto.value === 'perdon' ? 2 : 1)].det += ' · ' + P._restoTexto(f.elements.resto.value, r).toLowerCase();
     await A.saveDb(A.syncRecNC(next, phone)); if (A.refs) await A.reloadRefs();
     A.paymentReceipt(phone, doc, amount, rc); A.render();
+    { const pm2 = A.db.clients[phone].movs.find((m) => m.doc === doc && m.tipo === 'Compra'); const rs = pm2 && A.refSaleFor && A.refSaleFor(pm2); if (rs) { const mem = A.refs.data.members[rs.referrer] || {}, g = A.refGain(rs), f = (n) => rs.commissionCurrency === 'USD' ? A.usd(n) : A.ars(n); setTimeout(() => A.toast('Ganancia de ' + (mem.name || rs.referrer) + ' actualizada: lleva ' + f(g.ganada) + ' de ' + f(g.total) + '.'), 400); } }
   });
   A.paymentReceipt = (phone, doc, amount, rc) => {
     const c = A.db.clients[phone], pm = A.planOf(phone, doc), bal = A.balanceFor(phone, doc), pc = pm && pm.finan ? P._planCalc(c, pm) : null, q = pc && pc.prox;

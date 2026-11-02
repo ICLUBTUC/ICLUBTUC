@@ -2,6 +2,8 @@
 
 > **01/11 · Mejoras de la auditoría:** ejecutá en Supabase `migraciones/12-mejoras-auditoria.sql` (después del 11). Al final tiene que decir `version_instalada = 12`. Si `copia_automatica_activa` sale en `false`, activá **pg_cron** en Supabase → Database → Extensions y ejecutá el 12 otra vez. Después borrá de GitHub `gestion.js`, `gestion.css`, `referidos.js` y `referidos.css`, y revisá **Respaldo → Estado del sistema → Revisar ahora**: todo tiene que salir en verde.
 >
+> **Clientes referidos conectados:** en la ficha del cliente → Datos → "Lo refirió". Cada compra tiene "Vincular a referidor" (o "Vincular todas"); desde ahí cada pago suma solo a la ganancia del referidor (también los pagos anteriores) y las ventas nuevas a ese cliente ya traen al referidor elegido. **Registrar pago desde el Inicio:** buscás al cliente y tocás Cobrar.
+>
 > Novedades: historial de cambios, aviso claro si se corta la conexión (sí/no quedó guardada), movimientos de stock, IMEI por unidad, **devoluciones** con reintegro, ganancia cobrada vs. por cobrar, copia semanal automática del servidor y comisión liberada aunque perdones un resto.
 
 > **31/10 · Auditoría:** se actualizó `migraciones/11-red-comercial.sql` (caja de pagos combinados, permisos de actividad, tope de estadísticas y datos del inversor). **Ejecutalo de nuevo completo en Supabase aunque ya lo hayas corrido**: es seguro repetirlo y no borra datos. Detalle en `AUDITORIA-TECNICA.md`.
