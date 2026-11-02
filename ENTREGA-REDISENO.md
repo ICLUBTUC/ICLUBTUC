@@ -4,6 +4,8 @@
 >
 > **Clientes referidos conectados:** en la ficha del cliente → Datos → "Lo refirió". Cada compra tiene "Vincular a referidor" (o "Vincular todas"); desde ahí cada pago suma solo a la ganancia del referidor (también los pagos anteriores) y las ventas nuevas a ese cliente ya traen al referidor elegido. **Registrar pago desde el Inicio:** buscás al cliente y tocás Cobrar.
 >
+> **02/11 · Comprobantes en PDF con diseño nuevo:** recibo de pago, comprobante de compra (con plan de cuotas, pagos y estado de cada cuota), nota de crédito, reintegro y **estado de cuenta**. Botón **"Enviar PDF"**: en el celular abre WhatsApp con el PDF adjunto; en la PC lo descarga y abre el chat del cliente para adjuntarlo. Los datos del pie (WhatsApp, alias, Instagram, dirección) se cargan en Ajustes → "Datos de tus comprobantes PDF". No requiere SQL.
+>
 > Novedades: historial de cambios, aviso claro si se corta la conexión (sí/no quedó guardada), movimientos de stock, IMEI por unidad, **devoluciones** con reintegro, ganancia cobrada vs. por cobrar, copia semanal automática del servidor y comisión liberada aunque perdones un resto.
 
 > **31/10 · Auditoría:** se actualizó `migraciones/11-red-comercial.sql` (caja de pagos combinados, permisos de actividad, tope de estadísticas y datos del inversor). **Ejecutalo de nuevo completo en Supabase aunque ya lo hayas corrido**: es seguro repetirlo y no borra datos. Detalle en `AUDITORIA-TECNICA.md`.
