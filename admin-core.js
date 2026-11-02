@@ -35,6 +35,18 @@
   A.normalize = (d) => { d = d || {}; d.clients = d.clients || {}; d.catalog = d.catalog || {}; d.settings = d.settings || {}; d.ventas = (d.ventas || []).map((x, i) => ({ ...x, id: x.id || 'legacy-sale-' + i })); d.inventory = (d.inventory || []).map((x, i) => ({ ...x, id: x.id || 'legacy-inventory-' + i })); return d; };
   A.clone = (x) => JSON.parse(JSON.stringify(x));
   A.toast = (msg, bad) => { let t = A.$('#toast'); if (!t) { t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; document.body.appendChild(t); } t.textContent = msg; t.style.background = bad ? '#991b1b' : '#0f172a'; t.hidden = false; clearTimeout(A._tt); A._tt = setTimeout(() => (t.hidden = true), bad ? 7000 : 3200); };
+  /* Los cálculos pesados se guardan mientras los datos no cambian (el Inicio los usa varias veces por pantalla). */
+  const memo = new WeakMap();
+  const wrap = (name, keyFn) => { const orig = M[name]; M[name] = function (db, opt) { if (!db || typeof db !== 'object') return orig.apply(this, arguments); let m = memo.get(db); if (!m) { m = new Map(); memo.set(db, m); } const k = name + '|' + keyFn(opt || {}) + '|' + M.iso(new Date()); if (!m.has(k)) m.set(k, orig.apply(this, arguments)); return m.get(k); }; };
+  wrap('dues', (o) => (o.freq || 'all') + (o.today ? +o.today : ''));
+  wrap('finance', (o) => (o.month || '') + '|' + !!o.allTime + '|' + (o.refs ? 'r' + (A.refs ? A.refs.revision : '') : '') + (o.today ? +o.today : ''));
+  /* Si otro dispositivo guardó cambios, al volver a esta pestaña se actualiza sola (sin pisar lo que estés cargando). */
+  A.checkRemote = async () => {
+    if (!A.db || A.busy || document.hidden) return; const d = A.$('#modal'); if (d && d.open) return; if ((location.hash || '').startsWith('#vender') && A.pos && (A.pos.item || A.pos.client || A.pos.newProduct)) return;
+    try { const r = await A.api.revision(); if (r.version && r.version !== A.api.version) { await A.load(); A.toast('Datos actualizados: hubo cambios desde otro dispositivo.'); } } catch (_) {}
+  };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) A.checkRemote(); });
+  setInterval(A.checkRemote, 60000);
   A.load = async () => {
     const res = await A.api.read();
     if (res.user !== 'admin') { location.assign('/portal'); return; }
@@ -49,13 +61,26 @@
   };
   A.reloadRefs = async () => { try { A.refs = await A.rpc('iclub_ref_read'); } catch (_) {} };
   A.reloadNet = async () => { try { A.net = await A.rpc('iclub_net_read'); } catch (_) {} };
-  A.saveDb = async (next) => { const r = await A.api.write(next); A.db = A.normalize(r.data); ICLUBData.invalidate && ICLUBData.invalidate(); return r; };
+  /* Cada operación lleva un código único que queda anotado en el historial de cambios (bitácora).
+     Si se corta la conexión al guardar, se consulta el servidor y se confirma si quedó guardada o no. */
+  A.stamp = (next, desc) => { const op = A.currentOp || (A.currentOp = { id: A.uid(), desc: desc || 'Cambio' }); next.bitacora = (next.bitacora || []).filter((x) => x.id !== op.id).concat([{ id: op.id, at: new Date().toISOString(), desc: String(desc || op.desc || 'Cambio').slice(0, 160) }]).slice(-400); return next; };
+  A.saveDb = async (next, desc) => { A.stamp(next, desc); const r = await A.api.write(next); A.db = A.normalize(r.data); ICLUBData.invalidate && ICLUBData.invalidate(); return r; };
+  /* Movimientos de stock: cada entrada y salida queda registrada con motivo, referencia e IMEI. */
+  A.stockMove = (next, item, delta, motivo, ref, imei) => { if (!item || !delta) return; next.stockMoves = (next.stockMoves || []).concat([{ id: A.uid(), at: new Date().toISOString(), item: item.id, name: item.name + (item.spec ? ' · ' + item.spec : ''), delta, motivo, ref: ref || '', imei: imei || '' }]).slice(-3000); };
+  const netErr = (m) => /fetch|network|NetworkError|Load failed|timeout|tiempo de espera|conexi/i.test(String(m || ''));
   A.applyServer = (r) => { if (r && r.data) { A.db = A.normalize(r.data); if (r.version) A.api.version = r.version; } };
   A.act = async (fn, okMsg) => {
-    if (A.busy) return; A.busy = true; document.body.classList.add('busy');
+    if (A.busy) return; A.busy = true; document.body.classList.add('busy'); A.currentOp = { id: A.uid(), desc: okMsg || 'Cambio' };
     try { const r = await fn(); if (r !== false && okMsg) A.toast(okMsg); return r; }
-    catch (e) { const m = String(e.message || e); A.toast(/Otro dispositivo|otro dispositivo/.test(m) ? m + '\nTocá Actualizar y volvé a intentar.' : m, true); }
-    finally { A.busy = false; document.body.classList.remove('busy'); }
+    catch (e) {
+      const m = String(e.message || e), op = A.currentOp;
+      if (netErr(m)) {
+        /* Respuesta perdida: verificar en el servidor antes de que el usuario repita la operación. */
+        try { const st = await A.api.read(); const done = (st.data.bitacora || []).some((x) => x.id === op.id); A.db = A.normalize(st.data); A.closeModal(); A.render(); A.toast(done ? '✓ Se cortó la conexión, pero la operación SÍ quedó guardada. No la repitas.' : 'Se cortó la conexión y la operación NO se guardó. Podés intentarla de nuevo.', !done); }
+        catch (_) { A.toast('Sin conexión. No se puede confirmar si se guardó: cuando vuelva internet, tocá Actualizar y revisá antes de repetir.', true); }
+      } else A.toast(/Otro dispositivo|otro dispositivo/.test(m) ? m + '\nTocá Actualizar y volvé a intentar.' : m, true);
+    }
+    finally { A.busy = false; A.currentOp = null; document.body.classList.remove('busy'); }
   };
   A.refChange = async (action, item) => { const r = await A.rpc('iclub_ref_change', { p_revision: A.refs.revision, p_action: action, p_item: item }); await A.reloadRefs(); return r; };
   A.netChange = async (action, item) => { if (!A.net) throw Error('Instalá primero migraciones/11-red-comercial.sql.'); const r = await A.rpc('iclub_net_change', { p_revision: A.net.revision, p_action: action, p_item: item }); await A.reloadNet(); return r; };
@@ -65,7 +90,7 @@
     let d = A.$('#modal'); if (!d) { d = document.createElement('dialog'); d.id = 'modal'; document.body.appendChild(d); d.addEventListener('click', (e) => { if (e.target === d) d.close(); }); }
     d.className = 'modal' + (opt && opt.wide ? ' wide' : '');
     d.innerHTML = '<div class="modal-head"><h2>' + A.esc(title) + '</h2><button class="x" data-close aria-label="Cerrar">×</button></div><div class="modal-body">' + body + '</div>';
-    if (!d.open) d.showModal(); const f = d.querySelector('input:not([type=hidden]):not([readonly]),select,textarea'); if (f && !(opt && opt.noFocus)) setTimeout(() => f.focus(), 30);
+    if (!d.open) d.showModal(); const f = d.querySelector('input:not([type=hidden]):not([readonly]),select,textarea'); if (f && !(opt && opt.noFocus)) setTimeout(() => { const a = document.activeElement; if (!a || !d.contains(a) || !a.matches('input,select,textarea')) f.focus(); }, 30);
     return d;
   };
   A.closeModal = () => { const d = A.$('#modal'); if (d && d.open) d.close(); };
@@ -120,7 +145,7 @@
     const rc = 'RC 0002-' + String(next.nextRc || 1).padStart(8, '0'); next.nextRc = (next.nextRc || 1) + 1;
     let met = f.elements.method.value;
     if (met === 'Combinado') { const ef = A.num(f.elements.efec.value), tr = A.num(f.elements.transf.value); if (Math.abs(ef + tr - amount) > 0.005) throw Error('Efectivo + transferencia deben sumar ' + A.ars(amount) + '.'); met = 'Combinado (efectivo ' + A.ars(ef) + ' + transferencia ' + A.ars(tr) + ')'; }
-    const pay = { f: A.today(), tipo: 'Pago', doc: rc, imp: amount, met, plan: doc, det }; if (f.elements.sinInt && f.elements.sinInt.value === '1') { pay.sinInt = true; pay.det += ' · adelanto sin interés'; }
+    const pay = { f: A.today(), tipo: 'Pago', doc: rc, imp: amount, met, plan: doc, det }; if (f.elements.method.value === 'Combinado') { pay.efec = M.r2(A.num(f.elements.efec.value)); pay.transf = M.r2(A.num(f.elements.transf.value)); } if (f.elements.sinInt && f.elements.sinInt.value === '1') { pay.sinInt = true; pay.det += ' · adelanto sin interés'; }
     c.movs.push(pay);
     const r = A.applyResto(next, phone, doc, f.elements.resto && f.elements.resto.value); if (r) c.movs[c.movs.length - (f.elements.resto.value === 'perdon' ? 2 : 1)].det += ' · ' + P._restoTexto(f.elements.resto.value, r).toLowerCase();
     await A.saveDb(A.syncRecNC(next, phone)); if (A.refs) await A.reloadRefs();
@@ -137,6 +162,17 @@
     A.act(async () => { const next = A.clone(A.db); A.applyResto(next, phone, doc, dest); await A.saveDb(next); A.closeModal(); A.render(); }, 'Resto resuelto.');
   };
   A.copy = async (sel) => { const el = A.$(sel); if (!el) return; const t = el.value || el.textContent; try { await navigator.clipboard.writeText(t); A.toast('Copiado.'); } catch (_) { el.select && el.select(); try { document.execCommand('copy'); A.toast('Copiado.'); } catch (e) { A.toast('Seleccioná el texto y copialo.', true); } } };
+
+  /* Librería de PDF: si vendor/jspdf no llegó al servidor publicado, se carga sola desde un respaldo. */
+  A.jspdf = async () => {
+    if (window.jspdf && window.jspdf.jsPDF) return window.jspdf;
+    const srcs = ['vendor/jspdf.umd.min.js?v=2.5.1', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'];
+    for (const src of srcs) {
+      try { await new Promise((ok, ko) => { const sc = document.createElement('script'); sc.src = src; sc.onload = ok; sc.onerror = ko; document.head.appendChild(sc); }); } catch (_) { continue; }
+      if (window.jspdf && window.jspdf.jsPDF) return window.jspdf;
+    }
+    throw Error('No se pudo cargar el generador de PDF. Revisá tu conexión a internet y que la carpeta vendor esté subida.');
+  };
 
   /* ===== Comprobante de venta ===== */
   A.receiptText = (s) => {
@@ -166,7 +202,7 @@
       '<div class="row-flex">' + (d.hasAccount && (st.cuotas ? st.cuotas.pendiente : d.balance) > 0.005 ? '<button class="btn-good" data-act="pay" data-phone="' + A.esc(s.clientKey) + '" data-doc="' + A.esc(d.document) + '">Registrar pago</button>' : '') + (!s.delivered ? '<button class="btn-2" data-act="deliver" data-id="' + A.esc(id) + '">Confirmar entrega</button>' : '') + (A.db.clients[s.clientKey] ? '<a class="btn btn-2" href="#cliente/' + encodeURIComponent(s.clientKey) + '" data-close>Ver cliente</a>' : '') + '</div>';
     A.modal(created ? 'Comprobante listo' : 'Detalle de la venta', body, { noFocus: true });
   };
-  A.salePdf = async (id) => { const s = A.db.ventas.find((x) => x.id === id); try { if (!window.ICLUBSaleDocuments) throw Error('No se cargó el generador de PDF.'); await ICLUBSaleDocuments.receipt(A.db, s).save('ICLUB-comprobante-' + String(s.invoice || s.id).replace(/[^A-Za-z0-9-]/g, '-') + '.pdf', { returnPromise: true }); A.toast('PDF descargado.'); } catch (e) { A.toast('No se pudo generar el PDF. ' + e.message, true); } };
+  A.salePdf = async (id) => { const s = A.db.ventas.find((x) => x.id === id); try { await A.jspdf(); if (!window.ICLUBSaleDocuments) throw Error('No se cargó el generador de PDF.'); await ICLUBSaleDocuments.receipt(A.db, s).save('ICLUB-comprobante-' + String(s.invoice || s.id).replace(/[^A-Za-z0-9-]/g, '-') + '.pdf', { returnPromise: true }); A.toast('PDF descargado.'); } catch (e) { A.toast('No se pudo generar el PDF. ' + e.message, true); } };
   A.deliver = (id) => A.act(async () => {
     const linked = A.refs && (A.refs.data.sales || []).some((x) => x.id === id);
     if (linked) { await A.refChange('deliver', { id }); const st = await A.api.read(); A.db = A.normalize(st.data); }
@@ -188,9 +224,9 @@
   /* Mora configurada en Ajustes: % por día de atraso, con días de gracia y tope. */
   A.mora = (falta, dias) => { const st = A.db.settings || {}, pct = A.pct(st.mora); if (!(pct > 0) || !(dias > 0)) return 0; const d = Math.max(0, dias - A.num(st.moraGracia ?? 3)); if (!d) return 0; let p = pct * d; const tope = A.pct(st.moraTope ?? 20); if (tope > 0) p = Math.min(p, tope); return Math.round(falta * p / 100); };
   /* Contrato de financiación en PDF (mismo contenido que el portal anterior). */
-  A.planPdf = (phone, doc) => {
+  A.planPdf = async (phone, doc) => {
     try {
-      const { jsPDF } = window.jspdf; const c = A.db.clients[phone], pm = A.planOf(phone, doc), pc = P._planCalc(c, pm), st = A.db.settings || {}; const d = new jsPDF({ unit: 'pt', format: 'a4' }); let y = 60;
+      const { jsPDF } = await A.jspdf(); const c = A.db.clients[phone], pm = A.planOf(phone, doc), pc = P._planCalc(c, pm), st = A.db.settings || {}; const d = new jsPDF({ unit: 'pt', format: 'a4' }); let y = 60;
       const S = (x) => String(x == null ? '' : x).replace(/−/g, '-'); const title = (t) => { if (y > 730) { d.addPage(); y = 60; } y += 8; d.setFont('helvetica', 'bold'); d.setFontSize(11); d.setTextColor(29, 29, 31); d.text(S(t), 40, y); y += 10; d.setDrawColor(225); d.line(40, y, 555, y); y += 22; };
       const line = (l, v, bold) => { if (y > 770) { d.addPage(); y = 60; } d.setFont('helvetica', 'normal'); d.setFontSize(9.5); d.setTextColor(110, 110, 115); d.text(S(l), 40, y); d.setFont('helvetica', bold ? 'bold' : 'normal'); d.setFontSize(bold ? 11 : 10); d.setTextColor(29, 29, 31); d.text(S(v), 555, y, { align: 'right' }); d.setDrawColor(240); d.line(40, y + 8, 555, y + 8); y += 25; };
       d.setFont('helvetica', 'bold'); d.setFontSize(24); d.text('ICLUB', 40, y); d.setFontSize(10); d.setFont('helvetica', 'normal'); d.setTextColor(110); d.text('CONTRATO DE FINANCIACIÓN · ' + S(doc), 555, y, { align: 'right' }); y += 40;

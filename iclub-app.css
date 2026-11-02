@@ -99,3 +99,5 @@ dialog.modal.wide{max-width:min(980px,96vw)}.modal-head{display:flex;align-items
 .app .cal-d.late{background:#fef2f2;border-color:#fecaca}.app .cal-d.late .cal-amt{color:var(--bad)}.app .cal-d.today{border-color:var(--ink)}.app .cal-d.sel{background:#0f172a;color:#fff;border-color:#0f172a}.app .cal-d.sel .cal-amt,.app .cal-d.sel .cal-n,.app .cal-d.sel .cal-ok{color:#93c5fd}
 @media (max-width:1100px){.w8,.w6{grid-column:span 12}.w4{grid-column:span 6}}
 @media (max-width:700px){.w4{grid-column:span 12}.app .cal-d{min-height:50px}.cal-amt{font-size:10px}}
+
+.app button:focus-visible,.app a:focus-visible,.app [tabindex]:focus-visible{outline:3px solid #60a5fa;outline-offset:2px}

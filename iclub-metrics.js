@@ -71,6 +71,7 @@
     const B = root.ICLUBBusiness; const d = B.saleData(db, s); const c = (db.clients || {})[s.clientKey];
     const pm = c && (c.movs || []).find((m) => m.tipo === 'Compra' && ((s.id && m.grp === s.id) || (s.invoice && m.doc === s.invoice)));
     let cuotas = null, estado, color;
+    if (s.devolucion) { return { ...d, id: s.id, tipo: s.fin ? 'Financiada' : 'Contado', estado: 'Devuelta', color: 'muted', cuotas: null, ganancia: 0, dt: parseDate(s.fecha), referrer: s.referrer || null, balance: 0 }; }
     if (pm && pm.finan) {
       const pc = P()._planCalc(c, pm); const t = startOfDay(today || new Date());
       const vencidas = pc.cuotas.filter((q) => !q.done && q.dt && q.dt < t).length;
@@ -90,7 +91,8 @@
   function finance(db, opt) {
     opt = opt || {}; const today = startOfDay(opt.today || new Date()); const month = opt.month || monthKey(today);
     const rate = Number(db.settings && db.settings.rate) || 1520;
-    const ventas = (db.ventas || []).map((s) => ({ s, dt: parseDate(s.fecha) })).filter((x) => x.dt);
+    const ventas = (db.ventas || []).filter((s) => !s.devolucion).map((s) => ({ s, dt: parseDate(s.fecha) })).filter((x) => x.dt);
+    const devueltas = (db.ventas || []).filter((s) => s.devolucion && s.devolucion.f && monthKey(parseDate(s.devolucion.f) || new Date(0)) === month);
     const ofMonth = ventas.filter((x) => monthKey(x.dt) === month).map((x) => x.s);
     const sum = (arr, f) => r2(arr.reduce((a, x) => a + (Number(f(x)) || 0), 0));
     const pagos = []; for (const [phone, c] of Object.entries(db.clients || {})) for (const m of c.movs || []) if (m.tipo === 'Pago' && m.met !== 'Plan canje') { const dt = parseDate(m.f); if (dt) pagos.push({ phone, m, dt }); }
@@ -104,6 +106,9 @@
       porCobrar: r2(Object.values(db.clients || {}).reduce((a, c) => a + Math.max(0, saldo(c)), 0))
     };
     k.gananciaBruta = r2(k.vendido - k.costo); k.gananciaNeta = r2(k.gananciaBruta - k.gastos - k.comisiones);
+    /* Ganancia ya cobrada: la parte de la ganancia de cada venta del mes proporcional a lo que ya pagó el cliente. */
+    const B = root.ICLUBBusiness; k.gananciaCobrada = r2(ofMonth.reduce((a, s) => { const total = Number(s.ventaArs) || 0; if (!total || !B) return a; const d = B.saleData(db, s); const pagado = d.hasAccount ? Math.min(total, d.paid) : total; return a + (total - Number(s.costoArs || 0)) * pagado / total; }, 0)); k.gananciaPorCobrar = r2(k.gananciaBruta - k.gananciaCobrada);
+    k.devoluciones = devueltas.length;
     k.margen = k.vendido > 0 ? r2(k.gananciaBruta / k.vendido * 100) : 0; k.ticket = k.ventas ? r2(k.vendido / k.ventas) : 0;
     const all = dues(db, { today }); k.atrasado = r2(all.filter((d) => d.dias < 0).reduce((a, d) => a + d.amount, 0));
     /* Proyección: lo que deberías cobrar cada mes si todos pagan al día (lo vencido va al mes actual). */

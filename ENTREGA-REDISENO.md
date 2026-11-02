@@ -1,5 +1,12 @@
 # ICLUB · Rediseño completo del sistema interno · 30/10/2026
 
+> **01/11 · Mejoras de la auditoría:** ejecutá en Supabase `migraciones/12-mejoras-auditoria.sql` (después del 11). Al final tiene que decir `version_instalada = 12`. Si `copia_automatica_activa` sale en `false`, activá **pg_cron** en Supabase → Database → Extensions y ejecutá el 12 otra vez. Después borrá de GitHub `gestion.js`, `gestion.css`, `referidos.js` y `referidos.css`, y revisá **Respaldo → Estado del sistema → Revisar ahora**: todo tiene que salir en verde.
+>
+> Novedades: historial de cambios, aviso claro si se corta la conexión (sí/no quedó guardada), movimientos de stock, IMEI por unidad, **devoluciones** con reintegro, ganancia cobrada vs. por cobrar, copia semanal automática del servidor y comisión liberada aunque perdones un resto.
+
+> **31/10 · Auditoría:** se actualizó `migraciones/11-red-comercial.sql` (caja de pagos combinados, permisos de actividad, tope de estadísticas y datos del inversor). **Ejecutalo de nuevo completo en Supabase aunque ya lo hayas corrido**: es seguro repetirlo y no borra datos. Detalle en `AUDITORIA-TECNICA.md`.
+
+
 Incluye la Etapa 1 (sesión única, logo en pestañas, restos de cuota) y todo el rediseño: panel nuevo, referidos, inversores, finanzas, estadísticas y respaldo.
 
 ## Actualización del 30/10 · Inicio con widgets, Ajustes y ficha completa del cliente
