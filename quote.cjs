@@ -1,0 +1,8 @@
+const assert=require('node:assert/strict');const {compute,settings}=require('../ref-quote.js');
+const s={rate:1500,recargos:{2:25,3:45},tarjeta:{3:33.25}};
+let q=compute(400,s,{mode:'personal',hasAdvance:true,advance:100,advanceCurrency:'USD',months:2,frequency:'monthly'});assert.equal(q.advance,150000);assert.equal(q.balance,450000);assert.equal(q.total,562500);assert.equal(q.grandTotal,712500);assert.equal(q.regular,281250);
+let weekly=compute(400,s,{mode:'personal',hasAdvance:true,advance:150000,advanceCurrency:'ARS',months:2,frequency:'weekly'});assert.equal(weekly.count,8);assert.equal(weekly.total,q.total);assert.equal(weekly.regular,70312.5);
+q=compute(400,s,{mode:'personal',hasAdvance:false,advance:100,advanceCurrency:'USD',months:3,frequency:'weekly'});assert.equal(q.advance,0);assert.equal(q.total,870000);assert.equal(q.count,12);
+q=compute(400,s,{mode:'card',brand:'Visa',months:3});assert.equal(q.total,799500);assert.equal(q.advance,0);
+q=compute(399.99,s,{mode:'personal',months:3,frequency:'weekly'});assert.equal(Math.round((q.regular*(q.count-1)+q.last)*100),Math.round(q.total*100));
+assert.throws(()=>compute(400,s,{mode:'personal',months:2,hasAdvance:true,advance:500,advanceCurrency:'USD'}),/cubre/);assert.throws(()=>compute(400,s,{mode:'personal',months:2,hasAdvance:true,advance:0}),/adelanto/);assert.throws(()=>compute(400,s,{mode:'card',months:3}),/tarjeta/);assert.equal(settings().recargos[3],45);assert.equal(compute(400,s,{mode:'cash'}).grandTotal,600000);console.log('OK cotizador: contado, adelanto USD/ARS, semanal/mensual, tarjeta separada, redondeo y validaciones.');

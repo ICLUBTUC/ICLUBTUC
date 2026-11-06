@@ -1,0 +1,10 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),L=require('../price-list.js');
+const r=L.parse(fs.readFileSync(__dirname+'/lista-ejemplo.txt','utf8'),{rate:1500});const by=n=>r.items.find(x=>x.name===n);
+assert.equal(r.items.length,14);assert.equal(by('iPhone 13').usd,520);assert.match(by('iPhone 13').spec,/128 GB · Sellados/);
+assert.equal(by('iPhone 16 Pro Max').usd,1450);assert.match(by('iPhone 11').spec,/Batería 85% · Usados/);
+assert.equal(by('Samsung A15').usd,180);assert.match(by('Samsung A15').spec,/4 GB RAM/);assert.equal(by('Redmi Note 13').usd,210);
+assert.equal(by('Redmi A5').usd,180);assert.match(by('Redmi A5').flags[0],/pesos/);assert.equal(by('Smart TV Philco 4K').usd,490,'4K no es un precio');
+assert(r.ignored.some(l=>/bienvenidos/.test(l))&&r.ignored.some(l=>/Envíos/.test(l)));assert(!r.items.some(x=>/Seña|Envío|Hola/i.test(x.name)));
+const dup=L.parse('iPhone 13 128gb 500 usd\niPhone 13 128gb 520 usd');assert.equal(dup.items.length,1);assert.equal(dup.items[0].usd,520);
+assert.deepEqual(['iPhone 13','iPhone 11','iPhone 13 Pro'].map(n=>({name:n,cat:'Apple'})).sort(L.compare).map(x=>x.name),['iPhone 11','iPhone 13','iPhone 13 Pro']);
+console.log('OK lista de precios: 14 equipos, marcas por encabezado, capacidad/RAM/batería, pesos→USD, 4K no es precio, saludos ignorados, repetidos y orden natural.');

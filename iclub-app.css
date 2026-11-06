@@ -102,3 +102,15 @@ dialog.modal.wide{max-width:min(980px,96vw)}.modal-head{display:flex;align-items
 
 .app button:focus-visible,.app a:focus-visible,.app [tabindex]:focus-visible{outline:3px solid #60a5fa;outline-offset:2px}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Permisos de vendedores (el servidor además bloquea lo crítico) */
+.is-staff [data-act=dash-edit],.is-staff [data-act=ref-link],.is-staff [data-act=ref-link-all],.is-staff [data-act=ref-unlink],.is-staff [data-act=diag]{display:none!important}
+.no-editar [data-act=pay-edit],.no-editar [data-act=del-mov],.no-editar [data-act=undo-buy],.no-editar [data-act=devolucion],.no-editar [data-act=buy-date],.no-editar [data-act=plan-dates],.no-editar [data-act=cuota-date],.no-editar [data-act=plan-rec],.no-editar [data-act=plan-contado],.no-editar [data-act=del-gasto],.no-editar [data-act=manual-buy]{display:none!important}
+.no-cobrar [data-act=pay],.no-cobrar [data-act=qp-focus],.no-cobrar .qp-card{display:none!important}
+.no-vender [data-act=sell-to],.no-vender a[href="#vender"]{display:none!important}
+.no-inventario [data-act=add-item],.no-inventario [data-act=edit-item],.no-inventario [data-act=stock],.no-inventario [data-act=del-item],.no-inventario [data-act=quick-quote]~[data-act=add-item]{display:none!important}
+.no-clientes #clientFull button,.no-clientes #clientFull input,.no-clientes #clientFull select{pointer-events:none}
+.no-clientes #clientFull button{display:none!important}
+.side a.nav[hidden],.side .nav-label[hidden]{display:none!important}
+.no-finanzas .fin-only{display:none!important}
+.kpi.clickable{cursor:pointer;transition:transform .12s,box-shadow .12s}.kpi.clickable:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(15,23,42,.08)}

@@ -49,17 +49,24 @@ const admin=require('./e2e-seed.cjs')();const st=()=>rpc('iclub_get_state',{p_to
  assert.match(await page.textContent('#view'),/Referido: Álvaro/);
  await go('inicio');assert(await page.$('#qpQ'),'registrar pago en el inicio');await page.fill('#qpQ','juan');await page.waitForTimeout(200);
  await page.screenshot({path:path.join(shots,'o-cobro-inicio.png')});
- await page.click('#qpRes [data-act=pay][data-phone="3815000011"]');await page.waitForSelector('#payForm');await page.fill('#payForm [name=amount]','10000');await page.click('#payForm button.btn-good');await page.waitForSelector('#rcText');
+ await page.click('#qpRes [data-act=pay][data-phone="3815000011"]');await page.waitForSelector('#payForm');await page.fill('#payForm [name=amount]','10000');await page.fill('#payForm [name=by]','Leo');await page.click('#payForm button.btn-good');await page.waitForSelector('#rcText');{const pg=st().clients['3815000011'].movs.filter(m=>m.tipo==='Pago').at(-1);assert.equal(pg.by,'Leo');assert(pg.at,'hora del cobro');assert.deepEqual(st().panel.cobradores,['Leo']);}
  await toast(/Ganancia de Álvaro/);rs=refs().sales.find(x=>x.id==='v2');assert.equal(rs.collected,antes+10000,'el pago suma solo a la ganancia del referidor');await page.click('dialog#modal [data-close]');
  await go('vender');await page.fill('[name=cliQ]','juan');await page.click('#cliPick button[data-id="3815000011"]');await page.waitForTimeout(200);assert.equal(await page.inputValue('#posForm [name=referrer]'),'3815000001','la venta nueva ya trae al referidor');
  await page.evaluate(()=>{ICA.pos.reset();});
  console.log('OK cliente referido: compra vinculada, cobro desde el Inicio y la ganancia del referidor se actualiza sola; la venta nueva ya trae al referidor.');
+ // 5c) Comprobantes en PDF: recibo de pago, compra y estado de cuenta.
+ await go('cliente/3815000011/comprobantes');for(const [sel,re] of [['tr:has-text("Pago") [data-act=doc-pdf]:not([data-share])',/Comprobante de pago RC/],['tr:has-text("Compra") [data-act=doc-pdf]:not([data-share])',/Comprobante FA/],['[data-act=acc-pdf]:not([data-share])',/Estado de cuenta Juan Perez/]]){const [dl]=await Promise.all([page.waitForEvent('download'),page.click(sel)]);assert.match(dl.suggestedFilename(),re);const fp=path.join(shots,'t.pdf');await dl.saveAs(fp);assert.equal(fs.readFileSync(fp).subarray(0,4).toString(),'%PDF');}
+ await go('cliente/3815000011/pagos');const [rp]=await Promise.all([page.waitForEvent('download'),page.waitForEvent('popup'),page.click('[data-act=doc-pdf][data-share]')]);assert.match(rp.suggestedFilename(),/Comprobante de pago/);
+ await go('ajustes');await page.fill('#bizForm [name=wa]','381 555-1234');await page.click('#bizForm button.btn-good');await page.waitForTimeout(700);assert.equal(st().settings.biz.wa,'381 555-1234');
+ console.log('OK comprobantes PDF: recibo, compra y estado de cuenta; "Enviar PDF" descarga y abre WhatsApp en la PC; datos del negocio en Ajustes.');
  // 6) Respaldo: historial de cambios y estado del sistema.
  await go('respaldo');assert.match(await page.textContent('#view'),/Historial de cambios/);assert.match(await page.textContent('#view'),/Devolución de/);
  await page.click('[data-act=diag]');await page.waitForFunction(()=>/PDF/.test(document.querySelector('#diagOut').textContent),null,{timeout:15000});const dg=await page.textContent('#diagOut');
  assert.match(dg,/versión 12/);assert.match(dg,/Red comercial/);assert.match(dg,/Generador de Excel/);await page.screenshot({path:path.join(shots,'n-estado.png'),fullPage:true});
  // 7) Finanzas: ganancia cobrada / por cobrar.
- await go('finanzas');assert.match(await page.textContent('#view'),/ya cobrada/);assert.match(await page.textContent('#view'),/devoluciones/);
+ await go('finanzas');assert.match(await page.textContent('#view'),/ya cobrada/);
+ for(const [k,re] of [['vendido',/Total vendido[\s\S]*Contado \(/],['ganancia',/Ganancia neta[\s\S]*Ganancia por venta/],['cobrado',/Total/],['porCobrar',/Juan Pérez[\s\S]*Cobrar/],['atrasado',/Total atrasado/],['ticket',/General[\s\S]*Cada venta/],['gastos',/Gastos y comisiones/]]){await page.click('[data-act=fin-detail][data-k='+k+']');await page.waitForSelector('dialog#modal[open]');assert.match(await page.textContent('dialog#modal'),re,'detalle '+k);if(k==='vendido'){await page.click('dialog#modal [data-act=fin-tab][data-k=fin]');assert.equal(await page.$eval('dialog#modal [data-act=fin-tab][data-k=fin]',b=>b.classList.contains('on')),true);assert.equal(await page.$eval('dialog#modal [data-act=fin-tab][data-k=todas]',b=>b.classList.contains('on')),false);await page.screenshot({path:path.join(shots,'u-fin-detalle.png')});}await page.click('dialog#modal [data-close]');}
+assert.match(await page.textContent('#view'),/devoluciones/);
  console.log('OK respaldo: historial de cambios y estado del sistema (versión 12); finanzas separa ganancia cobrada y por cobrar.');
  console.log('Errores de página:',errors.length?errors:'ninguno');await browser.close();srv.close();if(errors.length)process.exit(1);
 })().catch(e=>{console.error('FALLO',e);process.exit(1);});

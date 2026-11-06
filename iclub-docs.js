@@ -10,7 +10,7 @@
   const productOf = (m) => (m && (m.prodName || String(m.det || m.doc || '').split(' · ')[0])) || 'Compra';
   const parse = (s) => { const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(s || '')); return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null; };
   const balanceOf = (movs) => r2(movs.reduce((a, m) => a - Number(m.imp || 0), 0));
-  const biz = (db) => Object.assign({ name: 'ICLUB', tagline: 'Tecnología · Financiación propia', wa: '', ig: '', dir: 'San Miguel de Tucumán', alias: 'ICLUBTUC', nota: '' }, (db.settings && db.settings.biz) || {});
+  const biz = (db) => Object.assign({ name: 'ICLUB', tagline: 'Tecnología · Financiación propia', wa: '', ig: '', dir: 'San Miguel de Tucumán', alias: 'ICLUBTUC', nota: '', promoOn: true, promoTitle: 'Recomendá ICLUB y ganá', promo: 'Si un amigo compra diciendo tu código, te bonificamos en tu próxima cuota. Consultá los detalles por WhatsApp.' }, (db.settings && db.settings.biz) || {});
 
   function setup(db, kind, number, date) {
     const J = root.jspdf && root.jspdf.jsPDF; if (!J) throw Error('No se pudo cargar el generador de PDF.');
@@ -43,7 +43,7 @@
       fill(bg); doc.roundedRect(x0, yy - 3.6, w, 5.4, 2.7, 2.7, 'F'); color(fg); t(text.toUpperCase(), x0 + w / 2, yy + 0.2, { align: 'center', charSpace: 0.35 }); return w;
     }
     function hero(label, amount, sub, pillText, tone) {
-      ensure(34); fill(C.soft); doc.roundedRect(M, y, CW, 26, 3.5, 3.5, 'F'); fill(tone === 'bad' ? C.red : tone === 'good' ? C.green : C.blue); doc.roundedRect(M, y, 2.2, 26, 1.1, 1.1, 'F');
+      ensure(34); heroY = y; fill(C.soft); doc.roundedRect(M, y, CW, 26, 3.5, 3.5, 'F'); fill(tone === 'bad' ? C.red : tone === 'good' ? C.green : C.blue); doc.roundedRect(M, y, 2.2, 26, 1.1, 1.1, 'F');
       font(7.2, true); color(C.muted); t(label.toUpperCase(), M + 9, y + 8, { charSpace: 0.7 });
       font(24, true); color(C.ink); t(money(amount), M + 9, y + 17.8);
       if (sub) { font(8.4); color(C.muted); t(sub, M + 9, y + 22.8); }
@@ -83,6 +83,22 @@
       ensure(14); font(8.4, true); color(C.ink); t(label, M, y); font(8.4); color(C.muted); t(done + ' de ' + total + ' cuotas', W - M, y, { align: 'right' }); y += 3;
       fill(C.line); doc.roundedRect(M, y, CW, 2.6, 1.3, 1.3, 'F'); const p = total ? Math.min(1, done / total) : 0; if (p > 0) { fill(p >= 1 ? C.green : C.blue); doc.roundedRect(M, y, Math.max(2.6, CW * p), 2.6, 1.3, 1.3, 'F'); } y += 8;
     }
+    function countdown(pc) {
+      if (!pc || !pc.cuotas.length) return; const pend = pc.cuotas.filter((q) => !q.done), last = pc.cuotas[pc.cuotas.length - 1]; ensure(13);
+      fill(pend.length ? C.blueSoft : C.greenSoft); doc.roundedRect(M, y - 4.6, CW, 9.6, 2.4, 2.4, 'F');
+      font(9.4, true); color(pend.length ? C.blue : C.green);
+      const txt = pend.length ? (pend.length === 1 ? '¡Te falta 1 sola cuota!' : 'Te faltan ' + pend.length + ' cuotas') + '  ·  terminás de pagar el ' + (last.d || '') : '¡Plan terminado! Pagaste todas las cuotas.';
+      t(txt, M + 5, y + 1.4); if (pend.length) { font(8.2); color(C.muted); const dl = last.dt ? Math.max(0, Math.ceil((last.dt - new Date()) / 86400000)) : null; if (dl != null) t(dl === 0 ? 'hoy' : 'en ' + dl + ' días', W - M - 5, y + 1.4, { align: 'right' }); }
+      y += 10;
+    }
+    function promo(code) {
+      if (!B.promoOn || !B.promo) return; font(8.6); const lines = doc.splitTextToSize(B.promo, CW - 62); const h = Math.max(20, 12 + lines.length * 4.2); ensure(h + 4);
+      fill(C.navy); doc.roundedRect(M, y, CW, h, 3.5, 3.5, 'F'); alpha(0.22, () => { fill(C.blue); doc.circle(M + CW - 30, y + h / 2, h / 2 - 1.2, 'F'); });
+      font(7, true); color([120, 180, 255]); t((B.promoTitle || 'Recomendá y ganá').toUpperCase(), M + 7, y + 7.5, { charSpace: 0.7 });
+      font(8.6); color(C.white); lines.forEach((ln, k) => t(ln, M + 7, y + 13 + k * 4.2));
+      if (code) { font(6.6, true); color([166, 180, 204]); t('TU CÓDIGO', W - M - 30, y + h / 2 - 3.2, { align: 'center', charSpace: 0.6 }); font(12, true); const w = doc.getTextWidth(code) + 8; fill(C.white); doc.roundedRect(W - M - 30 - w / 2, y + h / 2 - 1, w, 8, 2, 2, 'F'); color(C.navy); t(code, W - M - 30, y + h / 2 + 4.6, { align: 'center' }); }
+      y += h + 6;
+    }
     function totals(lines) {
       const w = 92, x = W - M - w; const h = lines.length * 7 + 4; ensure(h + 4);
       fill(C.soft); doc.roundedRect(x, y, w, h, 3, 3, 'F'); let yy = y + 8;
@@ -103,6 +119,21 @@
       font(7, true); color(C.blue); t('CÓMO PAGAR', M + 6, y + 6.4, { charSpace: 0.7 }); font(9, true); color(C.ink);
       t([B.alias ? 'Transferencia al alias ' + B.alias : '', B.wa ? 'Avisanos por WhatsApp ' + B.wa : ''].filter(Boolean).join('   ·   '), M + 6, y + 12); y += 22;
     }
+    let heroY = 54;
+    function stamp(text, sub, tone) {
+      const col = tone === 'muted' ? C.muted : tone === 'bad' ? C.red : C.green, ang = 8, rad = ang * Math.PI / 180, cx = W - M - 44, cy = heroY + 13.5;
+      const rot = (dx, dy) => [cx + dx * Math.cos(rad) + dy * Math.sin(rad), cy - dx * Math.sin(rad) + dy * Math.cos(rad)];
+      const width = (s, size, cs) => { font(size, true); return doc.getTextWidth(s) + cs * (s.length - 1); };
+      const line = (s, size, cs, dy) => { const w = width(s, size, cs); const [x, yy] = rot(-w / 2, dy); t(s, x, yy, { angle: ang, charSpace: cs }); };
+      const subs = sub ? String(sub).split('\n') : [];
+      const sw = Math.max(width(text, 22, 1.4), ...subs.map((x) => width(x, 6.2, 0.45))) + 10, sh = 13 + subs.length * 3.4;
+      if (doc.GState) { doc.saveGraphicsState(); doc.setGState(new doc.GState({ opacity: 0.9 })); }
+      color(col); stroke(col);
+      const box = (pad, lw) => { doc.setLineWidth(lw); const pts = [rot(-sw / 2 - pad, -sh / 2 - pad), rot(sw / 2 + pad, -sh / 2 - pad), rot(sw / 2 + pad, sh / 2 + pad), rot(-sw / 2 - pad, sh / 2 + pad)]; for (let k = 0; k < 4; k++) { const a = pts[k], b = pts[(k + 1) % 4]; doc.line(a[0], a[1], b[0], b[1]); } };
+      box(0, 0.9); box(1.4, 0.35);
+      line(text, 22, 1.4, subs.length ? -sh / 2 + 10.2 : 3.4); subs.forEach((ln, k) => line(ln, 6.2, 0.45, -sh / 2 + 14.6 + k * 3.4));
+      if (doc.GState) doc.restoreGraphicsState();
+    }
     function finish(filename) {
       const n = doc.getNumberOfPages();
       for (let i = 1; i <= n; i++) {
@@ -115,9 +146,10 @@
       doc.__name = String(filename).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9 ._-]+/g, '-'); return doc;
     }
     header(true);
-    return { doc, B, hero, boxes, section, paragraph, table, progress, totals, pill, payBox, finish, ensure, get y() { return y; }, set y(v) { y = v; } };
+    return { doc, B, stamp, countdown, promo, hero, boxes, section, paragraph, table, progress, totals, pill, payBox, finish, ensure, get y() { return y; }, set y(v) { y = v; } };
   }
 
+  const refCode = (c, phone) => (String(c.name || 'CLIENTE').split(' ')[0].normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 8) || 'CLIENTE') + String(phone).replace(/\D/g, '').slice(-4);
   const clientRows = (c, phone) => [['Nombre', c.name || 'Cliente'], ['Teléfono', phone], ['DNI / CUIT', c.cuit || ''], ['Dirección', c.dir || ''], ['Email', c.mail || '']];
   const ventaOf = (db, m) => (db.ventas || []).find((v) => (m.grp && v.id === m.grp) || (v.invoice && v.invoice === m.doc)) || null;
   const qState = (q, hoy) => (q.cancelada ? { text: 'Cancelada', tone: 'muted' } : q.done ? { text: 'Pagada', tone: 'good' } : q.paid > 0.005 ? { text: q.dt && q.dt < hoy ? 'Parcial · vencida' : 'Parcial', tone: 'warn' } : q.dt && q.dt < hoy ? { text: 'Vencida', tone: 'bad' } : { text: 'Pendiente', tone: 'muted' });
@@ -136,18 +168,21 @@ const proxTxt = (q) => { const hoy = new Date(); hoy.setHours(0, 0, 0, 0); const
     const after = c.movs.slice(0, idx + 1), saldoCuenta = balanceOf(after);
     const pcB = pm && pm.finan ? plan(c, pm, idx - 1) : null, pcA = pm && pm.finan ? plan(c, pm, idx) : null;
     const saldoCompra = pm ? r2(-Number(pm.imp) - after.filter((x) => x !== pm && (x.plan === pm.doc || (pm.grp && x.grp === pm.grp)) && x.tipo !== 'Compra').reduce((a, x) => a + Number(x.imp || 0), 0)) : saldoCuenta;
-    d.hero('Recibimos', m.imp, 'Gracias por tu pago, ' + (String(c.name || '').split(' ')[0] || 'cliente') + '.', 'Pago recibido', 'good');
+    d.hero('Recibimos', m.imp, 'Gracias por tu pago, ' + (String(c.name || '').split(' ')[0] || 'cliente') + '.', null, 'good');
     const medio = m.efec != null ? 'Efectivo ' + money(m.efec) + ' + transferencia ' + money(m.transf) : (m.met || 'Sin especificar');
-    d.boxes([{ title: 'Cliente', rows: clientRows(c, phone) }, { title: 'Pago', rows: [['Recibo', m.doc || ''], ['Fecha', m.f], ['Medio', medio], ['Aplicado a', pm ? productOf(pm) + ' · ' + pm.doc : 'Cuenta corriente']] }]);
+    const hora = m.at ? new Date(m.at).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Argentina/Buenos_Aires' }) + ' h' : '';
+    d.boxes([{ title: 'Cliente', rows: clientRows(c, phone) }, { title: 'Pago', rows: [['Recibo', m.doc || ''], ['Fecha', m.f + (hora ? ' · ' + hora : '')], ['Medio', medio], ['Cobró', m.by || ''], ['Aplicado a', pm ? productOf(pm) + ' · ' + pm.doc : 'Cuenta corriente']] }]);
     if (m.det) d.paragraph('Detalle: ' + m.det, 9, C.muted);
     const paidNow = pcA && pcB ? pcA.cuotas.filter((q) => q.paid - (pcB.cuotas[q.i] ? pcB.cuotas[q.i].paid : 0) > 0.005).map((q) => q.n) : [];
-    if (pcA) { d.section('Plan de cuotas', pcA.n + ' cuotas ' + (pcA.freq === 'Semanal' ? 'semanales' : 'mensuales')); d.progress(pcA.pagadas, pcA.n, 'Avance del plan después de este pago'); cuotasTable(d, pcA, paidNow); }
+    if (pcA) { d.section('Plan de cuotas', pcA.n + ' cuotas ' + (pcA.freq === 'Semanal' ? 'semanales' : 'mensuales')); d.progress(pcA.pagadas, pcA.n, 'Avance del plan después de este pago'); cuotasTable(d, pcA, paidNow); d.countdown(pcA); }
     const prox = pcA && pcA.prox;
     if (prox) d.paragraph(proxTxt(prox), 9.4, C.ink);
     d.totals([['Total de la compra', pm ? money(-pm.imp) : '—'], ['Este pago', money(m.imp)], ['Saldo de esta compra', money(Math.max(0, saldoCompra)), saldoCompra > 0.005 ? null : null], Object.assign(['Saldo total de tu cuenta', money(Math.max(0, saldoCuenta))], { strong: true })]);
     if (prox) { /* ya indicada arriba */ }
     else if (saldoCompra <= 0.005 && pm) d.paragraph('¡Esta compra quedó totalmente pagada! Gracias por confiar en nosotros.', 9.4, C.green);
     if (saldoCuenta > 0.005) d.payBox();
+    d.promo(refCode(c, phone));
+    d.stamp('PAGADO', m.f + (hora ? ' · ' + hora : '') + (m.by ? '\nCOBRÓ: ' + String(m.by).toUpperCase() : ''));
     return d.finish(d.B.name + ' Comprobante de pago ' + (m.doc || '') + '.pdf');
   }
 
@@ -161,7 +196,7 @@ const proxTxt = (q) => { const hoy = new Date(); hoy.setHours(0, 0, 0, 0); const
     const saldo = Math.max(0, r2(total - pagado - nc + ri));
     const d = setup(db, m.tipo === 'Saldo anterior' ? 'Saldo anterior' : 'Comprobante de compra', m.doc, m.f);
     const devuelta = (v && v.devolucion) || (m.finan && m.finan.cancelada);
-    d.hero('Total de la compra', total, pc && !pc.esContado ? pc.n + ' cuotas ' + (pc.freq === 'Semanal' ? 'semanales' : 'mensuales') + ' de ' + money(pc.cuotaImp) : (m.finan ? 'Precio de contado' : saldo <= 0.005 ? 'Pagada de contado' : 'Cuenta corriente'), devuelta ? 'Devuelta' : saldo <= 0.005 ? 'Pagada' : pc && pc.vencidoAhora > 0.005 ? 'Con atraso' : m.finan ? 'Financiada' : 'Saldo pendiente', devuelta ? 'muted' : saldo <= 0.005 ? 'good' : pc && pc.vencidoAhora > 0.005 ? 'bad' : 'info');
+    d.hero('Total de la compra', total, pc && !pc.esContado ? pc.n + ' cuotas ' + (pc.freq === 'Semanal' ? 'semanales' : 'mensuales') + ' de ' + money(pc.cuotaImp) : (m.finan ? 'Precio de contado' : saldo <= 0.005 ? 'Pagada de contado' : 'Cuenta corriente'), devuelta ? null : saldo <= 0.005 ? null : pc && pc.vencidoAhora > 0.005 ? 'Con atraso' : m.finan ? 'Financiada' : 'Saldo pendiente', devuelta ? 'muted' : saldo <= 0.005 ? 'good' : pc && pc.vencidoAhora > 0.005 ? 'bad' : 'info');
     const snap = v && v.itemSnapshot || {};
     d.boxes([{ title: 'Cliente', rows: clientRows(c, phone) }, { title: 'Equipo', rows: [['Producto', snap.name || productOf(m)], ['Detalle', snap.spec || ''], ['IMEI / serie', snap.imei || ''], ['Entrega', v ? (v.delivered ? 'Entregado' : 'Pendiente de entrega') : ''], ['Comprobante', m.doc]] }]);
     if ((m.prods || []).length > 1) { d.section('Productos'); d.table([{ label: 'Producto', w: 120 }, { label: 'Cantidad', w: 30, align: 'right' }], m.prods.map((p) => [p.name, p.qty])); }
@@ -171,13 +206,15 @@ const proxTxt = (q) => { const hoy = new Date(); hoy.setHours(0, 0, 0, 0); const
     if (m.finan && Number(m.finan.adel)) cond.push(['Adelanto', money(m.finan.adel)]);
     if (pc && !pc.esContado) { cond.push(['Monto financiado en ' + pc.n + ' cuotas ' + (pc.freq === 'Semanal' ? 'semanales' : 'mensuales'), money(pc.base)]); if (pc.recPct) cond.push(['Recargo de financiación', pc.recPct + '%']); }
     if (cond.length) { d.section('Condiciones de la compra'); d.table([{ label: 'Concepto', w: 95 }, { label: 'Importe', w: 75, align: 'right', bold: true }], cond); }
-    if (pc) { d.section('Plan de cuotas'); d.progress(pc.pagadas, pc.n, 'Avance del plan'); cuotasTable(d, pc); }
+    if (pc) { d.section('Plan de cuotas'); d.progress(pc.pagadas, pc.n, 'Avance del plan'); cuotasTable(d, pc); if (!devuelta) d.countdown(pc); }
     const movRows = pagos.map((x) => [x.f, x.doc || '', x.efec != null ? 'Combinado' : (x.met || ''), x.det || '', money(x.imp)]).concat(creditos.map((x) => [x.f, x.doc || '', 'Nota de crédito', x.det || '', money(x.imp)])).concat(reint.map((x) => [x.f, x.doc || '', 'Reintegro', x.det || '', money(x.imp)]));
     if (movRows.length) { d.section('Pagos y créditos registrados'); movRows.sort((a, b) => (parse(a[0]) || 0) - (parse(b[0]) || 0)); d.table([{ label: 'Fecha', w: 24 }, { label: 'Número', w: 36 }, { label: 'Medio', w: 28 }, { label: 'Detalle', w: 54 }, { label: 'Importe', w: 28, align: 'right', bold: true }], movRows); }
     const lines = [['Total de la compra', money(total)], ['Pagado', money(pagado)]]; if (nc) lines.push(['Notas de crédito', money(nc)]); if (ri) lines.push(['Reintegrado', money(-ri)]);
     if (pc && pc.prox && !devuelta) d.paragraph(proxTxt(pc.prox), 9.4, C.ink);
     lines.push(Object.assign(['Saldo pendiente', money(saldo)], { strong: true })); d.totals(lines);
     if (saldo > 0.005 && !devuelta) d.payBox();
+    if (!devuelta) d.promo(refCode(c, phone));
+    if (devuelta) d.stamp('DEVUELTA', '', 'muted'); else if (saldo <= 0.005) d.stamp('PAGADO', 'COMPRA CANCELADA');
     return d.finish(d.B.name + ' Comprobante ' + (m.doc || '') + '.pdf');
   }
 
@@ -205,9 +242,24 @@ const proxTxt = (q) => { const hoy = new Date(); hoy.setHours(0, 0, 0, 0); const
     if (movs.length) { d.section('Últimos movimientos', movs.length < (c.movs || []).length ? 'últimos ' + movs.length : ''); d.table([{ label: 'Fecha', w: 24 }, { label: 'Tipo', w: 28 }, { label: 'Número', w: 36 }, { label: 'Detalle', w: 54 }, { label: 'Importe', w: 28, align: 'right', bold: true, tone: (r) => (r.neg ? C.red : C.green) }], movs.map((m) => { const r = [m.f, m.tipo, m.doc || '', m.tipo === 'Compra' ? productOf(m) : (m.det || m.met || ''), money(-Number(m.imp))]; r.neg = -Number(m.imp) > 0; return r; })); }
     d.totals([Object.assign(['Saldo total', money(saldo)], { strong: true })]);
     if (saldo > 0.005) d.payBox();
+    d.promo(refCode(c, phone));
     return d.finish(d.B.name + ' Estado de cuenta ' + (c.name || phone) + '.pdf');
   }
 
+
+  /* ---------- Cierre de caja ---------- */
+  function cierre(db, data) {
+    const { r, k, cierre: x } = data, f = (d) => d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const d = setup(db, 'Cierre de caja', f(r.from) + (+r.from !== +r.to ? ' al ' + f(r.to) : ''), x ? new Date(x.at).toLocaleDateString('es-AR') : f(new Date()));
+    d.hero('Total cobrado', k.cobros, k.n + ' pagos registrados en el período', x ? (Math.abs(x.diferencia) < 1 ? 'Sin diferencia' : 'Con diferencia') : 'Sin cerrar', x ? (Math.abs(x.diferencia) < 1 ? 'good' : 'bad') : 'muted');
+    d.boxes([{ title: 'Efectivo', rows: [['Al inicio', money(x ? x.efectivoInicial : 0)], ['Cobros', money(k.efectivo)], ['Gastos', money(-k.gastos.efectivo)], ['Reintegros', money(-k.reintegros.efectivo)], ['Retiros / ingresos', k.ajustes.efectivo ? money(k.ajustes.efectivo) : ''], ['Debería haber', money(x ? x.efectivoEsperado : k.netoEfectivo)], ['Contado', x ? money(x.efectivoContado) : ''], ['Diferencia', x ? money(x.diferencia) : '']] },
+      { title: 'Otros medios', rows: [['Transferencias', money(k.transferencia)], ['Gastos por transferencia', money(-k.gastos.transferencia)], ['Neto en banco', money(k.netoTransferencia)], ['Mercado Pago', k.mp ? money(k.mp) : ''], ['Tarjeta', k.tarjeta ? money(k.tarjeta) : ''], ['Cerró', x && x.by ? x.by : '']] }]);
+    const pc = Object.entries(k.porCobrador || {}); if (pc.length) { d.section('Por quién cobró'); d.table([{ label: 'Cobrador', w: 120 }, { label: 'Importe', w: 50, align: 'right', bold: true }], pc.sort((a, b) => b[1] - a[1]).map(([w, v]) => [w, money(v)])); }
+    if (k.detalle.length) { d.section('Detalle de cobros', k.detalle.length + ' pagos'); d.table([{ label: 'Fecha', w: 22 }, { label: 'Cliente', w: 46 }, { label: 'Recibo', w: 34 }, { label: 'Medio', w: 26 }, { label: 'Cobró', w: 20 }, { label: 'Importe', w: 26, align: 'right', bold: true }], k.detalle.map((y) => [y.f, y.cliente, y.doc, y.medio, y.by, money(y.imp)])); }
+    if (k.gastos.lista.length) { d.section('Gastos'); d.table([{ label: 'Fecha', w: 22 }, { label: 'Concepto', w: 80 }, { label: 'Categoría', w: 36 }, { label: 'Importe', w: 30, align: 'right', bold: true }], k.gastos.lista.map((g) => [g.f, g.concepto, g.cat, money(g.monto)])); }
+    if (x && x.nota) { d.section('Nota'); d.paragraph(x.nota); }
+    return d.finish(d.B.name + ' Cierre de caja ' + f(r.from) + '.pdf');
+  }
   function forMov(db, phone, idx) { const m = db.clients[phone].movs[idx]; if (!m) throw Error('Comprobante inexistente.'); if (m.tipo === 'Pago') return pago(db, phone, idx); if (m.tipo === 'Compra' || m.tipo === 'Saldo anterior') return compra(db, phone, idx); return simple(db, phone, idx); }
-  root.ICLUBDocs = { forMov, cuenta, pago, compra, simple, money };
+  root.ICLUBDocs = { cierre, refCode, forMov, cuenta, pago, compra, simple, money };
 })(typeof window !== 'undefined' ? window : globalThis);

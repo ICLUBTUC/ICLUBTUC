@@ -114,6 +114,21 @@
       case 'pay-receipt': A.docSend(d.phone, Number(d.i)); break;
       case 'doc-pdf': A.docPdf(d.phone, Number(d.i), !!d.share); break;
       case 'biz-preview': { const ph = Object.keys(A.db.clients).find((k) => (A.db.clients[k].movs || []).some((m) => m.tipo === 'Compra' && m.finan)) || Object.keys(A.db.clients)[0]; if (ph) A.accountPdf(ph, false); else A.toast('Cargá un cliente para ver el ejemplo.'); break; }
+      case 'caja-off': ui.cajaOff = Math.min(0, (ui.cajaOff || 0) + Number(d.d)); rerender(); break;
+      case 'caja-pdf': A.cajaPdf(d.id); break;
+      case 'caja-reopen': A.cajaReopen(d.id); break;
+      case 'user-new': A.userForm(); break;
+      case 'user-edit': A.userForm(d.user); break;
+      case 'user-del': A.delUser(d.user); break;
+      case 'fin-detail': A.finDetail(d.k); break;
+      case 'fin-tab': A.finTab(d.g, d.k); break;
+      case 'fin-sale': A.closeModal(); A.openSale(d.id); break;
+      case 'fin-close': A.closeModal(); break;
+      case 'rem-send': A.remSend(d.phone); break;
+      case 'rem-skip': A.remSkip(d.phone); break;
+      case 'op-send': A.opSend(d.phone); break;
+      case 'op-later': A.opLater(d.phone); break;
+      case 'op-no': A.opNo(d.phone); break;
       case 'acc-pdf': A.accountPdf(d.phone, !!d.share); break;
       case 'pay-edit': A.payEdit(d.phone, Number(d.i)); break;
       case 'doc-send': A.docSend(d.phone, Number(d.i)); break;
@@ -147,12 +162,14 @@
     if (t.closest('#qqForm')) { A.qqRender(); return; }
     if (t.closest('#manualBuyForm')) { A.mbHint(); return; }
     if (t.closest('#devForm')) { A.devHint(); return; }
+    if (t.closest('#cajaCloseForm')) { A.cajaDif(); return; }
     if (t.id === 'qpQ') { A.qpSearch(t.value); return; }
     if (t.closest('#rateForm')) { A.$('#rateImpact').innerHTML = A.rateImpact(t.value); return; }
     const sim = t.closest('.sim-form'); if (sim) { const f = sim.elements; sim.querySelector('.sim-out').innerHTML = A.simOut(f.monto.value, f.rate.value, f.meses.value, f.tna.value); }
   });
   document.addEventListener('change', (e) => {
     const t = e.target;
+    if (t.dataset && t.dataset.actNorec) { A.setNoRec(t.dataset.actNorec, t.checked); return; }
     if (t.form && t.form.id === 'posForm' && t.name === 'imei') { pos.imei = t.value; A.posSummary(); return; }
     if (t.form && t.form.id === 'posForm' && t.name && t.tagName === 'SELECT') { setPath(pos, t.name, t.value); if (t.name === 'referrer' || t.name === 'method') rerender(); else A.posSummary(); return; }
     if (t.form && t.form.id === 'posForm' && t.type === 'checkbox') { setPath(pos, t.name, t.checked); A.posSummary(); return; }
@@ -169,16 +186,20 @@
     const f = e.target; if (f.dataset.backupForm) return; e.preventDefault(); const el = f.elements;
     switch (f.id) {
       case 'payForm': A.savePayment(f); break;
-      case 'dashForm': { const order = [...f.querySelectorAll('.item')].map((it) => it.dataset.k).filter((k) => f.querySelector('input[value="' + k + '"]').checked); if (!order.length) { A.toast('Elegí al menos un widget.', true); break; } A.act(async () => { const next = A.clone(A.db); next.panel = { ...(next.panel || {}), widgets: order }; await A.saveDb(next); A.closeModal(); rerender(); }, 'Inicio guardado.'); break; }
+      case 'dashForm': { const order = [...f.querySelectorAll('.item')].map((it) => it.dataset.k).filter((k) => f.querySelector('input[value="' + k + '"]').checked); if (!order.length) { A.toast('Elegí al menos un widget.', true); break; } A.act(async () => { const next = A.clone(A.db); next.panel = { ...(next.panel || {}), widgets: order, widgetsKnown: A.widgetKeys() }; await A.saveDb(next); A.closeModal(); rerender(); }, 'Inicio guardado.'); break; }
       case 'taskForm': A.act(async () => { const t = el.t.value.trim(); if (!t) return false; const next = A.clone(A.db); next.panel = { ...(next.panel || {}), tareas: ((next.panel || {}).tareas || []).concat([{ id: A.uid(), t: t.slice(0, 200), f: el.f.value || '', done: false, at: new Date().toISOString() }]) }; await A.saveDb(next); rerender(); const n = A.$('#taskForm [name=t]'); if (n) n.focus(); }); break;
       case 'rateForm': { const r = A.num(el.rate.value); if (!(r >= 100)) { A.toast('Ingresá un valor válido (mayor a 100).', true); break; } if (confirm('¿Cambiar el dólar a ' + A.ars(r) + '? Cambian todos los precios en pesos de la página.')) A.saveSettings({ rate: r }, 'Dólar actualizado a ' + A.ars(r) + '.'); break; }
-      case 'bizForm': A.saveSettings({ biz: { name: el.name.value.trim() || 'ICLUB', tagline: el.tagline.value.trim(), alias: el.alias.value.trim(), wa: el.wa.value.trim(), ig: el.ig.value.trim(), dir: el.dir.value.trim(), nota: el.nota.value.trim() } }, 'Datos de comprobantes guardados.'); break;
+      case 'userForm': A.saveUser(f); break;
+      case 'cajaCloseForm': A.cajaClose(f); break;
+      case 'cajaCfgForm': A.cajaCfg(f); break;
+      case 'cobranzaForm': A.saveCobranza(f); break;
+      case 'bizForm': A.saveSettings({ biz: { name: el.name.value.trim() || 'ICLUB', tagline: el.tagline.value.trim(), alias: el.alias.value.trim(), wa: el.wa.value.trim(), ig: el.ig.value.trim(), dir: el.dir.value.trim(), nota: el.nota.value.trim(), promoOn: el.promoOn.checked, promoTitle: el.promoTitle.value.trim(), promo: el.promo.value.trim().slice(0, 220) } }, 'Datos de comprobantes guardados.'); break;
       case 'moraForm': A.saveSettings({ mora: el.mora.value.replace(/[^0-9.,]/g, ''), moraGracia: A.num(el.moraGracia.value), moraTope: A.pct(el.moraTope.value) }, 'Mora guardada.'); break;
       case 'recForm': { const cur = A.settingsFull().recargos, rec = {}; Object.keys(cur).forEach((n) => { const v = el['r' + n] ? el['r' + n].value.trim() : ''; if (v !== '') rec[n] = A.pct(v); }); const nm = Math.round(A.num(el.newM.value)); if (nm >= 2 && nm <= 36 && rec[nm] == null) rec[nm] = 0; if (Object.values(rec).some((v) => !Number.isFinite(v) || v < 0 || v > 1000)) { A.toast('Revisá los porcentajes.', true); break; } A.saveSettings({ recargos: rec }, 'Recargos guardados.'); break; }
       case 'tjForm': { const tj = {}; for (const inp of f.querySelectorAll('input[name^="t"]')) { if (inp.name === 'tjRef' || inp.name === 'tjMarcas') continue; tj[inp.name.slice(1)] = A.pct(inp.value) || 0; } A.saveSettings({ tarjeta: tj, tjRef: A.num(el.tjRef.value) || 1000000, tjMarcas: el.tjMarcas.value }, 'Tarjeta guardada.'); break; }
       case 'recPlanForm': { const v = A.pct(el.rec.value); if (!(v >= 0 && v <= 1000)) { A.toast('Recargo inválido.', true); break; } A.closeModal(); A.act(async () => { const next = A.clone(A.db), c = next.clients[f.dataset.phone]; c.movs = c.movs.map((m) => m.doc === f.dataset.doc && m.finan ? { ...m, finan: { ...m.finan, rec: v } } : m); await A.saveDb(A.syncRecNC(next, f.dataset.phone)); rerender(); }, 'Recargo guardado.'); break; }
       case 'datesForm': A.saveDates(f); break;
-      case 'payEditForm': A.act(async () => { const next = A.clone(A.db), c = next.clients[f.dataset.phone], m = c.movs[Number(f.dataset.i)], imp = A.num(el.imp.value); if (!(imp > 0)) throw Error('Importe inválido.'); if (!el.f.value) throw Error('Elegí la fecha.'); Object.assign(m, { f: el.f.value.split('-').reverse().join('/'), imp, det: el.det.value.trim() }); if (el.met.value === 'Combinado') { const ef = M.r2(A.num(el.efec.value)), tr = M.r2(A.num(el.transf.value)); if (Math.abs(ef + tr - imp) > 0.005) throw Error('Efectivo + transferencia deben sumar ' + A.ars(imp) + '.'); Object.assign(m, { efec: ef, transf: tr, met: 'Combinado (efectivo ' + A.ars(ef) + ' + transferencia ' + A.ars(tr) + ')' }); } else { delete m.efec; delete m.transf; m.met = el.met.value; } await A.saveDb(A.syncRecNC(next, f.dataset.phone)); if (A.refs) await A.reloadRefs(); A.closeModal(); rerender(); }, 'Pago actualizado.'); break;
+      case 'payEditForm': A.act(async () => { const next = A.clone(A.db), c = next.clients[f.dataset.phone], m = c.movs[Number(f.dataset.i)], imp = A.num(el.imp.value); if (!(imp > 0)) throw Error('Importe inválido.'); if (!el.f.value) throw Error('Elegí la fecha.'); Object.assign(m, { f: el.f.value.split('-').reverse().join('/'), imp, det: el.det.value.trim() }); if (el.by) { const by = el.by.value.trim().slice(0, 40); if (by) m.by = by; else delete m.by; } if (el.met.value === 'Combinado') { const ef = M.r2(A.num(el.efec.value)), tr = M.r2(A.num(el.transf.value)); if (Math.abs(ef + tr - imp) > 0.005) throw Error('Efectivo + transferencia deben sumar ' + A.ars(imp) + '.'); Object.assign(m, { efec: ef, transf: tr, met: 'Combinado (efectivo ' + A.ars(ef) + ' + transferencia ' + A.ars(tr) + ')' }); } else { delete m.efec; delete m.transf; m.met = el.met.value; } await A.saveDb(A.syncRecNC(next, f.dataset.phone)); if (A.refs) await A.reloadRefs(); A.closeModal(); rerender(); }, 'Pago actualizado.'); break;
       case 'buyDateForm': A.act(async () => { const next = A.clone(A.db), c = next.clients[f.dataset.phone], m = c.movs[Number(f.dataset.i)]; if (!el.f.value) throw Error('Elegí la fecha.'); const nf = el.f.value.split('-').reverse().join('/'); const old = m.f; m.f = nf; c.movs.forEach((x) => { if (x.grp && x.grp === m.grp && x.adel && x.f === old) x.f = nf; }); const s = next.ventas.find((v) => v.id === m.grp || (v.invoice && v.invoice === m.doc)); if (s) s.fecha = nf; await A.saveDb(next); A.closeModal(); rerender(); }, 'Fecha actualizada.'); break;
       case 'manualBuyForm': A.saveManualBuy(f); break;
       case 'devForm': A.saveDevolucion(f); break;

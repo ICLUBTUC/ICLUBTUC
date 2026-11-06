@@ -49,8 +49,12 @@
   setInterval(A.checkRemote, 60000);
   A.load = async () => {
     const res = await A.api.read();
-    if (res.user !== 'admin') { location.assign('/portal'); return; }
+    if (res.user !== 'admin' && res.role !== 'staff') { location.assign('/portal'); return; }
+    const ALL = { vender: true, cobrar: true, editar: true, clientes: true, inventario: true, finanzas: true, ajustes: true };
+    A.me = res.role === 'staff' ? { role: 'staff', user: res.user, name: (res.staff && res.staff.name) || res.user, perms: Object.assign({}, (res.staff && res.staff.perms) || {}) } : { role: 'admin', user: 'admin', name: 'Administrador', perms: ALL };
+    A.applyPerms && A.applyPerms();
     A.db = A.normalize(res.data); const warns = [];
+    if (A.me.role === 'staff') { await A.reloadRefs(); A.warn = ''; A.render(); return; }
     const [refs, net] = await Promise.all([A.rpc('iclub_ref_read').catch((e) => ({ error: e.message })), A.rpc('iclub_net_read').catch((e) => ({ error: e.message }))]);
     A.refs = refs.error ? null : refs; A.net = net.error ? null : net;
     if (!A.refs) warns.push('Referidos no respondió: ' + refs.error + '. Revisá que ACTUALIZAR-SUPABASE.sql esté instalado.');
@@ -59,11 +63,13 @@
     if (A.net && !A.snap) A.rpc('iclub_snapshot_weekly', { p_force: false }).then((r) => { A.snap = r; if (r.created) A.reloadNet().then(() => A.render()); }).catch(() => {});
     A.render();
   };
-  A.reloadRefs = async () => { try { A.refs = await A.rpc('iclub_ref_read'); } catch (_) {} };
+  A.reloadRefs = async () => { try { if (A.me && A.me.role === 'staff') { const r = await A.rpc('iclub_staff_refs'); A.refs = { revision: r.revision, data: { members: r.members || {}, sales: [] } }; A.net = { data: { memberSettings: r.memberSettings || {} } }; return; } A.refs = await A.rpc('iclub_ref_read'); } catch (_) {} };
+  A.can = (p) => !!(A.me && (A.me.role === 'admin' || A.me.perms[p]));
+  A.isAdmin = () => !!(A.me && A.me.role === 'admin');
   A.reloadNet = async () => { try { A.net = await A.rpc('iclub_net_read'); } catch (_) {} };
   /* Cada operación lleva un código único que queda anotado en el historial de cambios (bitácora).
      Si se corta la conexión al guardar, se consulta el servidor y se confirma si quedó guardada o no. */
-  A.stamp = (next, desc) => { const op = A.currentOp || (A.currentOp = { id: A.uid(), desc: desc || 'Cambio' }); next.bitacora = (next.bitacora || []).filter((x) => x.id !== op.id).concat([{ id: op.id, at: new Date().toISOString(), desc: String(desc || op.desc || 'Cambio').slice(0, 160) }]).slice(-400); return next; };
+  A.stamp = (next, desc) => { const op = A.currentOp || (A.currentOp = { id: A.uid(), desc: desc || 'Cambio' }); next.bitacora = (next.bitacora || []).filter((x) => x.id !== op.id).concat([{ id: op.id, at: new Date().toISOString(), by: (A.me && A.me.name) || '', desc: String(desc || op.desc || 'Cambio').slice(0, 160) }]).slice(-400); return next; };
   A.saveDb = async (next, desc) => { A.stamp(next, desc); const r = await A.api.write(next); A.db = A.normalize(r.data); ICLUBData.invalidate && ICLUBData.invalidate(); return r; };
   /* Movimientos de stock: cada entrada y salida queda registrada con motivo, referencia e IMEI. */
   A.stockMove = (next, item, delta, motivo, ref, imei) => { if (!item || !delta) return; next.stockMoves = (next.stockMoves || []).concat([{ id: A.uid(), at: new Date().toISOString(), item: item.id, name: item.name + (item.spec ? ' · ' + item.spec : ''), delta, motivo, ref: ref || '', imei: imei || '' }]).slice(-3000); };
@@ -113,7 +119,7 @@
     const body = '<div class="chosen"><div class="avatar">' + A.esc(A.initials(c.name)) + '</div><div class="grow"><div class="strong">' + A.esc(c.name) + '</div><div class="small muted">' + A.esc((pm.prodName || String(pm.det || '').split(' · ')[0]) + ' · ' + doc) + '</div></div><div class="right"><div class="small muted">Saldo</div><div class="strong">' + A.ars(balance) + '</div></div></div>' +
       (q ? '<p class="small">' + (q.paid > 0 ? 'Resto de la cuota ' : 'Cuota ') + q.n + ' de ' + pc.n + ' · ' + (q.dt < M.startOfDay(new Date()) ? '<b class="bad">venció el ' + q.d + '</b>' : 'vence el ' + q.d) + ' · falta <b>' + A.ars(due) + '</b></p>' : '') +
       (resto ? '<div class="note warn">La cuota ' + resto.n + ' tiene un resto de <b>' + A.ars(resto.monto) + '</b>. Si no lo debe, resolvelo sin cobrar:<div class="row-flex" style="margin-top:8px">' + (resto.esUltima ? '' : '<button class="btn-2 btn-sm" data-act="resto-now" data-dest="next">Sumar a la próxima</button><button class="btn-2 btn-sm" data-act="resto-now" data-dest="last">Pasar a la última</button>') + '<button class="btn-2 btn-sm" data-act="resto-now" data-dest="perdon">Perdonar</button></div></div>' : '') +
-      '<form id="payForm" data-phone="' + A.esc(phone) + '" data-doc="' + A.esc(doc) + '" class="grid"><div class="grid g2"><label class="f">Importe recibido<input name="amount" inputmode="decimal" value="' + due + '" required></label><label class="f">Medio<select name="method"><option>Efectivo</option><option>Transferencia</option><option>Combinado</option></select></label></div>' +
+      '<form id="payForm" data-phone="' + A.esc(phone) + '" data-doc="' + A.esc(doc) + '" class="grid"><div class="grid g2"><label class="f">Importe recibido<input name="amount" inputmode="decimal" value="' + due + '" required></label><label class="f">Medio<select name="method"><option>Efectivo</option><option>Transferencia</option><option>Combinado</option></select></label></div>' + (() => { let last = ''; try { last = localStorage.getItem('iclub-cobro-by') || ''; } catch (_) {} const names = [...new Set(((A.db.panel && A.db.panel.cobradores) || []).concat(last ? [last] : []))]; if (A.me && A.me.role === 'staff') return '<input type="hidden" name="by" value="' + A.esc(A.me.name) + '"><p class="small muted">Cobra: <b>' + A.esc(A.me.name) + '</b></p>'; return '<label class="f">¿Quién cobró?<input name="by" list="cobradoresList" value="' + A.esc(last) + '" placeholder="Tu nombre o el del vendedor" maxlength="40"><datalist id="cobradoresList">' + names.map((n) => '<option value="' + A.esc(n) + '">').join('') + '</datalist><small>Aparece en el recibo con la hora exacta.</small></label>'; })() +
       '<div id="combBox" class="grid g2" hidden><label class="f">En efectivo<input name="efec" inputmode="decimal"></label><label class="f">Por transferencia<input name="transf" inputmode="decimal"><small id="combHint"></small></label></div>' +
       '<div id="adelBox" hidden class="note"><b id="adelTitle"></b><div class="options" style="margin-top:8px"><button type="button" class="on" data-sinint="0">Con interés: cada cuota adelantada vale ' + (pc ? A.ars(pc.cuotaImp) : '') + '</button><button type="button" data-sinint="1">Sin interés: se cobran a valor contado ' + (pc ? A.ars(pc.capImp) : '') + '</button></div><input type="hidden" name="sinInt" value="0"><small id="adelHint" class="muted"></small></div>' +
       '<div class="options">' + (q ? '<button type="button" class="btn-sm" data-fill="' + due + '">' + (q.paid > 0 ? 'Resto de cuota' : 'Cuota ' + q.n) + ' · ' + A.ars(due) + '</button>' : '') + '<button type="button" class="btn-sm" data-fill="' + balance + '">Todo · ' + A.ars(balance) + '</button></div>' +
@@ -145,7 +151,7 @@
     const rc = 'RC 0002-' + String(next.nextRc || 1).padStart(8, '0'); next.nextRc = (next.nextRc || 1) + 1;
     let met = f.elements.method.value;
     if (met === 'Combinado') { const ef = A.num(f.elements.efec.value), tr = A.num(f.elements.transf.value); if (Math.abs(ef + tr - amount) > 0.005) throw Error('Efectivo + transferencia deben sumar ' + A.ars(amount) + '.'); met = 'Combinado (efectivo ' + A.ars(ef) + ' + transferencia ' + A.ars(tr) + ')'; }
-    const pay = { f: A.today(), tipo: 'Pago', doc: rc, imp: amount, met, plan: doc, det }; if (f.elements.method.value === 'Combinado') { pay.efec = M.r2(A.num(f.elements.efec.value)); pay.transf = M.r2(A.num(f.elements.transf.value)); } if (f.elements.sinInt && f.elements.sinInt.value === '1') { pay.sinInt = true; pay.det += ' · adelanto sin interés'; }
+    const by = String((f.elements.by && f.elements.by.value) || '').trim().slice(0, 40); const pay = { f: A.today(), tipo: 'Pago', doc: rc, imp: amount, met, plan: doc, det, at: new Date().toISOString() }; if (by) { pay.by = by; try { localStorage.setItem('iclub-cobro-by', by); } catch (_) {} next.panel = next.panel || {}; next.panel.cobradores = [...new Set([by].concat(next.panel.cobradores || []))].slice(0, 12); } if (f.elements.method.value === 'Combinado') { pay.efec = M.r2(A.num(f.elements.efec.value)); pay.transf = M.r2(A.num(f.elements.transf.value)); } if (f.elements.sinInt && f.elements.sinInt.value === '1') { pay.sinInt = true; pay.det += ' · adelanto sin interés'; }
     c.movs.push(pay);
     const r = A.applyResto(next, phone, doc, f.elements.resto && f.elements.resto.value); if (r) c.movs[c.movs.length - (f.elements.resto.value === 'perdon' ? 2 : 1)].det += ' · ' + P._restoTexto(f.elements.resto.value, r).toLowerCase();
     await A.saveDb(A.syncRecNC(next, phone)); if (A.refs) await A.reloadRefs();
@@ -196,7 +202,7 @@
       '<div class="sum-line"><span>Total de la venta</span><b>' + A.ars(d.total) + '</b></div>' + (d.tradeValue ? '<div class="sum-line"><span>Canje · ' + A.esc((d.trade && d.trade.name) || '') + '</span><b>' + A.ars(d.tradeValue) + '</b></div>' : '') +
       d.payments.map((p) => '<div class="sum-line"><span class="muted">' + A.esc(p.date + ' · ' + p.method) + '</span><b>' + A.ars(p.amount) + '</b></div>').join('') +
       '<div class="sum-line"><span>Pagado a la fecha</span><b class="good">' + A.ars(d.paid) + '</b></div><div class="sum-line"><span>Saldo</span><b class="' + (d.balance > 0 ? 'bad' : 'good') + '">' + (d.hasAccount ? A.ars(st.cuotas ? st.cuotas.pendiente : d.balance) : 'Sin cuenta') + '</b></div>' +
-      '<div class="sum-line"><span>Ganancia</span><b>' + A.ars(st.ganancia) + '</b></div><div class="sum-line"><span>Entrega</span><b>' + (s.delivered ? 'Entregado' : 'Pendiente') + '</b></div>' +
+      '<div class="sum-line fin-only"><span>Ganancia</span><b>' + A.ars(st.ganancia) + '</b></div><div class="sum-line"><span>Entrega</span><b>' + (s.delivered ? 'Entregado' : 'Pendiente') + '</b></div>' +
       (member ? '<div class="sum-line"><span>Referidor</span><b>' + A.esc(member.name) + (r ? ' · comisión ' + A.money(r.commission, r.commissionCurrency) : '') + '</b></div>' : '') + '</div>' + plan +
       '<details><summary class="strong">Mensaje para el cliente</summary><textarea readonly id="saleText" rows="10" style="margin-top:8px">' + A.esc(text) + '</textarea></details>' +
       '<div class="row-flex"><a class="btn btn-wa" target="_blank" rel="noopener" href="' + A.waLink(d.phone, text) + '">Enviar por WhatsApp</a><button class="btn-2" data-act="copy" data-target="#saleText">Copiar mensaje</button><button class="btn-2" data-act="sale-pdf" data-id="' + A.esc(id) + '">Descargar PDF</button></div>' +
