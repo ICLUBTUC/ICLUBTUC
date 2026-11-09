@@ -94,6 +94,7 @@
     +         '<a class="zt-dd-all" href="Y mas ICLUB.dc.html">Ver todo</a>'
     +       '</div></div></div>'
     +     '<a href="Portal Clientes ICLUB.dc.html#financiar">Cotizador</a>'
+    +     '<a href="/canje">Plan canje</a>'
     +   '</nav>'
     +   '<div style="margin-left:auto;display:flex;align-items:center;gap:8px;">'
     +     '<button class="zt-search-btn" aria-label="Buscar un equipo"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg><span>Buscar</span></button>'
@@ -113,6 +114,7 @@
     +   '<a href="Smart TV ICLUB.dc.html">Smart TV ' + chev + '</a>'
     +   '<a href="Y mas ICLUB.dc.html">Y más… ' + chev + '</a>'
     +   '<a href="Portal Clientes ICLUB.dc.html#financiar">Cotizador ' + chev + '</a>'
+    +   '<a href="/canje">Plan canje ' + chev + '</a>'
     +   '<a href="Portal Clientes ICLUB.dc.html">Mi cuenta ' + chev + '</a>'
     + '</div>';
 

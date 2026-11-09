@@ -124,6 +124,11 @@
       case 'fin-tab': A.finTab(d.g, d.k); break;
       case 'fin-sale': A.closeModal(); A.openSale(d.id); break;
       case 'fin-close': A.closeModal(); break;
+      case 'lead-estado': A.leadEstado(Number(d.id), d.e); break;
+      case 'plan-edit': A.planEdit(d.phone, d.doc); break;
+      case 'fc-month': A.fcMonth(Number(d.i)); break;
+      case 'sim-open': A.simOpen(); break;
+      case 'fin-client': A.closeModal(); location.hash = 'cliente/' + encodeURIComponent(d.phone); break;
       case 'rem-send': A.remSend(d.phone); break;
       case 'rem-skip': A.remSkip(d.phone); break;
       case 'op-send': A.opSend(d.phone); break;
@@ -163,6 +168,8 @@
     if (t.closest('#manualBuyForm')) { A.mbHint(); return; }
     if (t.closest('#devForm')) { A.devHint(); return; }
     if (t.closest('#cajaCloseForm')) { A.cajaDif(); return; }
+    if (t.closest('#simForm')) { A.simCalc(); return; }
+    if (t.closest('#planEditForm')) { A.planEditPrev(t.name); return; }
     if (t.id === 'qpQ') { A.qpSearch(t.value); return; }
     if (t.closest('#rateForm')) { A.$('#rateImpact').innerHTML = A.rateImpact(t.value); return; }
     const sim = t.closest('.sim-form'); if (sim) { const f = sim.elements; sim.querySelector('.sim-out').innerHTML = A.simOut(f.monto.value, f.rate.value, f.meses.value, f.tna.value); }
@@ -170,6 +177,7 @@
   document.addEventListener('change', (e) => {
     const t = e.target;
     if (t.dataset && t.dataset.actNorec) { A.setNoRec(t.dataset.actNorec, t.checked); return; }
+    if (t.dataset && t.dataset.lead) { A.leadEstado(Number(t.dataset.lead), t.value); return; }
     if (t.form && t.form.id === 'posForm' && t.name === 'imei') { pos.imei = t.value; A.posSummary(); return; }
     if (t.form && t.form.id === 'posForm' && t.name && t.tagName === 'SELECT') { setPath(pos, t.name, t.value); if (t.name === 'referrer' || t.name === 'method') rerender(); else A.posSummary(); return; }
     if (t.form && t.form.id === 'posForm' && t.type === 'checkbox') { setPath(pos, t.name, t.checked); A.posSummary(); return; }
@@ -190,6 +198,8 @@
       case 'taskForm': A.act(async () => { const t = el.t.value.trim(); if (!t) return false; const next = A.clone(A.db); next.panel = { ...(next.panel || {}), tareas: ((next.panel || {}).tareas || []).concat([{ id: A.uid(), t: t.slice(0, 200), f: el.f.value || '', done: false, at: new Date().toISOString() }]) }; await A.saveDb(next); rerender(); const n = A.$('#taskForm [name=t]'); if (n) n.focus(); }); break;
       case 'rateForm': { const r = A.num(el.rate.value); if (!(r >= 100)) { A.toast('Ingresá un valor válido (mayor a 100).', true); break; } if (confirm('¿Cambiar el dólar a ' + A.ars(r) + '? Cambian todos los precios en pesos de la página.')) A.saveSettings({ rate: r }, 'Dólar actualizado a ' + A.ars(r) + '.'); break; }
       case 'userForm': A.saveUser(f); break;
+      case 'canjeForm': A.saveCanje(f); break;
+      case 'planEditForm': A.savePlanEdit(f); break;
       case 'cajaCloseForm': A.cajaClose(f); break;
       case 'cajaCfgForm': A.cajaCfg(f); break;
       case 'cobranzaForm': A.saveCobranza(f); break;

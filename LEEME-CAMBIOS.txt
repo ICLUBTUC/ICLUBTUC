@@ -1,0 +1,22 @@
+CAMBIOS PARA SUBIR A GITHUB — 2026-11-09
+
+Subí el contenido de esta carpeta (con sus subcarpetas) y aceptá reemplazar.
+
+Archivos nuevos o modificados (17):
+ - canje-data.js
+ - migraciones/14-plan-canje.sql
+ - canje.html
+ - admin-canje.js
+ - canje-app.js
+ - vercel.json
+ - admin-extra.js
+ - admin-users.js
+ - iclub-nav.js
+ - admin-events.js
+ - tests/canje-sql.cjs
+ - tests/package.json
+ - tests/e2e-canje.cjs
+ - canje.css
+ - ENTREGA-REDISENO.md
+ - gestion.html
+ - Inicio ICLUB.dc.html

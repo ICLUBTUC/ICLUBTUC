@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/canje",
+      "destination": "/canje.html"
+    },
+    {
       "source": "/gestion",
       "destination": "/gestion.html"
     },

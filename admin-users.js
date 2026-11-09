@@ -7,7 +7,7 @@
   const ROUTE = { vender: 'vender', finanzas: 'finanzas', caja: 'finanzas', estadisticas: 'finanzas', ajustes: 'ajustes' };
   const ADMIN_ONLY = ['catalogo', 'referidos', 'inversores', 'respaldo'];
   A.routeAllowed = (route) => { if (A.isAdmin()) return true; if (ADMIN_ONLY.includes(route)) return false; return !ROUTE[route] || A.can(ROUTE[route]); };
-  const STAFF_W = ['recordatorios', 'oportunidades', 'kpis', 'calendario', 'tareas', 'atrasados', 'proximos', 'stock', 'interesados', 'clientesW'];
+  const STAFF_W = ['consultas', 'recordatorios', 'oportunidades', 'kpis', 'calendario', 'tareas', 'atrasados', 'proximos', 'stock', 'interesados', 'clientesW'];
   A.widgetAllowed = (k) => A.isAdmin() || (STAFF_W.includes(k) && (k !== 'kpis' || A.can('cobrar')));
 
   A.applyPerms = () => {
