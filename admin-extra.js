@@ -35,7 +35,7 @@
   };
   const DEFAULT = ['kpis', 'calendario', 'tareas', 'atrasados', 'proximos', 'ventasMes', 'topRef', 'stock', 'interesados', 'clientesW', 'inversoresW', 'caja'];
   const AUTO = [];
-  A.registerWidget = (k, def, auto) => { W[k] = def; if (auto) { DEFAULT.unshift(k); AUTO.push(k); } };
+  A.registerWidget = (k, def, auto) => { W[k] = def; if (auto) { DEFAULT.splice(AUTO.length, 0, k); AUTO.push(k); } };
   A.widgetKeys = () => Object.keys(W);
   const widgetsOn = () => { const w = panel().widgets; if (!(Array.isArray(w) && w.length)) return DEFAULT.filter((k) => W[k] && (!A.widgetAllowed || A.widgetAllowed(k))); const known = panel().widgetsKnown || []; const extra = AUTO.filter((k) => !w.includes(k) && !known.includes(k)); return extra.concat(w).filter((k) => W[k] && (!A.widgetAllowed || A.widgetAllowed(k))); };
   const wHead = (t, extra) => '<div class="card-head" style="margin-bottom:10px"><h2>' + t + '</h2><div class="spacer"></div>' + (extra || '') + '</div>';
@@ -344,7 +344,7 @@
     doc.save(name); if (phone) window.open(A.waLink(phone, text + '\n\n(Te adjunto el PDF del comprobante.)'), '_blank', 'noopener');
     A.toast('PDF descargado. Adjuntalo en el chat de WhatsApp que se abrió.');
   };
-  const buildDoc = async (fn) => { await A.jspdf(); if (!window.ICLUBDocs) throw Error('Falta iclub-docs.js en la página publicada.'); return fn(window.ICLUBDocs); };
+  const buildDoc = async (fn) => { await A.jspdf(); if (!window.ICLUBDocs) throw Error('Falta iclub-docs.js en la página publicada.'); if (window.ICLUBDocs.setRefs) window.ICLUBDocs.setRefs(A.refs && A.refs.data); return fn(window.ICLUBDocs); };
   A.docPdf = async (phone, i, share) => {
     try { const doc = await buildDoc((D) => D.forMov(A.db, phone, i)); const m = A.db.clients[phone].movs[i];
       if (share) await A.sharePdf(doc, phone, 'Hola ' + A.first(A.db.clients[phone].name) + ', te envío tu comprobante ' + (m.doc || '') + ' de ICLUB.'); else { doc.save(doc.__name); A.toast('PDF descargado.'); } }

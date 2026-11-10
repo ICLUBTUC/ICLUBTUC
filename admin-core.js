@@ -6,7 +6,8 @@
   A.$ = (s, el) => (el || document).querySelector(s); A.$$ = (s, el) => [...(el || document).querySelectorAll(s)];
   A.esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const nf = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-  A.ars = (v) => '$ ' + nf.format(M.r2(Number(v) || 0));
+  const nf2 = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  A.ars = (v) => { const x = M.r2(Number(v) || 0); return '$ ' + (Math.abs(x - Math.round(x)) < 0.005 ? nf.format(Math.round(x)) : nf2.format(x)); };
   A.usd = (v) => 'USD ' + nf.format(M.r2(Number(v) || 0));
   A.money = (v, cur) => (cur === 'USD' ? A.usd(v) : A.ars(v));
   A.num = (v) => { const s = String(v ?? '').trim().replace(/\s|\$/g, ''); if (!s) return 0; if (/^\d{1,3}(\.\d{3})+(,\d{1,2})?$/.test(s)) return Number(s.replace(/\./g, '').replace(',', '.')); if (/,\d{1,2}$/.test(s)) return Number(s.replace(/\./g, '').replace(',', '.')); return Number(s.replace(/,/g, '')); };
@@ -108,7 +109,7 @@
     const c = A.db.clients[phone], pm = A.planOf(phone, doc); if (!c || !pm) return 0;
     const account = M.saldo(c);
     if (pm.finan) return M.r2(Math.max(0, Math.min(account, P._planCalc(c, pm).pendiente)));
-    const s = A.db.ventas.find((x) => x.invoice === doc || x.id === pm.grp); return M.r2(Math.max(0, Math.min(account, s ? B.saleData(A.db, s).balance : account)));
+    const al = P._alloc(c); return M.r2(Math.max(0, Math.min(account, al.debe[pm.doc] != null ? al.debe[pm.doc] : account)));
   };
   A.openPay = (phone, doc) => {
     const c = A.db.clients[phone]; if (!c) return;
@@ -156,8 +157,23 @@
     const r = A.applyResto(next, phone, doc, f.elements.resto && f.elements.resto.value); if (r) c.movs[c.movs.length - (f.elements.resto.value === 'perdon' ? 2 : 1)].det += ' · ' + P._restoTexto(f.elements.resto.value, r).toLowerCase();
     await A.saveDb(A.syncRecNC(next, phone)); if (A.refs) await A.reloadRefs();
     A.paymentReceipt(phone, doc, amount, rc); A.render();
-    { const pm2 = A.db.clients[phone].movs.find((m) => m.doc === doc && m.tipo === 'Compra'); const rs = pm2 && A.refSaleFor && A.refSaleFor(pm2); if (rs) { const mem = A.refs.data.members[rs.referrer] || {}, g = A.refGain(rs), f = (n) => rs.commissionCurrency === 'USD' ? A.usd(n) : A.ars(n); setTimeout(() => A.toast('Ganancia de ' + (mem.name || rs.referrer) + ' actualizada: lleva ' + f(g.ganada) + ' de ' + f(g.total) + '.'), 400); } }
+    { const pm2 = A.db.clients[phone].movs.find((m) => m.doc === doc && m.tipo === 'Compra'); const rs = pm2 && A.refSaleFor && A.refSaleFor(pm2); if (rs) { const mem = A.refs.data.members[rs.referrer] || {}, g = A.refGain(rs), f = (n) => rs.commissionCurrency === 'USD' ? A.usd(n) : A.ars(n); const auto = await A.autoComision(rs); setTimeout(() => A.toast(auto || ('Ganancia de ' + (mem.name || rs.referrer) + ' actualizada: lleva ' + f(g.ganada) + ' de ' + f(g.total) + '.')), 400); } }
   });
+  /* Comisión automática: lo que se libera con cada pago del referido se descuenta solo de la última cuota del referidor. */
+  A.autoComision = async (rs) => {
+    try {
+      if (!A.isAdmin || !A.isAdmin() || (A.db.settings && A.db.settings.comisionAuto === false) || !rs || !rs.delivered) return '';
+      const avail = M.r2(Number(rs.commission) * Math.min(1, Number(rs.collected) / (Number(rs.total) || 1)) - Number(rs.paid)); if (!(avail > 0.009)) return '';
+      const ph = rs.referrer, c = A.db.clients[ph]; if (!c) return '';
+      const planes = (c.movs || []).filter((m) => m.tipo === 'Compra' && m.finan && !m.finan.cancelada).map((pm) => ({ pm, pend: P._planCalc(c, pm).pendiente })).filter((x) => x.pend > 0.009).sort((a, b) => b.pend - a.pend);
+      if (!planes.length) return '';
+      const rate = Number(A.db.settings && A.db.settings.rate) || 1520, usd = rs.commissionCurrency === 'USD', maxCur = usd ? M.r2(planes[0].pend / rate) : planes[0].pend;
+      const amount = M.r2(Math.min(avail, maxCur)); if (!(amount > 0.009)) return '';
+      const r = await A.rpc('iclub_ref_apply_cuotas', { p_revision: A.refs.revision, p_expected_version: A.api.version, p_item: { saleId: rs.id, amount, mode: 'ultimas', planDoc: planes[0].pm.doc } });
+      A.applyServer(r); await A.reloadRefs(); A.render();
+      return 'Comisión de ' + (c.name || ph) + ': se descontaron ' + A.ars(r.ars) + ' de su última cuota.';
+    } catch (e) { return 'No se pudo descontar la comisión sola: ' + (e.message || e) + '. Podés hacerlo desde Referidos.'; }
+  };
   A.paymentReceipt = (phone, doc, amount, rc) => {
     const c = A.db.clients[phone], pm = A.planOf(phone, doc), bal = A.balanceFor(phone, doc), pc = pm && pm.finan ? P._planCalc(c, pm) : null, q = pc && pc.prox;
     const text = ['*ICLUB · Recibo de pago*', rc + ' · ' + A.today(), 'Cliente: ' + c.name, 'Recibimos: ' + A.ars(amount), 'Compra: ' + (pm.prodName || String(pm.det || '').split(' · ')[0]) + ' (' + doc + ')', pc ? 'Cuotas pagadas: ' + pc.pagadas + ' de ' + pc.n : '', 'Saldo restante: ' + A.ars(bal), q ? 'Próxima cuota: ' + q.d + ' · ' + A.ars(q.req - q.paid) : (bal <= 0.005 ? '¡Compra pagada por completo! Gracias.' : ''), '', 'Gracias por confiar en ICLUB.'].filter((x) => x !== '').join('\n');
