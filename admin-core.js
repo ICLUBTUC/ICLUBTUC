@@ -63,6 +63,7 @@
     A.warn = warns.join('\n');
     if (A.net && !A.snap) A.rpc('iclub_snapshot_weekly', { p_force: false }).then((r) => { A.snap = r; if (r.created) A.reloadNet().then(() => A.render()); }).catch(() => {});
     A.render();
+    if (!A._comCatchUp) { A._comCatchUp = true; setTimeout(() => A.autoComisionTodas(), 600); }
   };
   A.reloadRefs = async () => { try { if (A.me && A.me.role === 'staff') { const r = await A.rpc('iclub_staff_refs'); A.refs = { revision: r.revision, data: { members: r.members || {}, sales: [] } }; A.net = { data: { memberSettings: r.memberSettings || {} } }; return; } A.refs = await A.rpc('iclub_ref_read'); } catch (_) {} };
   A.can = (p) => !!(A.me && (A.me.role === 'admin' || A.me.perms[p]));
@@ -174,6 +175,15 @@
       return 'Comisión de ' + (c.name || ph) + ': se descontaron ' + A.ars(r.ars) + ' de su última cuota.';
     } catch (e) { return 'No se pudo descontar la comisión sola: ' + (e.message || e) + '. Podés hacerlo desde Referidos.'; }
   };
+  /* Al abrir el panel: descuenta lo que ya estaba liberado de pagos anteriores (una vez por sesión, en orden). */
+  A.autoComisionTodas = async () => {
+    try {
+      if (!A.refs || !A.isAdmin || !A.isAdmin() || (A.db.settings && A.db.settings.comisionAuto === false)) return;
+      const msgs = []; const ids = ((A.refs.data && A.refs.data.sales) || []).filter((s) => s.delivered && !s.cancelled && !s.devolucion).map((s) => s.id);
+      for (const id of ids) { const rs = ((A.refs.data && A.refs.data.sales) || []).find((s) => s.id === id); const m = await A.autoComision(rs); if (m && !/^No se pudo/.test(m)) msgs.push(m); }
+      if (msgs.length) A.toast(msgs.length === 1 ? msgs[0] : 'Se descontaron solas ' + msgs.length + ' comisiones de referidores que ya estaban liberadas.');
+    } catch (_) {}
+  };
   A.paymentReceipt = (phone, doc, amount, rc) => {
     const c = A.db.clients[phone], pm = A.planOf(phone, doc), bal = A.balanceFor(phone, doc), pc = pm && pm.finan ? P._planCalc(c, pm) : null, q = pc && pc.prox;
     const text = ['*ICLUB · Recibo de pago*', rc + ' · ' + A.today(), 'Cliente: ' + c.name, 'Recibimos: ' + A.ars(amount), 'Compra: ' + (pm.prodName || String(pm.det || '').split(' · ')[0]) + ' (' + doc + ')', pc ? 'Cuotas pagadas: ' + pc.pagadas + ' de ' + pc.n : '', 'Saldo restante: ' + A.ars(bal), q ? 'Próxima cuota: ' + q.d + ' · ' + A.ars(q.req - q.paid) : (bal <= 0.005 ? '¡Compra pagada por completo! Gracias.' : ''), '', 'Gracias por confiar en ICLUB.'].filter((x) => x !== '').join('\n');
@@ -187,7 +197,10 @@
   A.copy = async (sel) => { const el = A.$(sel); if (!el) return; const t = el.value || el.textContent; try { await navigator.clipboard.writeText(t); A.toast('Copiado.'); } catch (_) { el.select && el.select(); try { document.execCommand('copy'); A.toast('Copiado.'); } catch (e) { A.toast('Seleccioná el texto y copialo.', true); } } };
 
   /* Librería de PDF: si vendor/jspdf no llegó al servidor publicado, se carga sola desde un respaldo. */
-  A.jspdf = async () => {
+  /* PDF bajo demanda: jsPDF y las fuentes (≈ 560 KB) se cargan recién al generar el primer comprobante. */
+  const loadScript = (src) => new Promise((ok, ko) => { const sc = document.createElement('script'); sc.src = src; sc.onload = ok; sc.onerror = ko; document.head.appendChild(sc); });
+  A.jspdf = async () => { const js = await A.jspdfCore(); if (!window.ICLUBDocFonts) { try { await loadScript('document-fonts.js?v=20261110'); } catch (_) {} } return js; };
+  A.jspdfCore = async () => {
     if (window.jspdf && window.jspdf.jsPDF) return window.jspdf;
     const srcs = ['vendor/jspdf.umd.min.js?v=2.5.1', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'];
     for (const src of srcs) {
@@ -218,13 +231,20 @@
       '<div class="sum-line"><span>Total de la venta</span><b>' + A.ars(d.total) + '</b></div>' + (d.tradeValue ? '<div class="sum-line"><span>Canje · ' + A.esc((d.trade && d.trade.name) || '') + '</span><b>' + A.ars(d.tradeValue) + '</b></div>' : '') +
       d.payments.map((p) => '<div class="sum-line"><span class="muted">' + A.esc(p.date + ' · ' + p.method) + '</span><b>' + A.ars(p.amount) + '</b></div>').join('') +
       '<div class="sum-line"><span>Pagado a la fecha</span><b class="good">' + A.ars(d.paid) + '</b></div><div class="sum-line"><span>Saldo</span><b class="' + (d.balance > 0 ? 'bad' : 'good') + '">' + (d.hasAccount ? A.ars(st.cuotas ? st.cuotas.pendiente : d.balance) : 'Sin cuenta') + '</b></div>' +
-      '<div class="sum-line fin-only"><span>Ganancia</span><b>' + A.ars(st.ganancia) + '</b></div><div class="sum-line"><span>Entrega</span><b>' + (s.delivered ? 'Entregado' : 'Pendiente') + '</b></div>' +
+      '<div class="sum-line fin-only"><span>Costo del equipo</span><b class="' + (A.sinCosto && A.sinCosto(s) ? 'bad' : '') + '">' + (Number(s.costoArs) > 0 ? A.ars(s.costoArs) : 'Sin cargar') + '</b></div>' + (A.isAdmin && A.isAdmin() ? '<details class="fin-only"' + (A.sinCosto && A.sinCosto(s) ? ' open' : '') + '><summary class="small strong">' + (Number(s.costoArs) > 0 ? 'Corregir costo' : 'Cargar costo') + '</summary><form id="costoForm" data-id="' + A.esc(s.id) + '" class="row-flex" style="margin:8px 0;align-items:flex-end"><label class="f" style="flex:1">Costo<input name="costo" inputmode="decimal" required placeholder="Ej: 465"></label><label class="f">En<select name="cur"><option value="USD">USD</option><option value="ARS">$</option></select></label><label class="f">Dólar<input name="rate" inputmode="decimal" value="' + (Number(A.db.settings && A.db.settings.rate) || 1520) + '" style="width:90px"></label><button class="btn-good">Guardar</button></form></details>' : '') + '<div class="sum-line fin-only"><span>Ganancia</span><b>' + A.ars(st.ganancia) + '</b></div><div class="sum-line"><span>Entrega</span><b>' + (s.delivered ? 'Entregado' : 'Pendiente') + '</b></div>' +
       (member ? '<div class="sum-line"><span>Referidor</span><b>' + A.esc(member.name) + (r ? ' · comisión ' + A.money(r.commission, r.commissionCurrency) : '') + '</b></div>' : '') + '</div>' + plan +
       '<details><summary class="strong">Mensaje para el cliente</summary><textarea readonly id="saleText" rows="10" style="margin-top:8px">' + A.esc(text) + '</textarea></details>' +
       '<div class="row-flex"><a class="btn btn-wa" target="_blank" rel="noopener" href="' + A.waLink(d.phone, text) + '">Enviar por WhatsApp</a><button class="btn-2" data-act="copy" data-target="#saleText">Copiar mensaje</button><button class="btn-2" data-act="sale-pdf" data-id="' + A.esc(id) + '">Descargar PDF</button></div>' +
       '<div class="row-flex">' + (d.hasAccount && (st.cuotas ? st.cuotas.pendiente : d.balance) > 0.005 ? '<button class="btn-good" data-act="pay" data-phone="' + A.esc(s.clientKey) + '" data-doc="' + A.esc(d.document) + '">Registrar pago</button>' : '') + (!s.delivered ? '<button class="btn-2" data-act="deliver" data-id="' + A.esc(id) + '">Confirmar entrega</button>' : '') + (A.db.clients[s.clientKey] ? '<a class="btn btn-2" href="#cliente/' + encodeURIComponent(s.clientKey) + '" data-close>Ver cliente</a>' : '') + '</div>';
     A.modal(created ? 'Comprobante listo' : 'Detalle de la venta', body, { noFocus: true });
   };
+  A.saveCosto = (f) => A.act(async () => {
+    const id = f.dataset.id, e = f.elements, n = A.num(e.costo.value), cur = e.cur.value, rate = A.num(e.rate.value) || Number(A.db.settings && A.db.settings.rate) || 1520;
+    if (!(n > 0)) throw new Error('Poné un costo mayor a cero.');
+    const ars = M.r2(cur === 'USD' ? n * rate : n), next = A.clone(A.db), s = next.ventas.find((x) => x.id === id); if (!s) throw new Error('No encontré la venta.');
+    const antes = Number(s.costoArs) || 0; s.costoArs = ars; if (cur === 'USD') { s.costoUsd = n; s.costoRate = rate; }
+    await A.saveDb(next, 'Costo de ' + (s.invoice || s.id) + ': ' + A.ars(antes) + ' → ' + A.ars(ars)); A.render(); A.openSale(id);
+  }, 'Costo guardado. La ganancia ya se recalculó.');
   A.salePdf = async (id) => { const s = A.db.ventas.find((x) => x.id === id); const c0 = s && A.db.clients[s.clientKey], i0 = c0 ? c0.movs.findIndex((m) => m.tipo === 'Compra' && ((s.id && m.grp === s.id) || (s.invoice && m.doc === s.invoice))) : -1; if (A.docPdf && i0 >= 0) return A.docPdf(s.clientKey, i0, false); try { await A.jspdf(); if (!window.ICLUBSaleDocuments) throw Error('No se cargó el generador de PDF.'); await ICLUBSaleDocuments.receipt(A.db, s).save('ICLUB-comprobante-' + String(s.invoice || s.id).replace(/[^A-Za-z0-9-]/g, '-') + '.pdf', { returnPromise: true }); A.toast('PDF descargado.'); } catch (e) { A.toast('No se pudo generar el PDF. ' + e.message, true); } };
   A.deliver = (id) => A.act(async () => {
     const linked = A.refs && (A.refs.data.sales || []).some((x) => x.id === id);

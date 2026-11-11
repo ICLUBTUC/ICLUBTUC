@@ -1,7 +1,7 @@
 /* ICLUB · Estilos del panel, referidos e inversores. Lo importante, grande; lo secundario, chico. */
 :root{--bg:#f4f5f7;--card:#fff;--ink:#0f172a;--ink2:#334155;--muted:#64748b;--line:#e5e7eb;--soft:#f1f5f9;--brand:#0a84ff;--brand-d:#0060c7;--good:#15803d;--good-bg:#dcfce7;--bad:#b91c1c;--bad-bg:#fee2e2;--warn:#b45309;--warn-bg:#fef3c7;--info:#1d4ed8;--info-bg:#dbeafe;--radius:16px;--shadow:0 1px 2px rgba(15,23,42,.05),0 4px 16px rgba(15,23,42,.04)}
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
-body.app{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+body.app{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
 .app a{color:var(--brand-d)}.app h1,.app h2,.app h3{margin:0;letter-spacing:-.02em}.app p{margin:0}
 .app button,.app .btn{font:inherit;font-weight:650;font-size:14px;border:0;border-radius:12px;padding:11px 16px;min-height:44px;cursor:pointer;background:var(--ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap;transition:filter .15s,background .15s}
 .app button:hover,.app .btn:hover{filter:brightness(1.08)}.app button:disabled{opacity:.45;cursor:not-allowed}
@@ -139,3 +139,5 @@ dialog.modal.wide{max-width:min(980px,96vw)}.modal-head{display:flex;align-items
 .donut-legend div{display:flex;align-items:center;gap:6px}.donut-legend span{flex:1}
 @media (max-width:900px){.dash-tiles{grid-template-columns:repeat(2,1fr)}.flow{grid-template-columns:1fr}.flow-arrow{transform:rotate(90deg);margin:0 auto}}
 .no-vender .dash-tile[href="#vender"],.no-cobrar .dash-tile[data-act="qp-focus"],.no-clientes .dash-tile[href="#clientes"],.no-finanzas .dash-tile[href="#finanzas"],.is-staff .dash-tile[href="#caja"]{display:none}
+/* Marca ICLUB: 2 tipografías. Space Grotesk para títulos y números grandes, Plus Jakarta Sans para el resto. */
+body.app h1,body.app .kpi .num,body.app .flow-dot,body.app .brand-name{font-family:"Space Grotesk","Plus Jakarta Sans",sans-serif;letter-spacing:-.01em}

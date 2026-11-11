@@ -1,0 +1,15 @@
+{
+  "name": "iclub-tests",
+  "private": true,
+  "scripts": {
+    "test": "node security.cjs && node frontend.cjs && node referrals.cjs && node quote.cjs && node client-list.cjs && node catalog-filters.cjs && node finance-reports.cjs && node business.cjs && node gestion-sql.cjs && node upgrade6.cjs && node documents.cjs && node backup.cjs && node backup-ui.cjs && node small-balances.cjs && node restos-cuota.cjs && node price-list.cjs && node metrics.cjs && node red-comercial-sql.cjs && node auditoria-sql.cjs && node e2e-panel.cjs && node e2e-flujos.cjs && node e2e-ficha.cjs && node e2e-portales.cjs && node e2e-seguridad.cjs && node e2e-mejoras.cjs && node e2e-cobranza.cjs && node usuarios-sql.cjs && node e2e-usuarios.cjs && node canje-sql.cjs && node e2e-canje.cjs",
+    "test:pantallas": "node e2e-panel.cjs && node e2e-flujos.cjs && node e2e-ficha.cjs && node e2e-portales.cjs && node e2e-seguridad.cjs && node e2e-mejoras.cjs && node e2e-cobranza.cjs && node usuarios-sql.cjs && node e2e-usuarios.cjs && node canje-sql.cjs && node e2e-canje.cjs && node e2e-dash.cjs && node e2e-recibo-comision.cjs && node e2e-auditoria.cjs"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "jsdom": "26.1.0"
+  },
+  "devDependencies": {
+    "jspdf": "^2.5.1"
+  }
+}

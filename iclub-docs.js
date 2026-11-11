@@ -65,7 +65,7 @@
     function paragraph(s, size, tone) { font(size || 9); const lines = doc.splitTextToSize(String(s), CW); lines.forEach((ln) => { ensure(5.5); font(size || 9); color(tone || C.ink); t(ln, M, y); y += (size || 9) * 0.48; }); y += 2.5; }
     function table(cols, rows) {
       const total = cols.reduce((a, c) => a + c.w, 0), k = CW / total; cols.forEach((c) => { c.ww = c.w * k; });
-      const head = () => { fill(C.navy); doc.roundedRect(M, y - 4.6, CW, 7.6, 1.6, 1.6, 'F'); font(6.8, true); color(C.white); let x = M; cols.forEach((c) => { t(c.label.toUpperCase(), c.align === 'right' ? x + c.ww - 3 : c.align === 'center' ? x + c.ww / 2 : x + 3, y, { align: c.align || 'left', charSpace: 0.45 }); x += c.ww; }); y += 6.6; };
+      const head = () => { fill(C.navy); doc.roundedRect(M, y - 4.6, CW, 7.6, 1.6, 1.6, 'F'); font(6.8, true); color(C.white); let x = M; cols.forEach((c) => { /* Encabezado que entra en su columna: mayúsculas si entra; si no, texto normal y más chico. */ let lab = c.label.toUpperCase(), cs = 0.45, fs = 6.8; const room = c.ww - 5; font(fs, true); if (doc.getTextWidth(lab) + cs * lab.length > room) { lab = c.label; cs = 0; while (fs > 5.6 && (font(fs, true), doc.getTextWidth(lab)) > room) fs -= 0.2; } t(lab, c.align === 'right' ? x + c.ww - 3 : c.align === 'center' ? x + c.ww / 2 : x + 3, y, { align: c.align || 'left', charSpace: cs }); font(6.8, true); x += c.ww; }); y += 6.6; };
       head();
       rows.forEach((row, ri) => {
         font(8.4); const cells = cols.map((c, i) => (c.pill ? [row[i]] : doc.splitTextToSize(String(row[i] == null ? '' : row[i]), c.ww - 6))); const h = Math.max(...cells.map((x) => (x[0] && x[0].text ? 1 : x.length))) * 4.1 + 2.9;

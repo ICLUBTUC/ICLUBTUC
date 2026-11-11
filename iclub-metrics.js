@@ -108,6 +108,11 @@
     k.gananciaBruta = r2(k.vendido - k.costo); k.gananciaNeta = r2(k.gananciaBruta - k.gastos - k.comisiones);
     /* Ganancia ya cobrada: la parte de la ganancia de cada venta del mes proporcional a lo que ya pagó el cliente. */
     const B = root.ICLUBBusiness; k.gananciaCobrada = r2(ofMonth.reduce((a, s) => { const total = Number(s.ventaArs) || 0; if (!total || !B) return a; const d = B.saleData(db, s); const pagado = d.hasAccount ? Math.min(total, d.paid) : total; return a + (total - Number(s.costoArs || 0)) * pagado / total; }, 0)); k.gananciaPorCobrar = r2(k.gananciaBruta - k.gananciaCobrada);
+    /* Ganancia que ENTRÓ en el mes: a cada pago cobrado en el mes (sin contar canjes) se le aplica el margen de su venta. */
+    const ventaDe = (phone, m) => { const c = (db.clients || {})[phone] || {}; const pm = (c.movs || []).find((x) => (x.tipo === 'Compra' || x.tipo === 'Saldo anterior') && ((m.plan && x.doc === m.plan) || (m.grp && x.grp === m.grp))); return pm ? (db.ventas || []).find((v) => (pm.grp && v.id === pm.grp) || (v.invoice && v.invoice === pm.doc)) : null; };
+    const margenCliente = (phone) => { const vs = (db.ventas || []).filter((v) => v.clientKey === phone && !v.devolucion && Number(v.ventaArs) > 0); const t = vs.reduce((a, v) => a + Number(v.ventaArs), 0); return t ? vs.reduce((a, v) => a + Number(v.ventaArs) - Number(v.costoArs || 0), 0) / t : 0; };
+    k.cajaDetalle = pagos.filter((p) => monthKey(p.dt) === month).map((p) => { const v = ventaDe(p.phone, p.m); const mg = v && Number(v.ventaArs) > 0 ? (Number(v.ventaArs) - Number(v.costoArs || 0)) / Number(v.ventaArs) : margenCliente(p.phone); return { phone: p.phone, m: p.m, venta: v, margen: mg, ganancia: r2((Number(p.m.imp) || 0) * mg) }; });
+    k.gananciaCaja = r2(k.cajaDetalle.reduce((a, x) => a + x.ganancia, 0)); k.gananciaCajaNeta = r2(k.gananciaCaja - k.gastos - k.comisiones);
     k.devoluciones = devueltas.length;
     k.margen = k.vendido > 0 ? r2(k.gananciaBruta / k.vendido * 100) : 0; k.ticket = k.ventas ? r2(k.vendido / k.ventas) : 0;
     const all = dues(db, { today }); k.atrasado = r2(all.filter((d) => d.dias < 0).reduce((a, d) => a + d.amount, 0));
@@ -115,7 +120,12 @@
     const proj = new Map(); const cur = monthKey(today);
     for (const d of all) { const key = d.dias < 0 ? cur : monthKey(d.dt); proj.set(key, r2((proj.get(key) || 0) + d.amount)); }
     const realByMonth = new Map(); for (const p of pagos) { const key = monthKey(p.dt); realByMonth.set(key, r2((realByMonth.get(key) || 0) + Number(p.m.imp || 0))); }
-    const flujo = []; for (let i = -5; i <= 6; i++) { const d = new Date(today.getFullYear(), today.getMonth() + i, 1), key = monthKey(d); flujo.push({ month: key, label: d.toLocaleDateString('es-AR', { month: 'short', year: '2-digit' }), esperado: i >= 0 ? proj.get(key) || 0 : null, cobrado: i <= 0 ? realByMonth.get(key) || 0 : null }); }
+    /* Quién pagó y quién debería pagar cada mes (para ver nombres en "Cobros por mes"). */
+    const nombre = (ph) => ((db.clients || {})[ph] || {}).name || ph;
+    const pagosMes = new Map(); for (const p of pagos) { const key = monthKey(p.dt); if (!pagosMes.has(key)) pagosMes.set(key, []); pagosMes.get(key).push({ phone: p.phone, name: nombre(p.phone), date: p.m.f, amount: Number(p.m.imp || 0), doc: p.m.doc || '', met: p.m.met || '' }); }
+    const debeMes = new Map(); for (const d of all) { const key = d.dias < 0 ? cur : monthKey(d.dt); if (!debeMes.has(key)) debeMes.set(key, []); debeMes.get(key).push({ phone: d.phone, name: d.client || nombre(d.phone), date: d.date, amount: d.amount, atrasada: d.dias < 0, product: d.product || '', n: d.n, total: d.total }); }
+    const porCliente = (list) => { const m = new Map(); for (const x of list || []) { const g = m.get(x.phone) || { phone: x.phone, name: x.name, amount: 0, count: 0 }; g.amount = r2(g.amount + x.amount); g.count++; m.set(x.phone, g); } return [...m.values()].sort((a, b) => b.amount - a.amount); };
+    const flujo = []; for (let i = -5; i <= 6; i++) { const d = new Date(today.getFullYear(), today.getMonth() + i, 1), key = monthKey(d); flujo.push({ month: key, label: d.toLocaleDateString('es-AR', { month: 'short', year: '2-digit' }), esperado: i >= 0 ? proj.get(key) || 0 : null, cobrado: i <= 0 ? realByMonth.get(key) || 0 : null, pagos: i <= 0 ? pagosMes.get(key) || [] : [], debe: i >= 0 ? debeMes.get(key) || [] : [], clientesPagaron: i <= 0 ? porCliente(pagosMes.get(key)) : [], clientesDeben: i >= 0 ? porCliente(debeMes.get(key)) : [] }); }
     /* Ranking de equipos (todas las ventas o el período elegido). */
     const scope = opt.allTime ? ventas.map((x) => x.s) : ofMonth;
     const byModel = new Map();
@@ -216,6 +226,29 @@
     }
     return out.sort((a, b) => a.dt - b.dt || a.client.localeCompare(b.client));
   }
-  const api = { calendar, r2, parseDate, fmtDate, iso, monthKey, startOfDay, saldo, dues, collectionTotals, client, sale, brand, naturalCompare, finance, investor, simulate, referrerGain, excelSheets, freqKey };
+  /* Previsión: lo que vas a cobrar cada mes con las cuotas ya vendidas y cuánto de eso es ganancia (margen de cada venta). Lo atrasado va al mes actual. */
+  function forecast(db, opt) {
+    opt = opt || {}; const today = startOfDay(opt.today || new Date()), months = opt.months || 12, cur = monthKey(today);
+    const out = []; for (let i = 0; i < months; i++) { const d = new Date(today.getFullYear(), today.getMonth() + i, 1); out.push({ month: monthKey(d), label: d.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }), cobro: 0, ganancia: 0, atrasado: 0, items: [] }); }
+    const idx = new Map(out.map((x, i) => [x.month, i]));
+    const ventaDe = (phone, doc) => { const c = (db.clients || {})[phone] || {}; const pm = (c.movs || []).find((m) => m.doc === doc); return pm ? (db.ventas || []).find((v) => (pm.grp && v.id === pm.grp) || (v.invoice && v.invoice === pm.doc)) : null; };
+    for (const d of dues(db, { today })) {
+      const key = d.dias < 0 ? cur : monthKey(d.dt); if (!idx.has(key)) continue; const row = out[idx.get(key)];
+      const v = ventaDe(d.phone, d.doc); const mg = v && Number(v.ventaArs) > 0 ? (Number(v.ventaArs) - Number(v.costoArs || 0)) / Number(v.ventaArs) : 0;
+      const g = r2(d.amount * mg); row.cobro = r2(row.cobro + d.amount); row.ganancia = r2(row.ganancia + g); if (d.dias < 0) row.atrasado = r2(row.atrasado + d.amount);
+      row.items.push({ phone: d.phone, client: d.client, product: d.product, n: d.n, total: d.total, date: d.date, amount: d.amount, margen: mg, ganancia: g, atrasada: d.dias < 0, sinCosto: !v || !Number(v.costoArs) });
+    }
+    return out;
+  }
+  /* Simulador: vender un equipo financiado y ver cuánto cobrás y ganás por mes. */
+  function simSale(o) {
+    const costo = Number(o.costo) || 0, precio = Number(o.precio) || 0, adel = Math.min(precio, Number(o.adelanto) || 0), n = Math.max(1, Math.round(Number(o.cuotas) || 1)), sem = o.freq === 'Semanal';
+    const ganTotal = r2(precio - costo), mg = precio > 0 ? ganTotal / precio : 0, cuota = r2((precio - adel) / n), start = startOfDay(o.desde || new Date());
+    const meses = new Map(); const add = (d, cobro) => { const k = monthKey(d); const e = meses.get(k) || { month: k, label: d.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }), cobro: 0, ganancia: 0, cuotas: 0 }; e.cobro = r2(e.cobro + cobro); e.ganancia = r2(e.ganancia + cobro * mg); e.cuotas++; meses.set(k, e); };
+    if (adel > 0) add(start, adel);
+    for (let i = 1; i <= n; i++) { const d = sem ? new Date(start.getTime() + i * 7 * 86400000) : new Date(start.getFullYear(), start.getMonth() + i, Math.min(start.getDate(), 28)); add(d, cuota); }
+    return { ganTotal, margen: r2(mg * 100), cuota, n, freq: sem ? 'Semanal' : 'Mensual', meses: [...meses.values()].sort((a, b) => a.month.localeCompare(b.month)) };
+  }
+  const api = { forecast, simSale, calendar, r2, parseDate, fmtDate, iso, monthKey, startOfDay, saldo, dues, collectionTotals, client, sale, brand, naturalCompare, finance, investor, simulate, referrerGain, excelSheets, freqKey };
   root.ICLUBMetrics = api; if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

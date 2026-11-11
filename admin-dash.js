@@ -2,14 +2,17 @@
 (function () {
   'use strict';
   const A = window.ICA, M = window.ICLUBMetrics; const { esc, ars } = A;
-  const short = (n) => { const a = Math.abs(n); return (n < 0 ? '−' : '') + '$' + (a >= 1e6 ? (a / 1e6).toFixed(a >= 1e7 ? 0 : 1).replace('.', ',') + 'M' : a >= 1e3 ? Math.round(a / 1e3) + 'k' : Math.round(a)); };
+  const short = (n) => { const a = Math.abs(n); return (n < 0 ? '−' : '') + icon('pago') + (a >= 1e6 ? (a / 1e6).toFixed(a >= 1e7 ? 0 : 1).replace('.', ',') + 'M' : a >= 1e3 ? Math.round(a / 1e3) + 'k' : Math.round(a)); };
   const COL = { blue: '#0A84FF', green: '#16A34A', orange: '#F59E0B', purple: '#7C3AED', teal: '#0EA5A4', pink: '#DB2777', red: '#DC2626', slate: '#64748B' };
   const catOf = (s) => { const it = (A.db.inventory || []).find((i) => i.id === s.inventoryId); const n = ((it && (it.cat + ' ' + it.name)) || (s.itemSnapshot && s.itemSnapshot.name) || s.name || '').toLowerCase(); return /iphone|ipad|apple|airpods|macbook|watch/.test(n) ? 'Apple' : /tv|smart/.test(n) ? 'Smart TV' : /samsung|xiaomi|redmi|poco|motorola|moto |infinix|celular|android/.test(n) ? 'Android' : /ps5|playstation|joystick|consola/.test(n) ? 'Consolas' : 'Accesorios y otros'; };
 
+  /* Iconos de línea propios (24×24, trazo 2). */
+  const ICO = { venta: '<path d="M6 2h12a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M10 18h4"/><path d="M12 7v6M9 10h6"/>', pago: '<rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/>', clientes: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>', caja: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M8 15h3"/><path d="M16 14v3"/>', finanzas: '<path d="M3 20h18"/><path d="M6 16V11M11 16V7M16 16v-4M21 6l-5 4-4-3-6 4"/>' };
+  const icon = (k) => '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICO[k] + '</svg>';
   /* 1. Accesos rápidos */
   function wAccesos() {
     const t = (href, act, color, icon, label, sub) => '<a class="dash-tile" style="--c:' + color + '" ' + (act ? 'href="#" data-act="' + act + '"' : 'href="' + href + '"') + '><span class="dash-ico">' + icon + '</span><span><b>' + label + '</b><small>' + sub + '</small></span></a>';
-    return '<div class="dash-tiles">' + t('#vender', '', COL.blue, '＋', 'Registrar venta', 'desde el inventario') + t('', 'qp-focus', COL.green, '$', 'Registrar pago', 'buscar cliente y cobrar') + t('#clientes', '', COL.orange, '◉', 'Clientes', 'fichas, cuotas y deudas') + t('#caja', '', COL.purple, '▣', 'Cierre de caja', 'semanal o el que elijas') + t('#finanzas', '', COL.teal, '▲', 'Finanzas', 'ganancias y previsión') + '</div>';
+    return '<div class="dash-tiles">' + t('#vender', '', COL.blue, icon('venta'), 'Registrar venta', 'desde el inventario') + t('', 'qp-focus', COL.green, '$', 'Registrar pago', 'buscar cliente y cobrar') + t('#clientes', '', COL.orange, icon('clientes'), 'Clientes', 'fichas, cuotas y deudas') + t('#caja', '', COL.purple, icon('caja'), 'Cierre de caja', 'semanal o el que elijas') + t('#finanzas', '', COL.teal, icon('finanzas'), 'Finanzas', 'ganancias y previsión') + '</div>';
   }
   /* 2. Flujo del mes: vendido → cobrado → por cobrar */
   function wFlujo() {

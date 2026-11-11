@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   const A = window.ICA, M = window.ICLUBMetrics; const { esc, ars, chip } = A; const ui = A.ui;
+  const cap = (t) => String(t).charAt(0).toUpperCase() + String(t).slice(1);
   const month = () => ui.finMonth || M.monthKey(new Date());
   const monthLabel = (k) => { const [y, m] = k.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }); };
   const ventasMes = () => (A.db.ventas || []).filter((s) => !s.devolucion && !s.sinStats).map((s) => ({ s, dt: M.parseDate(s.fecha) })).filter((x) => x.dt && M.monthKey(x.dt) === month()).map((x) => ({ s: x.s, st: M.sale(A.db, x.s) })).sort((a, b) => b.st.dt - a.st.dt);
@@ -39,6 +40,12 @@
       return ['Cobrado en ' + monthLabel(month()), '<div style="margin-bottom:10px">' + Object.entries(byMed).sort((a, b) => b[1] - a[1]).map(([k, v]) => sumLine(esc(k), ars(v))).join('') + sumLine('Total', ars(p.reduce((a, x) => a + Number(x.m.imp), 0)), 'good', true) + '</div>' +
         table([{ t: 'Fecha' }, { t: 'Cliente' }, { t: 'Recibo' }, { t: 'Medio' }, { t: 'Cobró' }, { t: 'Importe', num: 1 }], p.map((x) => '<tr class="clickable" data-act="fin-client" data-phone="' + esc(x.phone) + '"><td>' + esc(x.m.f) + '</td><td>' + esc(x.c.name || x.phone) + '</td><td class="nowrap">' + esc(x.m.doc || '') + '</td><td>' + esc(x.m.efec != null ? 'Combinado' : x.m.met || '') + '</td><td>' + esc(x.m.by || '') + '</td><td class="num strong">' + ars(x.m.imp) + '</td></tr>'), 'Sin cobros este mes.') + '<p class="tiny muted">No incluye los equipos recibidos en canje (no es plata).</p>'];
     },
+    caja() {
+      const k = M.finance(A.db, { month: month() }).k, det = k.cajaDetalle.slice().sort((a, b) => b.ganancia - a.ganancia), name = (ph) => (A.db.clients[ph] || {}).name || ph;
+      return ['Ganancia que entró en ' + monthLabel(month()), '<p class="small muted">Por cada pago que cobraste este mes (de ventas de cualquier mes), la parte que es ganancia según el margen de esa venta. No cuenta los equipos recibidos en canje.</p>' +
+        '<div class="card" style="margin:0 0 12px">' + sumLine('Cobrado en el mes', ars(k.cobrado)) + sumLine('Ganancia dentro de lo cobrado', ars(k.gananciaCaja), 'good') + sumLine('− Gastos', ars(k.gastos), 'bad') + sumLine('− Comisiones', ars(k.comisiones), 'bad') + sumLine('= Ganancia neta que entró', ars(k.gananciaCajaNeta), k.gananciaCajaNeta >= 0 ? 'good' : 'bad', true) + '</div>' +
+        table([{ t: 'Fecha' }, { t: 'Cliente' }, { t: 'Venta' }, { t: 'Cobrado', num: 1 }, { t: 'Margen', num: 1 }, { t: 'Ganancia', num: 1 }], det.map((x) => '<tr class="clickable" data-act="fin-client" data-phone="' + esc(x.phone) + '"><td>' + esc(x.m.f) + '</td><td>' + esc(name(x.phone)) + '</td><td>' + esc(x.venta ? (x.venta.itemSnapshot && x.venta.itemSnapshot.name) || x.venta.name : 'Varias (margen promedio del cliente)') + '</td><td class="num">' + ars(x.m.imp) + '</td><td class="num">' + Math.round(x.margen * 100) + '%</td><td class="num strong ' + (x.ganancia < 0 ? 'bad' : 'good') + '">' + ars(x.ganancia) + '</td></tr>'), 'Sin cobros este mes.')];
+    },
     porCobrar() {
       const due = M.dues(A.db, {}); const rows = Object.entries(A.db.clients || {}).map(([ph, c]) => ({ ph, c, saldo: M.saldo(c), d: due.filter((x) => x.phone === ph).sort((a, b) => a.dt - b.dt) })).filter((x) => x.saldo > 0.005).sort((a, b) => b.saldo - a.saldo);
       return ['Por cobrar · ' + rows.length + ' clientes', sumLine('Total por cobrar', ars(rows.reduce((a, x) => a + x.saldo, 0)), 'strong', true) + '<div style="margin-top:10px"></div>' +
@@ -61,4 +68,53 @@
   };
   A.finDetail = (key) => { const fn = D[key]; if (!fn) return; const [title, body] = fn(); A.modal(title, body, { wide: true, noFocus: true }); };
   A.finTab = (g, k) => { document.querySelectorAll('[data-act=fin-tab][data-g="' + g + '"]').forEach((b) => b.classList.toggle('on', b.dataset.k === k)); document.querySelectorAll('div[data-g="' + g + '"]').forEach((d) => { d.hidden = d.dataset.k !== k; }); };
+
+  /* ===================== PREVISIÓN DE GANANCIAS + SIMULADOR ===================== */
+  A.forecastCard = () => {
+    const f = M.forecast(A.db, { months: 12 }); let last = f.length; while (last > 6 && !f[last - 1].cobro) last--; const rows = f.slice(0, last); let acc = 0; const max = Math.max(1, ...rows.map((x) => x.cobro));
+    const total = rows.reduce((a, x) => a + x.ganancia, 0), sinCosto = f.some((x) => x.items.some((i) => i.sinCosto));
+    return '<div class="card"><div class="card-head"><div><h2>Previsión de ganancias</h2><p>Con las cuotas que ya vendiste: cuánto vas a cobrar cada mes y cuánto de eso es ganancia (si todos pagan). Lo atrasado suma al mes actual.</p></div><div class="spacer"></div><button class="btn-brand" data-act="sim-open">¿Y si vendo…? Simular</button></div>' +
+      '<div class="kpis" style="margin-bottom:12px"><div class="kpi good"><span class="lbl">Ganancia asegurada</span><span class="num">' + ars(total) + '</span><span class="sub">próximos ' + rows.length + ' meses</span></div><div class="kpi"><span class="lbl">Este mes</span><span class="num">' + ars(rows[0] ? rows[0].ganancia : 0) + '</span><span class="sub">de ' + ars(rows[0] ? rows[0].cobro : 0) + ' a cobrar</span></div><div class="kpi"><span class="lbl">Próximo mes</span><span class="num">' + ars(rows[1] ? rows[1].ganancia : 0) + '</span><span class="sub">de ' + ars(rows[1] ? rows[1].cobro : 0) + ' a cobrar</span></div></div>' +
+      table([{ t: 'Mes' }, { t: '' }, { t: 'Vas a cobrar', num: 1 }, { t: 'Ganancia', num: 1 }, { t: 'Ganancia acumulada', num: 1 }], rows.map((x, i) => { acc += x.ganancia; return '<tr class="clickable" data-act="fc-month" data-i="' + i + '"><td class="strong">' + esc(cap(x.label)) + (x.atrasado ? '<br><span class="tiny bad">incluye ' + ars(x.atrasado) + ' atrasado</span>' : '') + '</td><td style="width:30%"><div style="height:8px;border-radius:6px;background:var(--line)"><div style="height:8px;border-radius:6px;width:' + Math.round(x.cobro / max * 100) + '%;background:var(--good)"></div></div></td><td class="num">' + ars(x.cobro) + '</td><td class="num strong good">' + ars(x.ganancia) + '</td><td class="num">' + ars(acc) + '</td></tr>'; })) +
+      (sinCosto ? '<p class="tiny muted">Algunas cuotas son de ventas sin costo cargado: su ganancia no se puede calcular y figura en $0.</p>' : '') + '<p class="tiny muted">Tocá un mes para ver de quién vas a cobrar.</p></div>';
+  };
+  /* Cobros por mes: quién pagó (meses pasados) y quién debería pagar (este mes y los que vienen). */
+  A.finMes = (i) => {
+    const x = M.finance(A.db, { month: A.ui.finMonth }).flujo[i]; if (!x) return;
+    const pag = x.pagos.slice().sort((a, b) => (M.parseDate(a.date) || 0) - (M.parseDate(b.date) || 0)), deb = x.debe.slice().sort((a, b) => (M.parseDate(a.date) || 0) - (M.parseDate(b.date) || 0));
+    A.modal('Cobros de ' + x.label,
+      (x.cobrado != null ? sumLine('Cobrado', ars(x.cobrado), 'good', true) + table([{ t: 'Fecha' }, { t: 'Cliente' }, { t: 'Recibo' }, { t: 'Medio' }, { t: 'Importe', num: 1 }], pag.map((p) => '<tr class="clickable" data-act="fin-client" data-phone="' + esc(p.phone) + '"><td>' + esc(p.date) + '</td><td class="strong">' + esc(p.name) + '</td><td class="small muted">' + esc(p.doc) + '</td><td class="small">' + esc(p.met) + '</td><td class="num strong good">' + ars(p.amount) + '</td></tr>'), 'Nadie pagó este mes.') : '') +
+      (x.esperado != null ? '<div style="margin-top:12px"></div>' + sumLine('Esperado si pagan al día', ars(x.esperado), '', true) + table([{ t: 'Vence' }, { t: 'Cliente' }, { t: 'Equipo' }, { t: 'Cuota' }, { t: 'Importe', num: 1 }], deb.map((q) => '<tr class="clickable" data-act="fin-client" data-phone="' + esc(q.phone) + '"><td>' + esc(q.date) + (q.atrasada ? ' ' + chip('Atrasada', 'bad') : '') + '</td><td class="strong">' + esc(q.name) + '</td><td class="small">' + esc(q.product) + '</td><td>' + (q.n ? q.n + '/' + q.total : '') + '</td><td class="num strong">' + ars(q.amount) + '</td></tr>'), 'Nada para cobrar.') : ''), { wide: true, noFocus: true });
+  };
+  /* Ventas sin costo cargado: cuentan como 100% de ganancia e inflan los números. */
+  A.sinCosto = (s) => !!s && !s.devolucion && !s.sinStats && Number(s.ventaArs) > 0 && !(Number(s.costoArs) > 0);
+  A.sinCostoLista = (month) => (A.db.ventas || []).filter((s) => A.sinCosto(s) && (!month || M.monthKey(M.parseDate(s.fecha) || new Date(0)) === month));
+  A.sinCostoAviso = (month) => {
+    const all = A.sinCostoLista(), mes = month ? A.sinCostoLista(month) : all; if (!all.length) return '';
+    const list = (mes.length ? mes : all).slice(0, 8);
+    return '<div class="card fin-only" style="border-color:var(--bad);margin-bottom:16px"><div class="card-head"><div><h2>' + (mes.length ? mes.length + ' venta' + (mes.length === 1 ? '' : 's') + ' de este mes sin costo cargado' : all.length + ' venta' + (all.length === 1 ? '' : 's') + ' sin costo cargado') + '</h2><p>Sin costo, el sistema cuenta toda la venta como ganancia. Cargá el costo para que los números sean reales.</p></div></div>' +
+      list.map((s) => '<div class="item clickable" data-act="fin-sale" data-id="' + esc(s.id) + '"><div class="grow"><div class="main-t">' + esc(s.clientName || s.client || (A.db.clients[s.clientKey] || {}).name || 'Cliente') + '</div><div class="sub-t">' + esc((s.itemSnapshot && s.itemSnapshot.name) || s.name || '') + ' · ' + esc(s.fecha || '') + '</div></div><b>' + ars(s.ventaArs) + '</b></div>').join('') + ((mes.length ? mes : all).length > 8 ? '<p class="small muted">y ' + ((mes.length ? mes : all).length - 8) + ' más.</p>' : '') + '</div>';
+  };
+  A.fcMonth = (i) => {
+    const x = M.forecast(A.db, { months: 12 })[i]; if (!x) return;
+    A.modal('Previsión de ' + x.label, sumLine('Vas a cobrar', ars(x.cobro)) + sumLine('Ganancia', ars(x.ganancia), 'good', true) + '<div style="margin-top:10px"></div>' +
+      table([{ t: 'Vence' }, { t: 'Cliente' }, { t: 'Equipo' }, { t: 'Cuota' }, { t: 'Importe', num: 1 }, { t: 'Margen', num: 1 }, { t: 'Ganancia', num: 1 }], x.items.sort((a, b) => (M.parseDate(a.date) || 0) - (M.parseDate(b.date) || 0)).map((q) => '<tr class="clickable" data-act="fin-client" data-phone="' + esc(q.phone) + '"><td>' + esc(q.date) + (q.atrasada ? ' ' + chip('Atrasada', 'bad') : '') + '</td><td>' + esc(q.client) + '</td><td>' + esc(q.product) + '</td><td>' + q.n + '/' + q.total + '</td><td class="num">' + ars(q.amount) + '</td><td class="num">' + (q.sinCosto ? '<span class="muted">sin costo</span>' : Math.round(q.margen * 100) + '%') + '</td><td class="num strong good">' + ars(q.ganancia) + '</td></tr>'), 'Nada para cobrar este mes.'), { wide: true, noFocus: true });
+  };
+  A.simOpen = () => {
+    const rate = Number(A.db.settings && A.db.settings.rate) || 1520;
+    A.modal('¿Y si vendo…? Simulador de ganancia', '<p class="small muted">Poné cuánto te cuesta el equipo y a cuánto lo vendés en cuotas. Te muestro cuánto cobrás y cuánto ganás cada mes, y cómo queda sumado a lo que ya tenés asegurado.</p>' +
+      '<form id="simForm" class="grid"><div class="grid g3"><label class="f">Costo del equipo ($)<input name="costo" inputmode="decimal" value="1000000"></label><label class="f">Precio de venta total ($)<input name="precio" inputmode="decimal" value="2000000"><small>Total que paga el cliente, con recargo.</small></label><label class="f">Adelanto ($)<input name="adelanto" inputmode="decimal" value="0"></label><label class="f">Cantidad de cuotas<input name="cuotas" inputmode="numeric" value="6"></label><label class="f">Frecuencia<select name="freq"><option>Mensual</option><option>Semanal</option></select></label><label class="f">Cantidad de equipos<input name="cant" inputmode="numeric" value="1"><small>Ej: si vendés 3 iguales.</small></label></div><p class="tiny muted">Dólar de hoy: ' + ars(rate) + '</p></form><div id="simOut"></div>', { wide: true, noFocus: true });
+    A.simCalc();
+  };
+  A.simCalc = () => {
+    const f = A.$('#simForm'), out = A.$('#simOut'); if (!f || !out) return; const e = f.elements, num = (x) => { const v = A.num(x); return Number.isFinite(v) ? v : 0; }, cant = Math.max(1, Math.round(num(e.cant.value)) || 1);
+    const r = M.simSale({ costo: num(e.costo.value) * cant, precio: num(e.precio.value) * cant, adelanto: num(e.adelanto.value) * cant, cuotas: num(e.cuotas.value), freq: e.freq.value });
+    if (!(num(e.precio.value) > 0)) { out.innerHTML = '<p class="muted">Completá el precio.</p>'; return; }
+    const base = new Map(M.forecast(A.db, { months: 24 }).map((x) => [x.month, x]));
+    const sem = r.freq === 'Semanal', perCuotaGan = r.cuota * r.margen / 100;
+    out.innerHTML = '<div class="kpis"><div class="kpi ' + (r.ganTotal >= 0 ? 'good' : 'bad') + '"><span class="lbl">Ganancia total</span><span class="num">' + ars(r.ganTotal) + '</span><span class="sub">margen ' + r.margen + '%' + (cant > 1 ? ' · ' + cant + ' equipos' : '') + '</span></div><div class="kpi"><span class="lbl">Cuota ' + (sem ? 'semanal' : 'mensual') + '</span><span class="num">' + ars(r.cuota) + '</span><span class="sub">' + r.n + ' cuotas</span></div><div class="kpi good"><span class="lbl">Ganancia por cuota</span><span class="num">' + ars(perCuotaGan) + '</span><span class="sub">' + (sem ? 'cada semana' : 'cada mes') + '</span></div></div>' +
+      '<h3 style="margin-top:12px">Mes por mes</h3>' + table([{ t: 'Mes' }, { t: 'Cobrás (esta venta)', num: 1 }, { t: 'Ganás (esta venta)', num: 1 }, { t: 'Ganancia que ya tenés', num: 1 }, { t: 'Total ganancia del mes', num: 1 }], r.meses.map((x) => { const b = base.get(x.month); const ya = b ? b.ganancia : 0; return '<tr><td>' + esc(cap(x.label)) + (x.cuotas > 1 ? ' <span class="tiny muted">(' + x.cuotas + ' pagos)</span>' : '') + '</td><td class="num">' + ars(x.cobro) + '</td><td class="num strong good">' + ars(x.ganancia) + '</td><td class="num">' + ars(ya) + '</td><td class="num strong">' + ars(ya + x.ganancia) + '</td></tr>'; })) +
+      '<p class="tiny muted">El adelanto entra el día de la venta. La ganancia de cada pago es proporcional al margen. Es una simulación: no registra nada.</p>';
+  };
+
 })();

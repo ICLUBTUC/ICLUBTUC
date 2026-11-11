@@ -1,17 +1,32 @@
-CAMBIOS PARA SUBIR A GITHUB — 2026-11-10
+CAMBIOS PARA SUBIR A GITHUB — todo lo nuevo desde el 09/11 (10 y 11/11)
 
-Subí el contenido de esta carpeta (con sus subcarpetas) y aceptá reemplazar.
+Si ya subiste el zip del 09/11: subí el contenido de esta carpeta y aceptá reemplazar.
+Reemplaza a TODOS los zips ICLUBTUC-cambios-2026-11-10 que te mandé.
 
-Archivos nuevos o modificados (12):
+Archivos (26):
+ - canje.html
+ - inversores.html
  - admin-dash.js
  - admin-core.js
+ - referidos.html
  - iclub-app.css
+ - vercel.json
+ - Finalizar Compra.dc.html
  - admin-extra.js
  - admin-users.js
+ - admin-fin.js
+ - admin-events.js
+ - iclub-metrics.js
+ - admin-views.js
+ - Portal Clientes ICLUB.dc.html
+ - admin-cobranza.js
+ - iclub-docs.js
+ - smarttv-cutout.webp
+ - gestion.html
+ - Inicio ICLUB.dc.html
  - tests/e2e-mejoras.cjs
+ - tests/e2e-auditoria.cjs
+ - tests/e2e-harness.cjs
  - tests/package.json
  - tests/e2e-recibo-comision.cjs
  - tests/e2e-dash.cjs
- - admin-cobranza.js
- - iclub-docs.js
- - gestion.html

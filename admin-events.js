@@ -127,6 +127,7 @@
       case 'lead-estado': A.leadEstado(Number(d.id), d.e); break;
       case 'plan-edit': A.planEdit(d.phone, d.doc); break;
       case 'fc-month': A.fcMonth(Number(d.i)); break;
+      case 'fin-mes': A.finMes(Number(d.i)); break;
       case 'sim-open': A.simOpen(); break;
       case 'fin-client': A.closeModal(); location.hash = 'cliente/' + encodeURIComponent(d.phone); break;
       case 'rem-send': A.remSend(d.phone); break;
@@ -203,6 +204,7 @@
       case 'cajaCloseForm': A.cajaClose(f); break;
       case 'cajaCfgForm': A.cajaCfg(f); break;
       case 'cobranzaForm': A.saveCobranza(f); break;
+      case 'costoForm': A.saveCosto(f); break;
       case 'bizForm': A.saveSettings({ biz: { name: el.name.value.trim() || 'ICLUB', tagline: el.tagline.value.trim(), alias: el.alias.value.trim(), wa: el.wa.value.trim(), ig: el.ig.value.trim(), dir: el.dir.value.trim(), nota: el.nota.value.trim(), promoOn: el.promoOn.checked, promoTitle: el.promoTitle.value.trim(), promo: el.promo.value.trim().slice(0, 220) } }, 'Datos de comprobantes guardados.'); break;
       case 'moraForm': A.saveSettings({ mora: el.mora.value.replace(/[^0-9.,]/g, ''), moraGracia: A.num(el.moraGracia.value), moraTope: A.pct(el.moraTope.value) }, 'Mora guardada.'); break;
       case 'recForm': { const cur = A.settingsFull().recargos, rec = {}; Object.keys(cur).forEach((n) => { const v = el['r' + n] ? el['r' + n].value.trim() : ''; if (v !== '') rec[n] = A.pct(v); }); const nm = Math.round(A.num(el.newM.value)); if (nm >= 2 && nm <= 36 && rec[nm] == null) rec[nm] = 0; if (Object.values(rec).some((v) => !Number.isFinite(v) || v < 0 || v > 1000)) { A.toast('Revisá los porcentajes.', true); break; } A.saveSettings({ recargos: rec }, 'Recargos guardados.'); break; }
