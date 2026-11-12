@@ -141,3 +141,17 @@ dialog.modal.wide{max-width:min(980px,96vw)}.modal-head{display:flex;align-items
 .no-vender .dash-tile[href="#vender"],.no-cobrar .dash-tile[data-act="qp-focus"],.no-clientes .dash-tile[href="#clientes"],.no-finanzas .dash-tile[href="#finanzas"],.is-staff .dash-tile[href="#caja"]{display:none}
 /* Marca ICLUB: 2 tipografías. Space Grotesk para títulos y números grandes, Plus Jakarta Sans para el resto. */
 body.app h1,body.app .kpi .num,body.app .flow-dot,body.app .brand-name{font-family:"Space Grotesk","Plus Jakarta Sans",sans-serif;letter-spacing:-.01em}
+/* Capital */
+.side a.nav-cap .nav-cap-t{display:flex;flex-direction:column;line-height:1.2}.side a.nav-cap b{font-family:"Space Grotesk",sans-serif;font-size:16px;color:#4ade80}.side a.nav-cap.on b{color:#16a34a}
+.cap-hero{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;background:#0f172a;color:#fff;border-radius:18px;padding:22px 24px}
+.cap-hero .lbl{display:block;font-size:13px;color:#94a3b8;font-weight:600}.cap-hero .sub{display:block;font-size:12.5px;color:#94a3b8;margin-top:4px}
+.cap-total{display:block;font-family:"Space Grotesk",sans-serif;font-size:40px;font-weight:700;letter-spacing:-.02em}
+.cap-mes{display:flex;gap:22px}.cap-mes div{display:flex;flex-direction:column;font-size:12.5px;color:#94a3b8}.cap-mes b{font-size:18px}.cap-mes b.good{color:#4ade80}.cap-mes b.bad{color:#f87171}
+.cap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.side~* .cap-acc,.cap-acc{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;background:#fff!important;border:1px solid var(--line)!important;border-radius:16px;padding:16px;cursor:pointer;font:inherit;color:var(--ink)!important;box-shadow:none;min-height:0;justify-content:flex-start}
+.cap-acc:hover{border-color:var(--brand)}.cap-name{font-weight:700}.cap-amt{font-family:"Space Grotesk",sans-serif;font-size:24px;font-weight:700}.cap-amt.bad{color:var(--bad)}
+.cap-ico{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:#fff;background:#64748b}.cap-ico.t-efectivo{background:#16a34a}.cap-ico.t-billetera{background:#0a84ff}.cap-ico.t-banco{background:#7c3aed}
+.cap-bar{width:100%;height:6px;border-radius:4px;background:#eef1f5;overflow:hidden}.cap-bar i{display:block;height:100%;background:var(--brand)}
+.cap-sum{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.cap-sum>div{flex:1;min-width:150px;background:#f6f7f9;border-radius:12px;padding:12px}.cap-sum span{display:block;font-size:12.5px;color:var(--muted)}.cap-sum b{font-size:18px}.cap-sum .op{font-size:22px;color:var(--muted);flex:none;min-width:0;background:none;padding:0}.cap-sum .tot{background:#0f172a;color:#fff}.cap-sum .tot span{color:#94a3b8}
+.cap-row{align-items:end}
+.no-finanzas .nav-cap{display:none}

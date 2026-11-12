@@ -232,7 +232,7 @@ const proxTxt = (q) => { const hoy = new Date(); hoy.setHours(0, 0, 0, 0); const
     const devuelta = (v && v.devolucion) || (m.finan && m.finan.cancelada);
     d.hero('Total de la compra', total, pc && !pc.esContado ? pc.n + ' cuotas ' + (pc.freq === 'Semanal' ? 'semanales' : 'mensuales') + ' de ' + money(pc.cuotaImp) : (m.finan ? 'Precio de contado' : saldo <= 0.005 ? 'Pagada de contado' : 'Cuenta corriente'), devuelta ? null : saldo <= 0.005 ? null : pc && pc.vencidoAhora > 0.005 ? 'Con atraso' : m.finan ? 'Financiada' : 'Saldo pendiente', devuelta ? 'muted' : saldo <= 0.005 ? 'good' : pc && pc.vencidoAhora > 0.005 ? 'bad' : 'info');
     const snap = v && v.itemSnapshot || {};
-    d.boxes([{ title: 'Cliente', rows: clientRows(c, phone) }, { title: 'Equipo', rows: [['Producto', snap.name || productOf(m)], ['Detalle', snap.spec || ''], ['IMEI / serie', snap.imei || ''], ['Entrega', v ? (v.delivered ? 'Entregado' : 'Pendiente de entrega') : ''], ['Comprobante', m.doc]] }]);
+    d.boxes([{ title: 'Cliente', rows: clientRows(c, phone) }, { title: 'Equipo', rows: [['Producto', snap.name || productOf(m)], ['Detalle', snap.spec || ''], ['IMEI / serie', snap.imei || '']].concat(snap.cargador ? [['Cargador', snap.cargador]] : []).concat([['Entrega', v ? (v.delivered ? 'Entregado' : 'Pendiente de entrega') : ''], ['Comprobante', m.doc]]) }]);
     if ((m.prods || []).length > 1) { d.section('Productos'); d.table([{ label: 'Producto', w: 120 }, { label: 'Cantidad', w: 30, align: 'right' }], m.prods.map((p) => [p.name, p.qty])); }
     const cond = [];
     if (v && Number(v.cashArs) && Number(v.cashArs) !== total) cond.push(['Precio de contado', money(v.cashArs)]);

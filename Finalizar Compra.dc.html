@@ -66,6 +66,7 @@ image-slot{--is-frame-bg:#fff;}
       <span style="font-size:13px; color:#86868B;">{{ countLabel }}</span>
     </div>
     <sc-for list="{{ items }}" as="it" hint-placeholder-count="1">
+      <div style="display:flex; flex-direction:column; gap:8px;">
       <div style="background:#fff; border-radius:22px; padding:16px; display:flex; align-items:center; gap:14px; box-shadow:0 1px 3px rgba(0,0,0,.06);">
         <div style="width:58px; height:76px; border-radius:15px; background:#F4F1EC; flex-shrink:0; display:flex; align-items:center; justify-content:center; overflow:hidden;">
           <sc-if value="{{ it.hasPhoto }}" hint-placeholder-val="{{ false }}">{{ it.photoNode }}</sc-if>
@@ -87,6 +88,13 @@ image-slot{--is-frame-bg:#fff;}
           <span style="font-size:16px; font-weight:700; letter-spacing:-.015em;">{{ it.lineMain }}</span>
           <span style="font-size:11.5px; color:#A1A1A6;">{{ it.lineSub }}</span>
         </span>
+      </div>
+      <sc-if value="{{ it.hasCarg }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <button onClick="{{ it.setCert }}" style="{{ it.certStyle }}"><span style="font-size:14px; font-weight:700; color:#1D1D1F;">Cargador certificado</span><span style="font-size:12.5px; color:#1F8A5B; font-weight:600;">De regalo</span></button>
+          <button onClick="{{ it.setOrig }}" style="{{ it.origStyle }}"><span style="font-size:14px; font-weight:700; color:#1D1D1F;">Cargador original</span><span style="font-size:12.5px; color:#6E6E73; font-weight:600;">{{ it.origPrice }}</span></button>
+        </div>
+      </sc-if>
       </div>
     </sc-for>
     <a href="Inicio ICLUB.dc.html" style="align-self:flex-start; font-size:13.5px; font-weight:600;">+ Agregar otro equipo</a>
@@ -187,7 +195,7 @@ class Component extends DCLogic {
     try { items = JSON.parse(localStorage.getItem('zt_cart') || '[]') || []; } catch (e) {}
     items = items.filter((x) => x && x.id && x.usd > 0).map((x) => ({
       id: String(x.id), name: String(x.name || 'Equipo'), usd: parseFloat(x.usd) || 0,
-      qty: Math.min(10, Math.max(1, parseInt(x.qty, 10) || 1))
+      qty: Math.min(10, Math.max(1, parseInt(x.qty, 10) || 1)), carg: x.carg === 'original' ? 'original' : ''
     }));
     const urlId = q.get('id') || '';
     if (urlId) {
@@ -204,6 +212,7 @@ class Component extends DCLogic {
     this.state = {
       items, photos,
       rate: (db && db.settings && db.settings.rate) || 1520,
+      cargCfg: (db && db.settings && db.settings.cargador) || null, cats: {},
       entrega: 'envio', pago: 'transferencia',
       dir: prof.dir || '', city: prof.city || '', cp: prof.cp || '',
       factName: prof.factName || '', dni: prof.dni || '',
@@ -243,14 +252,21 @@ class Component extends DCLogic {
         });
         if (touched) patch.photos = next;
         if (db.settings && db.settings.rate && db.settings.rate !== this.state.rate) patch.rate = db.settings.rate;
+        if (db.settings && db.settings.cargador) patch.cargCfg = db.settings.cargador;
+        const cats = {}; this.state.items.forEach((it) => { const ov = db.catalog && db.catalog[it.id]; if (ov && ov.cat) cats[it.id] = ov.cat; }); patch.cats = cats;
         if (Object.keys(patch).length) this.setState(patch);
     }).catch(() => {});
   }
 
   _saveCart() {
-    try { localStorage.setItem('zt_cart', JSON.stringify(this.state.items.map((x) => ({ id: x.id, name: x.name, usd: x.usd, qty: x.qty })))); } catch (e) {}
+    try { localStorage.setItem('zt_cart', JSON.stringify(this.state.items.map((x) => ({ id: x.id, name: x.name, usd: x.usd, qty: x.qty, carg: x.carg || '' })))); } catch (e) {}
   }
   _setItems(items) { this.setState({ items, err: '' }, () => this._saveCart()); }
+  /* Cargador: los celulares van con cargador certificado de regalo; el original tiene un extra. */
+  _cargUsd() { const c = this.state.cargCfg; return c && c.on !== false && Number(c.usd) > 0 ? Number(c.usd) : 0; }
+  _esCel(it) { const cat = (this.state.cats && this.state.cats[it.id]) || ''; return /iphone|samsung|galaxy|motorola|moto |xiaomi|redmi|poco|celular|infinix|realme/i.test(it.name + ' ' + cat) || /android/i.test(cat); }
+  _cargOf(it) { return this._cargUsd() && this._esCel(it) && it.carg === 'original' ? this._cargUsd() : 0; }
+  _setCarg(id, v) { this._setItems(this.state.items.map((x) => x.id === id ? Object.assign({}, x, { carg: v }) : x)); }
   _setQty(id, qty) {
     let items = this.state.items.map((x) => Object.assign({}, x));
     if (qty <= 0) items = items.filter((x) => x.id !== id);
@@ -269,7 +285,8 @@ class Component extends DCLogic {
   renderVals() {
     const s = this.state;
     const rate = s.rate || 1520;
-    const totalUsd = s.items.reduce((n, x) => n + x.usd * x.qty, 0);
+    const totalUsd = s.items.reduce((n, x) => n + (x.usd + this._cargOf(x)) * x.qty, 0);
+    const cargUsd = this._cargUsd();
     const units = s.items.reduce((n, x) => n + x.qty, 0);
     const optBase = 'display:flex; flex-direction:column; align-items:flex-start; gap:3px; padding:14px 16px; border-radius:16px; cursor:pointer; font-family:inherit; background:#fff; text-align:left; transition:border-color .25s, box-shadow .25s;';
     const on = ' border:2px solid #0A84FF; box-shadow:0 0 0 4px rgba(10,132,255,.08);';
@@ -285,9 +302,13 @@ class Component extends DCLogic {
         return {
           name: it.name, qty: it.qty,
           unitLine: this._ars(it.usd * rate) + ' \u00b7 ' + this._usd(it.usd) + ' c/u',
-          lineMain: this._ars(it.usd * it.qty * rate),
-          lineSub: this._usd(it.usd * it.qty),
-          sumLabel: it.qty + ' \u00d7 ' + short(it.name, 26),
+          lineMain: this._ars((it.usd + this._cargOf(it)) * it.qty * rate),
+          lineSub: this._usd((it.usd + this._cargOf(it)) * it.qty),
+          sumLabel: it.qty + ' \u00d7 ' + short(it.name, 26) + (this._cargOf(it) ? ' + cargador original' : ''),
+          hasCarg: !!(cargUsd && this._esCel(it)),
+          setCert: () => this._setCarg(it.id, ''), setOrig: () => this._setCarg(it.id, 'original'),
+          certStyle: optBase + (it.carg !== 'original' ? on : off), origStyle: optBase + (it.carg === 'original' ? on : off),
+          origPrice: '+ ' + this._ars(cargUsd * rate) + (it.qty > 1 ? ' c/u' : ''),
           hasPhoto: !!photo, noPhoto: !photo,
           photoNode: photo ? React.createElement('img', { src: photo, alt: it.name, style: { width: '100%', height: '100%', objectFit: 'contain', display: 'block' } }) : null,
           inc: () => this._setQty(it.id, it.qty + 1),
@@ -341,6 +362,7 @@ class Component extends DCLogic {
         const lines = ['Hola ICLUB! Quiero confirmar mi pedido:'];
         s.items.forEach((it) => {
           lines.push('\u2022 ' + it.qty + ' x ' + it.name + ' \u2014 ' + this._ars(it.usd * rate) + ' c/u');
+          if (cargUsd && this._esCel(it)) lines.push(this._cargOf(it) ? '   Con cargador ORIGINAL (+' + this._ars(cargUsd * rate) + ' c/u)' : '   Con cargador certificado de regalo');
         });
         lines.push('Entrega: ' + (s.entrega === 'retiro' ? 'Retiro en el local' : ('Env\u00edo a ' + s.dir + (s.city ? ', ' + s.city : '') + (s.cp ? ' (CP ' + s.cp + ')' : ''))));
         lines.push('Pago: ' + pago);

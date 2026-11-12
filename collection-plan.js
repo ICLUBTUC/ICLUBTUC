@@ -24,7 +24,35 @@
     }
     return out;
   }
-  _planCalc(client, pm) {
+  /* Reparto de pagos sueltos (sin compra elegida) entre las compras de cuenta corriente,
+     de la más vieja a la más nueva. Devuelve lo que debe cada una y cuánto se usó. */
+  _alloc(client) {
+    const movs = client.movs || [], d = (x) => this._parseDate(x.f) || 0;
+    const compras = movs.filter((m) => m.tipo === 'Compra' || m.tipo === 'Saldo anterior').slice().sort((a, b) => d(a) - d(b));
+    const linked = (x) => compras.find((p) => (x.plan && x.plan === p.doc) || (x.grp && p.grp && x.grp === p.grp)) || (x.adel || /adelanto/i.test(String(x.det || '')) ? compras.find((p) => p.finan && p.f === x.f) : null);
+    const credit = movs.filter((x) => x.tipo === 'Pago' || x.tipo === 'Nota de Crédito' || x.tipo === 'Reintegro');
+    const out = {}; let pool = 0, consumed = 0;
+    credit.forEach((x) => { if (!linked(x)) pool += Number(x.imp) || 0; });
+    compras.filter((p) => !p.finan).forEach((p) => {
+      const own = credit.filter((x) => linked(x) === p).reduce((a, x) => a + (Number(x.imp) || 0), 0);
+      let need = Math.max(0, Math.round((-Number(p.imp) - own) * 100) / 100); const take = Math.max(0, Math.min(need, pool));
+      need -= take; pool -= take; consumed += take; out[p.doc] = Math.round(need * 100) / 100;
+    });
+    return { debe: out, consumed: Math.round(consumed * 100) / 100, sobrante: Math.round(pool * 100) / 100 };
+  }
+  /* Un "resto" guardado solo vale si esa cuota de verdad quedó a medio pagar.
+     Los restos viejos que nacieron de un sobrante (pagar de más) se ignoran. */
+  _restosValidos(client, pm) {
+    const rs = (pm.finan && pm.finan.restos) || []; if (!rs.length) return [];
+    /* Se prueba con los pagos de a uno (en orden): el resto es válido si en algún momento
+       esa cuota quedó a medio pagar con justo ese faltante. */
+    const d = (x) => this._parseDate(x.f) || 0, movs = client.movs || [];
+    const pays = movs.filter((x) => x.tipo === 'Pago').slice().sort((a, b) => d(a) - d(b));
+    const otros = movs.filter((x) => x.tipo !== 'Pago');
+    const prefijos = []; for (let k = 1; k <= pays.length; k++) prefijos.push(this._planCalc(Object.assign({}, client, { movs: otros.concat(pays.slice(0, k)) }), pm, { restos: [] }));
+    return rs.filter((r) => prefijos.some((pc) => { const q = pc.cuotas[r.i]; return q && !q.done && q.paid > 0.005 && Math.abs(q.req - q.paid - Number(r.monto)) < 1; }));
+  }
+  _planCalc(client, pm, opts) {
     const n = pm.finan.n;
     const freq = pm.finan.freq || 'Mensual';
     const base = pm.finan.base != null ? pm.finan.base : -pm.imp;
@@ -34,7 +62,8 @@
     const cuotaImp = pm.finan.exact ? Math.round(base / n * 100)/100 : Math.round(base / n);
     const capImp = Math.round(contado / n);
     const vencs = pm.finan.vencs || {};
-    const dates = this._schedule(pm.f, n, freq).map((d, i) => vencs[i] || d);
+    const sched = pm.finan.primera ? [pm.finan.primera].concat(this._schedule(pm.finan.primera, n - 1, freq)) : this._schedule(pm.f, n, freq);
+    const dates = sched.map((d, i) => vencs[i] || d);
     /* Si el cliente tiene un solo plan financiado, los pagos sueltos (cargados
        sin elegir "Aplicar a") también se imputan a ese plan — salvo el adelanto
        de la propia compra, que ya está descontado del monto financiado. */
@@ -44,9 +73,17 @@
        porque se cobró el mismo día de la venta (datos viejos sin marca). */
     const esAdelanto = (x) => !!x.adel || /adelanto/i.test(String(x.det || ''))
       || (x.grp && x.grp === pm.grp) || x.f === pm.f;
+    /* Los pagos sueltos cubren primero las compras de cuenta corriente más viejas
+       (cada compra muestra lo suyo); lo que sobra recién va al plan en cuotas. */
+    const otrosGrp = new Set((client.movs || []).filter((m) => (m.tipo === 'Compra' || m.tipo === 'Saldo anterior') && m !== pm && m.grp).map((m) => m.grp));
+    const deOtra = (x) => !!(x.grp && otrosGrp.has(x.grp));
+    const consumido = planesCount === 1 ? this._alloc(client).consumed : 0;
+    let saltar = consumido;
     const pagos = (client.movs || []).filter((x) => x.tipo === 'Pago' && (
-      x.plan === pm.doc || (planesCount === 1 && !x.plan && !esAdelanto(x))
-    )).slice().sort((a, b) => (this._parseDate(a.f) || 0) - (this._parseDate(b.f) || 0));
+      x.plan === pm.doc || (planesCount === 1 && !x.plan && !esAdelanto(x) && !deOtra(x))
+    )).slice().sort((a, b) => (this._parseDate(a.f) || 0) - (this._parseDate(b.f) || 0))
+      .map((x) => { if (x.plan === pm.doc || saltar <= 0.005) return x; const imp = Number(x.imp) || 0, quita = Math.min(imp, saltar); saltar -= quita; return quita >= imp - 0.005 ? null : Object.assign({}, x, { imp: Math.round((imp - quita) * 100) / 100 }); })
+      .filter(Boolean);
     /* Plan liquidado a contado: el cliente pagó (o paga) en efectivo y se le
        saca el recargo entero, sin importar la fecha de cada cuota. */
     const esContado = !!pm.finan.contado;
@@ -55,7 +92,8 @@
     /* Restos de cuota resueltos por administración: el faltante de una cuota
        se suma a la próxima, se pasa a la última o se perdona (con nota de
        crédito). Así un pago chico nunca arrastra el faltante cuota por cuota. */
-    (pm.finan.restos || []).forEach((r) => {
+    const restosValidos = (opts && opts.restos) || this._restosValidos(client, pm);
+    restosValidos.forEach((r) => {
       const q = cuotas[r.i], m = Math.round(Number(r.monto) * 100) / 100;
       if (!q || !(m > 0)) return;
       const dest = r.destino === 'next' ? cuotas[r.i + 1] : r.destino === 'last' ? cuotas[n - 1] : null;
@@ -83,22 +121,43 @@
     });
     const TOL = 0.005;
     let ahorro = esContado ? Math.round(base - contado) : 0, credito = 0;
+    /* Cada pago se aplica a la primera cuota pendiente. Si sobra plata pero no alcanza
+       para la cuota siguiente, el sobrante se descuenta desde la ÚLTIMA cuota hacia atrás
+       (nunca se apila en la próxima) y la cuota pagada muestra el pago completo. */
+    const descontarDelFinal = (monto, desde, p) => {
+      let r = monto;
+      for (let k = cuotas.length - 1; k > desde && r > TOL; k--) {
+        const q = cuotas[k]; if (q.done) continue; const libre = Math.round((q.req - q.paid) * 100) / 100; if (!(libre > TOL)) continue;
+        const m = Math.min(libre, r); q.req = Math.round((q.req - m) * 100) / 100; q.adj = Math.round((q.adj - m) * 100) / 100; q.porSobrante = Math.round(((q.porSobrante || 0) + m) * 100) / 100; r = Math.round((r - m) * 100) / 100;
+        if (q.req - q.paid <= TOL) { q.done = true; q.pay = p; q.cubiertaPorSobrante = true; }
+      }
+      return r;
+    };
     pagos.forEach((p) => {
       let rest = p.imp;
       const pd = this._parseDate(p.f) || new Date();
-      let primera = true;
-      for (let i = 0; i < cuotas.length && rest > 0; i++) {
+      let primera = true, ultima = null;
+      for (let i = 0; i < cuotas.length && rest > TOL; i++) {
         const q = cuotas[i];
         if (q.done) continue;
         /* El adelanto sin interés aplica a las cuotas que este pago adelanta
            (no a la que ya estaba vencida o en curso). */
         if (p.sinInt && q.paid === 0 && !primera && q.dt && pd < q.dt) { q.req = Math.round((capImp + q.adj) * 100) / 100; q.sinInt = true; }
+        const need = Math.round((q.req - q.paid) * 100) / 100;
+        if (!primera && rest < need - TOL && p.imp >= cuotaBase - TOL) {
+          /* Sobrante de un pago que ya completó una cuota: va contra la última cuota. */
+          const sobra = rest, quedo = descontarDelFinal(sobra, i, p), usado = Math.round((sobra - quedo) * 100) / 100;
+          if (ultima && usado > 0) { ultima.paid = Math.round((ultima.paid + usado) * 100) / 100; ultima.sobrante = Math.round(((ultima.sobrante || 0) + usado) * 100) / 100; }
+          rest = quedo;
+          if (rest > TOL) { q.paid = Math.round((q.paid + rest) * 100) / 100; rest = 0; }
+          break;
+        }
         primera = false;
-        const take = Math.min(q.req - q.paid, rest);
+        const take = Math.min(need, rest);
         q.paid = Math.round((q.paid + take)*100)/100; rest = Math.round((rest - take)*100)/100;
-        if (q.paid >= q.req - TOL) { q.done = true; q.pay = p; if (q.sinInt && !esContado) ahorro += (cuotaImp - capImp); }
+        if (q.paid >= q.req - TOL) { q.done = true; q.pay = p; ultima = q; if (q.sinInt && !esContado) ahorro += (cuotaImp - capImp); }
       }
-      if (rest > 0) credito += rest;
+      if (rest > TOL) credito += rest;
     });
     cuotas.forEach((q) => { if (!q.done && q.req <= TOL) q.done = true; });
     /* Devolución: el plan queda cerrado; lo no pagado se canceló con nota de crédito. */

@@ -4,7 +4,7 @@
   const A = window.ICA; const { esc, chip } = A;
   const PERMS = [['vender', 'Vender', 'Registrar ventas desde el inventario'], ['cobrar', 'Cobrar', 'Registrar pagos y mandar recibos'], ['editar', 'Editar y anular', 'Editar/anular pagos, deshacer compras, devoluciones, cambiar fechas'], ['clientes', 'Datos de clientes', 'Cambiar datos, claves y bloquear clientes'], ['inventario', 'Inventario', 'Cargar productos, precios y stock'], ['finanzas', 'Finanzas y caja', 'Ver finanzas, estadísticas, gastos y cierres de caja'], ['ajustes', 'Ajustes', 'Dólar, recargos, tarjeta y textos']];
   A.PERMS = PERMS;
-  const ROUTE = { vender: 'vender', finanzas: 'finanzas', caja: 'finanzas', estadisticas: 'finanzas', ajustes: 'ajustes' };
+  const ROUTE = { vender: 'vender', finanzas: 'finanzas', capital: 'finanzas', caja: 'finanzas', estadisticas: 'finanzas', ajustes: 'ajustes' };
   const ADMIN_ONLY = ['catalogo', 'referidos', 'inversores', 'respaldo'];
   A.routeAllowed = (route) => { if (A.isAdmin()) return true; if (ADMIN_ONLY.includes(route)) return false; return !ROUTE[route] || A.can(ROUTE[route]); };
   const STAFF_W = ['accesos', 'consultas', 'recordatorios', 'oportunidades', 'kpis', 'calendario', 'tareas', 'atrasados', 'proximos', 'stock', 'interesados', 'clientesW'];
