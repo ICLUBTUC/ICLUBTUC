@@ -38,6 +38,7 @@
       if (acc.cur === 'USD' && !usd) v = v / rate(); if (acc.cur !== 'USD' && usd) v = v * rate();
       add(cu, -v, { at: g.at, f: g.f, kind: 'gasto', nota: 'Gasto · ' + (g.concepto || '') + (g.cat ? ' (' + g.cat + ')' : '') });
     }
+    for (const p of A.db.ahorros || []) for (const a of p.aportes || []) { if (!despues(c, a)) continue; add(a.cuenta || cuentaDe(c, 'Efectivo'), Number(a.ars) || 0, { at: a.at, f: a.f, kind: 'cobro', nota: 'Aporte plan de ahorro · ' + p.name, by: a.by }); }
     for (const x of A.db.comprasStock || []) {
       if (!despues(c, x)) continue; const cu = x.cuenta || cuentaDe(c, 'Efectivo'), acc = c.cuentas.find((y) => y.id === cu) || {};
       let v = Number(x.monto) || 0; if (acc.cur === 'USD' && x.cur !== 'USD') v = v / rate(); if (acc.cur !== 'USD' && x.cur === 'USD') v = Number(x.montoArs) || v * rate();

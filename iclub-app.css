@@ -155,3 +155,14 @@ body.app h1,body.app .kpi .num,body.app .flow-dot,body.app .brand-name{font-fami
 .cap-sum{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.cap-sum>div{flex:1;min-width:150px;background:#f6f7f9;border-radius:12px;padding:12px}.cap-sum span{display:block;font-size:12.5px;color:var(--muted)}.cap-sum b{font-size:18px}.cap-sum .op{font-size:22px;color:var(--muted);flex:none;min-width:0;background:none;padding:0}.cap-sum .tot{background:#0f172a;color:#fff}.cap-sum .tot span{color:#94a3b8}
 .cap-row{align-items:end}
 .no-finanzas .nav-cap{display:none}
+/* Plan de ahorro */
+.ah-plan{margin-top:12px}
+.ah-bar{position:relative;height:10px;border-radius:6px;background:#eef1f5;margin:4px 0 12px}.ah-bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#16a34a,#22c55e)}.ah-bar b{position:absolute;top:-4px;width:2px;height:18px;background:#0f172a;opacity:.35}
+.ah-nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}.ah-nums div{background:#f6f7f9;border-radius:12px;padding:10px 12px}.ah-nums span{display:block;font-size:12px;color:var(--muted)}.ah-nums b{font-size:17px}.ah-nums small{display:block;font-size:11.5px;color:var(--muted)}
+/* Chequeo de iPhone */
+.chq-g{border:1px solid var(--line);border-radius:14px;padding:8px 12px}.chq-gt{font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:4px 0}
+.chq-it{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.chq-it:first-of-type{border-top:0}
+.chq-t details{display:inline}.chq-t summary{display:inline;cursor:pointer;color:var(--brand);list-style:none}.chq-t details[open] span{display:block;margin-top:4px}
+.chq-ops{display:flex;gap:4px}.chq-o input{position:absolute;opacity:0;pointer-events:none}.chq-o span{display:inline-block;padding:6px 12px;border-radius:999px;border:1.5px solid var(--line);font-weight:700;font-size:13px;cursor:pointer}
+.chq-o.ok input:checked+span{background:#16a34a;border-color:#16a34a;color:#fff}.chq-o.bad input:checked+span{background:#dc2626;border-color:#dc2626;color:#fff}.chq-o.na input:checked+span{background:#64748b;border-color:#64748b;color:#fff}
+.chq-nota{grid-column:1/-1;font-size:13px;padding:6px 10px!important}.chq-num{grid-column:1/-1;max-width:160px}

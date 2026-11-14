@@ -1,0 +1,13 @@
+/* ICLUB · Chequeá tu iPhone (sobre canje.css) */
+.cq-prog{display:flex;align-items:center;gap:10px;margin:6px 0 4px;font-size:13px;font-weight:700;color:var(--muted)}.cq-bar{flex:1;height:8px;border-radius:6px;background:#E7EAF0;overflow:hidden}.cq-bar i{display:block;height:100%;background:var(--brand);transition:width .25s}
+.cq-it{border:1.5px solid var(--line);border-radius:14px;background:#fff;margin:8px 0;overflow:hidden}.cq-it.ok{border-color:#86EFAC;background:#F0FDF4}.cq-it.falla{border-color:#FCA5A5;background:#FEF2F2}
+.cq-it summary{display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;list-style:none;font-size:15px}.cq-it summary::-webkit-details-marker{display:none}
+.cq-it summary em{margin-left:auto;font-style:normal;font-size:11px;font-weight:800;color:#B45309;background:#FEF3C7;border-radius:999px;padding:2px 8px}
+.cq-dot{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid #CBD5E1;display:grid;place-items:center;font-weight:900;font-size:13px;color:#fff}.cq-it.ok .cq-dot{background:#16A34A;border-color:#16A34A}.cq-it.falla .cq-dot{background:#DC2626;border-color:#DC2626}
+.cq-it p{margin:0 14px 10px 48px;font-size:14px;color:#475569;line-height:1.5}.cq-bat{margin:0 14px 10px 48px;max-width:200px}
+.cq-btns{display:flex;gap:8px;margin:0 14px 14px 48px}.cq-btns button{flex:1;padding:10px;border-radius:12px;border:1.5px solid var(--line);background:#fff;font:inherit;font-weight:700;font-size:14px;cursor:pointer}
+.cq-btns button.on{background:#16A34A;border-color:#16A34A;color:#fff}.cq-btns button.bad.on{background:#DC2626;border-color:#DC2626}
+.cq-res{display:flex;gap:16px;align-items:flex-start;border-radius:18px;padding:18px;border:1.5px solid}.cq-res.good{background:#F0FDF4;border-color:#86EFAC}.cq-res.warn{background:#FFFBEB;border-color:#FCD34D}
+.cq-big{font-size:44px;font-weight:850;letter-spacing:-.03em;line-height:1}.cq-big small{font-size:20px;color:var(--muted)}.cq-res ul{margin:6px 0;padding-left:18px}.cq-res p{margin:4px 0}.cq-alert{color:#B91C1C}
+.cq-ctas{display:grid;gap:10px;margin-top:14px}.cq-cta{display:block;padding:16px;border-radius:16px;background:var(--brand);color:#fff;text-decoration:none;font-weight:800;font-size:16px}.cq-cta small{display:block;font-weight:500;font-size:13px;opacity:.85;margin-top:2px}.cq-cta.alt{background:#0B1220}
+.cq-reset{background:none;border:0;color:var(--muted);text-decoration:underline;font:inherit;cursor:pointer}

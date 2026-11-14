@@ -45,7 +45,7 @@
     function hero(label, amount, sub, pillText, tone) {
       ensure(34); heroY = y; fill(C.soft); doc.roundedRect(M, y, CW, 26, 3.5, 3.5, 'F'); fill(tone === 'bad' ? C.red : tone === 'good' ? C.green : C.blue); doc.roundedRect(M, y, 2.2, 26, 1.1, 1.1, 'F');
       font(7.2, true); color(C.muted); t(label.toUpperCase(), M + 9, y + 8, { charSpace: 0.7 });
-      font(24, true); color(C.ink); t(money(amount), M + 9, y + 17.8);
+      font(24, true); color(C.ink); t(typeof amount === 'string' ? amount : money(amount), M + 9, y + 17.8);
       if (sub) { font(8.4); color(C.muted); t(sub, M + 9, y + 22.8); }
       if (pillText) pill(pillText, W - M - 8, y + 8, tone, 'right');
       y += 32;
@@ -144,13 +144,17 @@
         t([B.dir, B.wa ? 'WhatsApp ' + B.wa : '', B.ig].filter(Boolean).join('  ·  '), M + w0 + 3, 285.5);
         t('Página ' + i + ' de ' + n, W - M, 285.5, { align: 'right' });
         font(6.6); color(C.light); t(B.nota || 'Comprobante interno de ' + B.name + '. No válido como factura fiscal.', M, 290);
+        if (i === n && R.foot) { font(6.8); color(C.muted); t(R.foot, M, 277); }
       }
       doc.__name = String(filename).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9 ._-]+/g, '-'); return doc;
     }
     header(true);
-    return { doc, B, stamp, countdown, promo, hero, boxes, section, paragraph, table, progress, totals, pill, payBox, finish, ensure, get y() { return y; }, set y(v) { y = v; } };
+    const R = { doc, B, stamp, countdown, promo, hero, boxes, section, paragraph, table, progress, totals, pill, payBox, finish, ensure, get y() { return y; }, set y(v) { y = v; } };
+    return R;
   }
 
+  /* Garantía de iPhone usado: una línea chica al pie del comprobante y del contrato. */
+  const garantia = (db, m, v) => { const sn = (v && v.itemSnapshot) || {}, txt = [sn.name, sn.spec, m && m.prodName, m && m.det].filter(Boolean).join(' '); if (!/iphone/i.test(txt) || /sellad|nuevo\b|new\b/i.test(txt) && !(Number(sn.battery) > 0 && Number(sn.battery) < 100)) return ''; return (db.settings && db.settings.garantiaUsados) || 'Garantía: 1 mes desde la entrega.'; };
   const refCode = (c, phone) => (String(c.name || 'CLIENTE').split(' ')[0].normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 8) || 'CLIENTE') + String(phone).replace(/\D/g, '').slice(-4);
   const clientRows = (c, phone) => [['Nombre', c.name || 'Cliente'], ['Teléfono', phone], ['DNI / CUIT', c.cuit || ''], ['Dirección', c.dir || ''], ['Email', c.mail || '']];
   const ventaOf = (db, m) => (db.ventas || []).find((v) => (m.grp && v.id === m.grp) || (v.invoice && v.invoice === m.doc)) || null;
@@ -232,7 +236,7 @@ const proxTxt = (q) => { const hoy = new Date(); hoy.setHours(0, 0, 0, 0); const
     const devuelta = (v && v.devolucion) || (m.finan && m.finan.cancelada);
     d.hero('Total de la compra', total, pc && !pc.esContado ? pc.n + ' cuotas ' + (pc.freq === 'Semanal' ? 'semanales' : 'mensuales') + ' de ' + money(pc.cuotaImp) : (m.finan ? 'Precio de contado' : saldo <= 0.005 ? 'Pagada de contado' : 'Cuenta corriente'), devuelta ? null : saldo <= 0.005 ? null : pc && pc.vencidoAhora > 0.005 ? 'Con atraso' : m.finan ? 'Financiada' : 'Saldo pendiente', devuelta ? 'muted' : saldo <= 0.005 ? 'good' : pc && pc.vencidoAhora > 0.005 ? 'bad' : 'info');
     const snap = v && v.itemSnapshot || {};
-    d.boxes([{ title: 'Cliente', rows: clientRows(c, phone) }, { title: 'Equipo', rows: [['Producto', snap.name || productOf(m)], ['Detalle', snap.spec || ''], ['IMEI / serie', snap.imei || '']].concat(snap.cargador ? [['Cargador', snap.cargador]] : []).concat([['Entrega', v ? (v.delivered ? 'Entregado' : 'Pendiente de entrega') : ''], ['Comprobante', m.doc]]) }]);
+    d.boxes([{ title: 'Cliente', rows: clientRows(c, phone) }, { title: 'Equipo', rows: [['Producto', snap.name || productOf(m)], ['Detalle', snap.spec || ''], ['IMEI / serie', snap.imei || '']].concat(snap.cargador ? [['Cargador', snap.cargador]] : []).concat(snap.chequeo ? [['Chequeo', snap.chequeo]] : []).concat([['Entrega', v ? (v.delivered ? 'Entregado' : 'Pendiente de entrega') : ''], ['Comprobante', m.doc]]) }]);
     if ((m.prods || []).length > 1) { d.section('Productos'); d.table([{ label: 'Producto', w: 120 }, { label: 'Cantidad', w: 30, align: 'right' }], m.prods.map((p) => [p.name, p.qty])); }
     const cond = [];
     if (v && Number(v.cashArs) && Number(v.cashArs) !== total) cond.push(['Precio de contado', money(v.cashArs)]);
@@ -249,6 +253,7 @@ const proxTxt = (q) => { const hoy = new Date(); hoy.setHours(0, 0, 0, 0); const
     if (saldo > 0.005 && !devuelta) d.payBox();
     if (!devuelta) d.promo(refCode(c, phone));
     if (devuelta) d.stamp('DEVUELTA', '', 'muted'); else if (saldo <= 0.005) d.stamp('PAGADO', 'COMPRA CANCELADA');
+    if (!devuelta) d.foot = garantia(db, m, v);
     return d.finish(d.B.name + ' Comprobante ' + (m.doc || '') + '.pdf');
   }
 
@@ -262,6 +267,20 @@ const proxTxt = (q) => { const hoy = new Date(); hoy.setHours(0, 0, 0, 0); const
     if (m.auto === 'comision') comisiones(d, db, phone, idx, m);
     d.totals([Object.assign(['Saldo de tu cuenta', money(Math.max(0, saldo))], { strong: true })]);
     return d.finish(d.B.name + ' ' + (nc ? 'Nota de credito' : m.tipo) + ' ' + (m.doc || '') + '.pdf');
+  }
+
+  /* ---------- Informe de chequeo de un iPhone ---------- */
+  function chequeo(db, it) {
+    const ch = it.chequeo || {}, L = (root.ICLUBChequeoItems || []), res = ch.items || {};
+    const hechas = L.filter((x) => res[x.k] && res[x.k].st && res[x.k].st !== 'na'), ok = hechas.filter((x) => res[x.k].st === 'ok'), fallas = hechas.filter((x) => res[x.k].st === 'falla');
+    const d = setup(db, 'Informe de chequeo', it.imeis && it.imeis[0] ? 'IMEI ' + it.imeis[0] : '', ch.f || '');
+    d.hero('Pruebas aprobadas', ok.length + ' de ' + hechas.length, fallas.length ? fallas.length + ' con observaciones' : 'Todo funciona correctamente', fallas.length ? 'Con observaciones' : 'Verificado', fallas.length ? 'warn' : 'good');
+    d.boxes([{ title: 'Equipo', rows: [['Modelo', it.name || ''], ['Detalle', it.spec || ''], ['IMEI', (it.imeis || []).join(', ')], ['Batería', ch.bateria ? ch.bateria + '%' : '']] }, { title: 'Revisión', rows: [['Fecha', ch.f || ''], ['Revisó', ch.by || ''], ['Herramientas', '3uTools y pruebas manuales'], ['Resultado', fallas.length ? 'Con observaciones' : 'Aprobado']] }]);
+    d.section('Pruebas');
+    d.table([{ label: 'Área', w: 28 }, { label: 'Prueba', w: 60 }, { label: 'Resultado', w: 28 }, { label: 'Nota', w: 66 }], L.filter((x) => res[x.k] && res[x.k].st).map((x) => [x.g, x.t, res[x.k].st === 'ok' ? 'OK' : res[x.k].st === 'falla' ? 'Falla' : 'No aplica', (res[x.k].nota || '') + (x.k === 'bateria' && ch.bateria ? (res[x.k].nota ? ' · ' : '') + ch.bateria + '%' : '')]));
+    if (!fallas.length && hechas.length) d.stamp('VERIFICADO', (ch.f || '') + (ch.by ? '\nREVISÓ: ' + String(ch.by).toUpperCase() : ''), 'good');
+    d.foot = garantia(db, {}, { itemSnapshot: { name: it.name, spec: it.spec, battery: ch.bateria } });
+    return d.finish(d.B.name + ' Chequeo ' + (it.name || '') + '.pdf');
   }
 
   /* ---------- Estado de cuenta ---------- */
@@ -297,5 +316,5 @@ const proxTxt = (q) => { const hoy = new Date(); hoy.setHours(0, 0, 0, 0); const
     return d.finish(d.B.name + ' Cierre de caja ' + f(r.from) + '.pdf');
   }
   function forMov(db, phone, idx) { const m = db.clients[phone].movs[idx]; if (!m) throw Error('Comprobante inexistente.'); if (m.tipo === 'Pago') return pago(db, phone, idx); if (m.tipo === 'Compra' || m.tipo === 'Saldo anterior') return compra(db, phone, idx); return simple(db, phone, idx); }
-  root.ICLUBDocs = { setRefs, refInfo, cierre, refCode, forMov, cuenta, pago, compra, simple, money };
+  root.ICLUBDocs = { chequeo, garantia, setRefs, refInfo, cierre, refCode, forMov, cuenta, pago, compra, simple, money };
 })(typeof window !== 'undefined' ? window : globalThis);

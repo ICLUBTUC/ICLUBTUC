@@ -1890,6 +1890,13 @@
       <sc-if value="{{ finStepPlans }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex; flex-direction:column; gap:12px; animation:ztReveal .5s both;">
           <span style="font-size:13px; font-weight:700; letter-spacing:.06em; color:#1D1D1F;">{{ finPlansTitle }}</span>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div style="display:inline-flex; gap:2px; background:#F5F4F1; border-radius:980px; padding:4px;">
+              <button onClick="{{ finPerMes }}" style="{{ finPerMesStyle }}">Por mes</button>
+              <button onClick="{{ finPerSem }}" style="{{ finPerSemStyle }}">Por semana</button>
+            </div>
+            <span style="font-size:12.5px; color:#A1A1A6;">Por semana = la cuota del mes dividida en 4.</span>
+          </div>
           <sc-for list="{{ finPlans }}" as="pl" hint-placeholder-count="5">
             <button onClick="{{ pl.pick }}" style="font-family:inherit; text-align:left; display:flex; align-items:center; justify-content:space-between; gap:16px; background:{{ pl.bg }}; color:{{ pl.color }}; border:1.5px solid {{ pl.border }}; border-radius:18px; padding:18px 22px; cursor:pointer; box-shadow:0 10px 30px -22px rgba(0,0,0,.2); transition:background .2s, border-color .2s, transform .2s;" style-hover="transform:translateY(-2px);">
               <span style="display:flex; flex-direction:column; gap:2px; min-width:0;">
@@ -2775,6 +2782,10 @@ class Component extends DCLogic {
     d.text(S(client.name || ''), 52, y + 28);
     d.text('DNI: ______________________', 52, y + 42);
 
+    { /* Garantía de iPhone usado: una línea chica al pie. */
+      const gtxt = [pm.prodName, pm.det].filter(Boolean).join(' ');
+      if (/iphone/i.test(gtxt) && !/sellad|nuevo\b|new\b/i.test(gtxt)) { d.setPage(d.getNumberOfPages()); d.setFont('helvetica', 'normal'); d.setFontSize(7.5); d.setTextColor(140, 140, 145); d.text('Garantía: 1 mes desde la entrega.', 52, 815); }
+    }
     d.save('ICLUB Contrato ' + String(pm.doc).replace(/[^0-9A-Za-z]/g, '-') + '.pdf');
   }
   _pdfDocGroup(client, g) {
@@ -4193,8 +4204,10 @@ class Component extends DCLogic {
       const total = finFinanced * (1 + finRecargos[n]);
       const per = total / n;
       const active = fin.planN === n;
+      /* Por semana: la cuota mensual dividida en 4. */
+      const div = fin.periodo === 'semana' ? 4 : 1, suf = fin.periodo === 'semana' ? ' /semana' : ' /mes';
       return {
-        label: n + ' pagos', per: this._ars(per * finRate), perArs: this._usd(per),
+        label: n + (n === 1 ? ' mes' : ' meses') + (div === 4 ? ' · ' + (n * 4) + ' semanas' : ''), per: this._ars(per / div * finRate) + suf, perArs: this._usd(per / div) + suf,
         /* El total va a la vista ANTES de elegir: el recargo se descubría
            recién en el resumen, cuando el cliente ya había elegido a ciegas. */
         totalTxt: 'Total ' + this._ars(total * finRate),
@@ -4216,6 +4229,7 @@ class Component extends DCLogic {
         { label: 'Adelanto', value: fin.adelanto === 'si' ? (this._ars(finAdelNum * finRate) + ' · ' + this._usd(finAdelNum)) : 'Sin adelanto' },
         { label: 'Monto a financiar', value: this._ars(finFinanced * finRate) + ' · ' + this._usd(finFinanced) },
         { label: 'Plan elegido', value: finPlanChosen + ' pagos de ' + this._ars(per * finRate) + ' · ' + this._usd(per) },
+        ...(fin.periodo === 'semana' ? [{ label: 'Pago por semana', value: (finPlanChosen * 4) + ' semanas de ' + this._ars(per / 4 * finRate) + ' · ' + this._usd(per / 4) }] : []),
         { label: 'Total financiado', value: this._ars(total * finRate) + ' · ' + this._usd(total) }
       ];
       const msg = 'Hola ICLUB! \uD83D\uDC4B Quiero sumarme al club y consultar una financiación.\n'
@@ -4226,6 +4240,7 @@ class Component extends DCLogic {
         + '\n\uD83D\uDCB0 Adelanto:\n' + (fin.adelanto === 'si' ? (this._ars(finAdelNum * finRate) + ' · ' + this._usd(finAdelNum)) : 'Sin adelanto') + '\n'
         + '\n\uD83E\uDDFE Monto a financiar:\n' + this._ars(finFinanced * finRate) + ' · ' + this._usd(finFinanced) + '\n'
         + '\n\uD83D\uDCC5 Plan elegido:\n' + finPlanChosen + ' pagos de ' + this._ars(per * finRate) + ' · ' + this._usd(per) + '\n'
+        + (fin.periodo === 'semana' ? '\n\uD83D\uDDD3\uFE0F Lo quiero pagar por semana:\n' + (finPlanChosen * 4) + ' semanas de ' + this._ars(per / 4 * finRate) + ' · ' + this._usd(per / 4) + '\n' : '')
         + '\n\u2705 Total financiado:\n' + this._ars(total * finRate) + ' · ' + this._usd(total) + '\n'
         + '\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n'
         + '\n¿Me confirmás la financiación? \uD83D\uDE4C';
@@ -4384,6 +4399,9 @@ class Component extends DCLogic {
       finShowPlans: finShowPlans,
       finPlansTitle: 'Elegí en cuántos pagos financiar ' + this._ars(finFinanced * finRate) + ' · ' + this._usd(finFinanced),
       finPlans: finPlansArr,
+      finPerMes: () => setFin({ periodo: 'mes' }), finPerSem: () => setFin({ periodo: 'semana' }),
+      finPerMesStyle: 'font-family:inherit; font-size:14px; font-weight:700; border:none; border-radius:980px; padding:9px 18px; cursor:pointer; ' + (fin.periodo === 'semana' ? 'background:transparent; color:#6E6E73;' : 'background:#1D1D1F; color:#fff;'),
+      finPerSemStyle: 'font-family:inherit; font-size:14px; font-weight:700; border:none; border-radius:980px; padding:9px 18px; cursor:pointer; ' + (fin.periodo === 'semana' ? 'background:#1D1D1F; color:#fff;' : 'background:transparent; color:#6E6E73;'),
       finPlanChosen: !!finPlanChosen,
       finStepQ1: finStep === 'q1',
       finStepAsesor: finStep === 'asesor',
