@@ -234,7 +234,8 @@ const proxTxt = (q) => { const hoy = new Date(); hoy.setHours(0, 0, 0, 0); const
     const saldo = Math.max(0, r2(total - pagado - nc + ri));
     const d = setup(db, m.tipo === 'Saldo anterior' ? 'Saldo anterior' : 'Comprobante de compra', m.doc, m.f);
     const devuelta = (v && v.devolucion) || (m.finan && m.finan.cancelada);
-    d.hero('Total de la compra', total, pc && !pc.esContado ? pc.n + ' cuotas ' + (pc.freq === 'Semanal' ? 'semanales' : 'mensuales') + ' de ' + money(pc.cuotaImp) : (m.finan ? 'Precio de contado' : saldo <= 0.005 ? 'Pagada de contado' : 'Cuenta corriente'), devuelta ? null : saldo <= 0.005 ? null : pc && pc.vencidoAhora > 0.005 ? 'Con atraso' : m.finan ? 'Financiada' : 'Saldo pendiente', devuelta ? 'muted' : saldo <= 0.005 ? 'good' : pc && pc.vencidoAhora > 0.005 ? 'bad' : 'info');
+    const snap0 = v && v.itemSnapshot || {};
+    d.hero('Tu compra', String(snap0.name || productOf(m) || 'Compra').slice(0, 28), pc && !pc.esContado ? pc.n + ' cuotas ' + (pc.freq === 'Semanal' ? 'semanales' : 'mensuales') + ' de ' + money(pc.cuotaImp) : (m.finan ? 'Precio de contado' : saldo <= 0.005 ? 'Pagada de contado' : 'Cuenta corriente'), devuelta ? null : saldo <= 0.005 ? null : pc && pc.vencidoAhora > 0.005 ? 'Con atraso' : m.finan ? 'Financiada' : 'Saldo pendiente', devuelta ? 'muted' : saldo <= 0.005 ? 'good' : pc && pc.vencidoAhora > 0.005 ? 'bad' : 'info');
     const snap = v && v.itemSnapshot || {};
     d.boxes([{ title: 'Cliente', rows: clientRows(c, phone) }, { title: 'Equipo', rows: [['Producto', snap.name || productOf(m)], ['Detalle', snap.spec || ''], ['IMEI / serie', snap.imei || '']].concat(snap.cargador ? [['Cargador', snap.cargador]] : []).concat(snap.chequeo ? [['Chequeo', snap.chequeo]] : []).concat([['Entrega', v ? (v.delivered ? 'Entregado' : 'Pendiente de entrega') : ''], ['Comprobante', m.doc]]) }]);
     if ((m.prods || []).length > 1) { d.section('Productos'); d.table([{ label: 'Producto', w: 120 }, { label: 'Cantidad', w: 30, align: 'right' }], m.prods.map((p) => [p.name, p.qty])); }
@@ -247,7 +248,15 @@ const proxTxt = (q) => { const hoy = new Date(); hoy.setHours(0, 0, 0, 0); const
     if (pc) { d.section('Plan de cuotas'); d.progress(pc.pagadas, pc.n, 'Avance del plan'); cuotasTable(d, pc); if (!devuelta) d.countdown(pc); }
     const movRows = pagos.map((x) => [x.f, x.doc || '', x.efec != null ? 'Combinado' : (x.met || ''), x.det || '', money(x.imp)]).concat(creditos.map((x) => [x.f, x.doc || '', 'Nota de crédito', x.det || '', money(x.imp)])).concat(reint.map((x) => [x.f, x.doc || '', 'Reintegro', x.det || '', money(x.imp)]));
     if (movRows.length) { d.section('Pagos y créditos registrados'); movRows.sort((a, b) => (parse(a[0]) || 0) - (parse(b[0]) || 0)); d.table([{ label: 'Fecha', w: 24 }, { label: 'Número', w: 36 }, { label: 'Medio', w: 28 }, { label: 'Detalle', w: 54 }, { label: 'Importe', w: 28, align: 'right', bold: true }], movRows); }
-    const lines = [['Total de la compra', money(total)], ['Pagado', money(pagado)]]; if (nc) lines.push(['Notas de crédito', money(nc)]); if (ri) lines.push(['Reintegrado', money(-ri)]);
+    /* Total de la compra al final, detallado: contado, parte de pago, adelanto, financiado, recargo y total. */
+    const cash = v && Number(v.cashArs) > 0 ? Number(v.cashArs) : total, lines = [];
+    if (Math.abs(cash - total) > 0.5 || (pc && !pc.esContado)) {
+      lines.push(['Precio de contado', money(cash)]);
+      if (v && Number(v.tradeValue)) lines.push(['Parte de pago (equipo)', '− ' + money(v.tradeValue)]);
+      if (m.finan && Number(m.finan.adel)) lines.push(['Adelanto', '− ' + money(m.finan.adel)]);
+      if (pc && !pc.esContado) { const fin = r2(cash - (Number(v && v.tradeValue) || 0) - (Number(m.finan && m.finan.adel) || 0)); if (fin > 0.5 && (Number(v && v.tradeValue) || Number(m.finan && m.finan.adel))) lines.push(['A financiar', money(fin)]); if (total - cash > 0.5) lines.push(['Recargo' + (pc.recPct ? ' (' + pc.recPct + '%)' : ''), '+ ' + money(total - cash)]); lines.push([pc.n + ' cuotas de', money(pc.cuotaImp)]); }
+    }
+    lines.push(Object.assign(['Total de la compra', money(total)], { strong: true }), ['Pagado', money(pagado)]); if (nc) lines.push(['Notas de crédito', money(nc)]); if (ri) lines.push(['Reintegrado', money(-ri)]);
     if (pc && pc.prox && !devuelta) d.paragraph(proxTxt(pc.prox), 9.4, C.ink);
     lines.push(Object.assign(['Saldo pendiente', money(saldo)], { strong: true })); d.totals(lines);
     if (saldo > 0.005 && !devuelta) d.payBox();
