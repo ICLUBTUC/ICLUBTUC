@@ -243,7 +243,7 @@ const proxTxt = (q) => { const hoy = new Date(); hoy.setHours(0, 0, 0, 0); const
     if (v && Number(v.cashArs) && Number(v.cashArs) !== total) cond.push(['Precio de contado', money(v.cashArs)]);
     if (v && Number(v.tradeValue)) cond.push(['Equipo entregado en parte de pago' + (v.tradeSnapshot && v.tradeSnapshot.name ? ' (' + v.tradeSnapshot.name + ')' : ''), money(v.tradeValue)]);
     if (m.finan && Number(m.finan.adel)) cond.push(['Adelanto', money(m.finan.adel)]);
-    if (pc && !pc.esContado) { cond.push(['Monto financiado en ' + pc.n + ' cuotas ' + (pc.freq === 'Semanal' ? 'semanales' : 'mensuales'), money(pc.base)]); if (pc.recPct) cond.push(['Recargo de financiación', pc.recPct + '%']); }
+    if (pc && !pc.esContado) { cond.push(['Monto financiado en ' + pc.n + ' cuotas ' + (pc.freq === 'Semanal' ? 'semanales' : 'mensuales'), money(pc.base)]); }
     if (cond.length) { d.section('Condiciones de la compra'); d.table([{ label: 'Concepto', w: 95 }, { label: 'Importe', w: 75, align: 'right', bold: true }], cond); }
     if (pc) { d.section('Plan de cuotas'); d.progress(pc.pagadas, pc.n, 'Avance del plan'); cuotasTable(d, pc); if (!devuelta) d.countdown(pc); }
     const movRows = pagos.map((x) => [x.f, x.doc || '', x.efec != null ? 'Combinado' : (x.met || ''), x.det || '', money(x.imp)]).concat(creditos.map((x) => [x.f, x.doc || '', 'Nota de crédito', x.det || '', money(x.imp)])).concat(reint.map((x) => [x.f, x.doc || '', 'Reintegro', x.det || '', money(x.imp)]));
@@ -254,7 +254,7 @@ const proxTxt = (q) => { const hoy = new Date(); hoy.setHours(0, 0, 0, 0); const
       lines.push(['Precio de contado', money(cash)]);
       if (v && Number(v.tradeValue)) lines.push(['Parte de pago (equipo)', '− ' + money(v.tradeValue)]);
       if (m.finan && Number(m.finan.adel)) lines.push(['Adelanto', '− ' + money(m.finan.adel)]);
-      if (pc && !pc.esContado) { const fin = r2(cash - (Number(v && v.tradeValue) || 0) - (Number(m.finan && m.finan.adel) || 0)); if (fin > 0.5 && (Number(v && v.tradeValue) || Number(m.finan && m.finan.adel))) lines.push(['A financiar', money(fin)]); if (total - cash > 0.5) lines.push(['Recargo' + (pc.recPct ? ' (' + pc.recPct + '%)' : ''), '+ ' + money(total - cash)]); lines.push([pc.n + ' cuotas de', money(pc.cuotaImp)]); }
+      if (pc && !pc.esContado) { const fin = r2(cash - (Number(v && v.tradeValue) || 0) - (Number(m.finan && m.finan.adel) || 0)); if (fin > 0.5 && (Number(v && v.tradeValue) || Number(m.finan && m.finan.adel))) lines.push(['A financiar', money(fin)]); lines.push([pc.n + ' cuotas de', money(pc.cuotaImp)]); }
     }
     lines.push(Object.assign(['Total de la compra', money(total)], { strong: true }), ['Pagado', money(pagado)]); if (nc) lines.push(['Notas de crédito', money(nc)]); if (ri) lines.push(['Reintegrado', money(-ri)]);
     if (pc && pc.prox && !devuelta) d.paragraph(proxTxt(pc.prox), 9.4, C.ink);
