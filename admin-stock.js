@@ -7,7 +7,7 @@
   const rate = () => Number(A.db.settings && A.db.settings.rate) || 1520;
   const catWeb = (cat) => ({ Apple: 'Apple', Celulares: 'Celulares', 'Smart TV': 'Smart TV', Accesorios: 'Accesorios' })[cat] || 'Accesorios';
   const enPagina = (it) => { const c = it && it.catalogId && A.db.catalog[it.catalogId]; return !!(c && !c.hidden && !c.deleted); };
-  const cuentaOpts = (sel) => { const cs = A.capCuentas_ ? A.capCuentas_() : []; if (!cs.length) return ''; return '<label class="f">Salió de<select name="compraCuenta">' + cs.map((a) => '<option value="' + esc(a.id) + '"' + (a.id === sel ? ' selected' : '') + '>' + esc(a.name) + (a.cur === 'USD' ? ' (USD)' : '') + '</option>').join('') + '</select></label>'; };
+  const cuentaOpts = (sel) => { const cs = A.capCuentas_ ? A.capCuentas_() : []; if (!cs.length) return ''; return '<label class="f">Salió de<select name="compraCuenta">' + cs.map((a) => '<option value="' + esc(a.id) + '"' + (a.id === sel ? ' selected' : '') + '>' + esc(a.name) + (a.cur === 'USD' ? ' (USD)' : '') + '</option>').join('') + '<option value="__prestamo"' + (sel === '__prestamo' ? ' selected' : '') + '>Con un préstamo (lo devuelvo después)</option></select></label>'; };
   const lastCuenta = () => { try { return localStorage.getItem('iclub-cap-compra') || ''; } catch (_) { return ''; } };
 
   const compraBlock = (editing, x) => '<div class="card compra-box" style="padding:12px 14px;margin:0;background:#f6f7f9;box-shadow:none"><label class="check"><input type="checkbox" name="compraOn" checked> <b>Lo compré: restar la plata</b> <span class="small muted">(se descuenta de tu capital y queda en Finanzas como compra)</span></label>' +
@@ -36,8 +36,9 @@
   };
   const registrarCompra = (next, it, qty, monto, cuenta) => {
     const cur = it.moneda === 'ARS' ? 'ARS' : 'USD';
+    if (cuenta === '__prestamo') { const ars = M.r2(cur === 'USD' ? monto * rate() : monto); next.comprasStock = (next.comprasStock || []).concat([{ id: A.uid(), at: new Date().toISOString(), f: A.today(), invId: it.id, name: it.name + (it.spec ? ' ' + it.spec : ''), qty, monto: M.r2(monto), cur, montoArs: ars, cuenta: null, prestamo: true, by: (A.me && A.me.name) || '' }]); if (A.deudaNueva) A.deudaNueva(next, 'Yo (mi sueldo)', ars, 'Compra de ' + qty + ' × ' + it.name); return 'compra con préstamo ' + A.ars(ars); }
     next.comprasStock = (next.comprasStock || []).concat([{ id: A.uid(), at: new Date().toISOString(), f: A.today(), invId: it.id, name: it.name + (it.spec ? ' ' + it.spec : ''), qty, monto: M.r2(monto), cur, montoArs: M.r2(cur === 'USD' ? monto * rate() : monto), cuenta: cuenta || null, by: (A.me && A.me.name) || '' }]);
-    if (cuenta) { try { localStorage.setItem('iclub-cap-compra', cuenta); } catch (_) {} }
+    if (cuenta && cuenta !== '__prestamo') { try { localStorage.setItem('iclub-cap-compra', cuenta); } catch (_) {} }
     return 'compra ' + A.money(monto, cur);
   };
   const publicar = (next, it, on) => {
@@ -75,7 +76,7 @@
   A.comprasStockCard = (month) => {
     const list = (A.db.comprasStock || []).filter((x) => { const d = x.at ? new Date(x.at) : M.parseDate(x.f); return d && (!month || M.monthKey(d) === month); }); if (!list.length) return '';
     const tot = M.r2(list.reduce((s, x) => s + (Number(x.montoArs) || 0), 0)), cs = A.capCuentas_ ? A.capCuentas_() : [];
-    return '<div class="card fin-only" style="margin-top:16px"><div class="card-head"><div><h2>Compras de mercadería del mes · ' + A.ars(tot) + '</h2><p>Plata que salió para comprar stock. No es un gasto: se descuenta de la ganancia recién cuando vendés el equipo (como costo).</p></div></div><div class="list">' + list.slice().reverse().map((x) => '<div class="item"><div class="grow"><div class="main-t">' + x.qty + ' × ' + esc(x.name) + '</div><div class="sub-t">' + esc(x.f) + ((cs.find((a) => a.id === x.cuenta) || {}).name ? ' · desde ' + esc(cs.find((a) => a.id === x.cuenta).name) : '') + (x.by ? ' · ' + esc(x.by) : '') + '</div></div><b>' + A.money(x.monto, x.cur) + (x.cur === 'USD' ? '<div class="tiny muted">' + A.ars(x.montoArs) + '</div>' : '') + '</b></div>').join('') + '</div></div>';
+    return '<div class="card fin-only" style="margin-top:16px"><div class="card-head"><div><h2>Compras de mercadería del mes · ' + A.ars(tot) + '</h2><p>Plata que salió para comprar stock. No es un gasto: se descuenta de la ganancia recién cuando vendés el equipo (como costo).</p></div></div><div class="list">' + list.slice().reverse().map((x) => '<div class="item"><div class="grow"><div class="main-t">' + x.qty + ' × ' + esc(x.name) + '</div><div class="sub-t">' + esc(x.f) + (x.prestamo ? ' · con préstamo' : '')+((cs.find((a) => a.id === x.cuenta) || {}).name ? ' · desde ' + esc(cs.find((a) => a.id === x.cuenta).name) : '') + (x.by ? ' · ' + esc(x.by) : '') + '</div></div><b>' + A.money(x.monto, x.cur) + (x.cur === 'USD' ? '<div class="tiny muted">' + A.ars(x.montoArs) + '</div>' : '') + '</b></div>').join('') + '</div></div>';
   };
   A.enPagina = enPagina;
   /* Lo que vale tu stock y lo que te puede quedar si lo vendés todo al precio cargado. */

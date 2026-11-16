@@ -39,7 +39,12 @@
       add(cu, -v, { at: g.at, f: g.f, kind: 'gasto', nota: 'Gasto · ' + (g.concepto || '') + (g.cat ? ' (' + g.cat + ')' : '') });
     }
     for (const p of A.db.ahorros || []) for (const a of p.aportes || []) { if (!despues(c, a)) continue; add(a.cuenta || cuentaDe(c, 'Efectivo'), Number(a.ars) || 0, { at: a.at, f: a.f, kind: 'cobro', nota: 'Aporte plan de ahorro · ' + p.name, by: a.by }); }
+    for (const dd of c.deudas || []) {
+      if (dd.cuenta) add(dd.cuenta, Number(dd.monto) || 0, { at: dd.at, f: dd.f, kind: 'prestamo', nota: 'Préstamo de ' + dd.de + (dd.nota ? ' · ' + dd.nota : ''), id: dd.id, deuda: true });
+      for (const pg of dd.pagos || []) add(pg.cuenta, -(Number(pg.monto) || 0), { at: pg.at, f: pg.f, kind: 'devolucion', nota: 'Devolución a ' + dd.de, deuda: true });
+    }
     for (const x of A.db.comprasStock || []) {
+      if (x.prestamo) continue; /* se pagó con un préstamo: la plata no pasó por tus cuentas */
       if (!despues(c, x)) continue; const cu = x.cuenta || cuentaDe(c, 'Efectivo'), acc = c.cuentas.find((y) => y.id === cu) || {};
       let v = Number(x.monto) || 0; if (acc.cur === 'USD' && x.cur !== 'USD') v = v / rate(); if (acc.cur !== 'USD' && x.cur === 'USD') v = Number(x.montoArs) || v * rate();
       add(cu, -v, { at: x.at, f: x.f, kind: 'compra', nota: 'Compra de stock · ' + x.qty + ' × ' + (x.name || ''), by: x.by });
@@ -52,10 +57,14 @@
     return { c, ev, saldo, totalArs };
   };
   /* Capital total del negocio: plata + mercadería en stock (a costo) + lo que te deben. */
+  /* Deudas del negocio: préstamos que tomaste (por ejemplo de tu sueldo) y lo que falta devolver. */
+  A.deudasList = () => ((A.db.capital && A.db.capital.deudas) || []).map((d) => { const dev = M.r2((d.pagos || []).reduce((s, p) => s + (Number(p.monto) || 0), 0)); return Object.assign({}, d, { devuelto: dev, saldo: M.r2(Math.max(0, Number(d.monto) - dev)) }); });
+  A.deudasSaldo = () => A.deudasList().reduce((s, d) => s + d.saldo, 0);
   A.capitalTotal = (k) => {
     const stock = M.r2((A.db.inventory || []).reduce((s, it) => { const q = Number(it.stock) || 0; if (q <= 0) return s; const costo = (Number(it.costo) || 0) * (it.moneda === 'ARS' ? 1 : rate()); return s + q * costo; }, 0));
     const porCobrar = M.r2(M.finance(A.db, {}).k.porCobrar || 0);
-    return { dinero: k ? k.totalArs : 0, stock, porCobrar, total: M.r2((k ? k.totalArs : 0) + stock + porCobrar) };
+    const debes = M.r2(A.deudasSaldo());
+    return { dinero: k ? k.totalArs : 0, stock, porCobrar, debes, total: M.r2((k ? k.totalArs : 0) + stock + porCobrar - debes) };
   };
 
   /* ---------- Pantalla Capital ---------- */
@@ -75,18 +84,23 @@
     const head = '<div class="page-head"><div><h1>Capital</h1><p>Cuánta plata tenés y dónde está</p></div></div>';
     const k = A.capitalCalc(); if (!k) return head + setupForm();
     const t = A.capitalTotal(k), c = k.c, hoy = new Date(); const mesKey = M.monthKey(hoy);
-    const mes = k.ev.filter((e) => { const d = e.at ? new Date(e.at) : M.parseDate(e.f); return d && M.monthKey(d) === mesKey && e.kind !== 'transfer' && e.kind !== 'ajuste'; });
+    const mes = k.ev.filter((e) => { const d = e.at ? new Date(e.at) : M.parseDate(e.f); return d && M.monthKey(d) === mesKey && e.kind !== 'transfer' && e.kind !== 'ajuste' && !e.deuda; });
     const entro = M.r2(mes.filter((e) => e.amount > 0).reduce((s, e) => s + toArs(c, e), 0)), salio = M.r2(mes.filter((e) => e.amount < 0).reduce((s, e) => s - toArs(c, e), 0));
     return head +
       '<div class="cap-hero"><div><span class="lbl">Capital disponible</span><span class="cap-total">' + A.ars(k.totalArs) + '</span><span class="sub">en ' + c.cuentas.length + ' cuenta' + (c.cuentas.length === 1 ? '' : 's') + (c.cuentas.some((a) => a.cur === 'USD') ? ' · dólares a ' + A.ars(rate()) : '') + '</span></div><div class="cap-mes"><div><span>Entró este mes</span><b class="good">+' + A.ars(entro) + '</b></div><div><span>Salió este mes</span><b class="bad">−' + A.ars(salio) + '</b></div></div></div>' +
       '<div class="row-flex" style="margin:14px 0;gap:8px;flex-wrap:wrap"><button class="btn-brand" data-act="cap-move" data-k="transfer">⇄ Pasar entre cuentas</button><button class="btn-good" data-act="cap-move" data-k="ingreso">+ Ingreso</button><button class="btn-2" data-act="cap-move" data-k="retiro">− Retiro o pago</button><button class="btn-2" data-act="cap-move" data-k="ajuste">Ajustar saldo</button><button class="btn-2" data-act="cap-cuentas">Cuentas</button></div>' +
       '<div class="cap-grid">' + c.cuentas.map((a) => { const pct = k.totalArs > 0 ? Math.max(0, Math.round((a.cur === 'USD' ? k.saldo[a.id] * rate() : k.saldo[a.id]) / k.totalArs * 100)) : 0; return '<button class="cap-acc" data-act="cap-acc" data-id="' + esc(a.id) + '"><span class="cap-ico t-' + esc(a.tipo || 'otro') + '">' + ico(a.tipo) + '</span><span class="cap-name">' + esc(a.name) + '</span><span class="cap-amt' + (k.saldo[a.id] < 0 ? ' bad' : '') + '">' + fmt(k.saldo[a.id], a.cur) + '</span><span class="cap-bar"><i style="width:' + pct + '%"></i></span><span class="tiny muted">' + pct + '% de tu plata' + (a.cur === 'USD' ? ' · ≈ ' + A.ars(k.saldo[a.id] * rate()) : '') + '</span></button>'; }).join('') + '</div>' +
-      '<div class="card" style="margin-top:16px"><div class="card-head"><div><h2>Capital total del negocio</h2><p>La plata que tenés, más lo que tenés en mercadería y lo que te deben.</p></div></div>' +
-      '<div class="cap-sum"><div><span>Plata en cuentas</span><b>' + A.ars(t.dinero) + '</b></div><span class="op">+</span><div><span>Mercadería en stock (a costo)</span><b>' + A.ars(t.stock) + '</b></div><span class="op">+</span><div><span>Te deben los clientes</span><b>' + A.ars(t.porCobrar) + '</b></div><span class="op">=</span><div class="tot"><span>Capital total</span><b>' + A.ars(t.total) + '</b></div></div></div>' +
+      A.deudasCard() +
+      '<div class="card" style="margin-top:16px"><div class="card-head"><div><h2>Capital total del negocio</h2><p>La plata que tenés, más lo que tenés en mercadería y lo que te deben, menos lo que debés.</p></div></div>' +
+      '<div class="cap-sum"><div><span>Plata en cuentas</span><b>' + A.ars(t.dinero) + '</b></div><span class="op">+</span><div><span>Mercadería en stock (a costo)</span><b>' + A.ars(t.stock) + '</b></div><span class="op">+</span><div><span>Te deben los clientes</span><b>' + A.ars(t.porCobrar) + '</b></div>' + (t.debes > 0 ? '<span class="op">−</span><div><span>Lo que debés (préstamos)</span><b class="bad">' + A.ars(t.debes) + '</b></div>' : '') + '<span class="op">=</span><div class="tot"><span>Capital total</span><b>' + A.ars(t.total) + '</b></div></div></div>' +
       '<div class="card" style="margin-top:16px"><div class="card-head"><h2>Últimos movimientos</h2><div class="spacer"></div><span class="small muted">desde ' + new Date(c.inicio).toLocaleDateString('es-AR') + '</span></div>' + movList(k, k.ev.slice(-25).reverse(), true) + '</div>';
   };
+  A.deudasCard = () => { const l = A.deudasList(), act = l.filter((d) => d.saldo > 0.009), tot = M.r2(act.reduce((s, d) => s + d.saldo, 0));
+    return '<div class="card" style="margin-top:16px"><div class="card-head"><div><h2>Deudas del negocio' + (tot ? ' · <span class="bad">' + A.ars(tot) + '</span>' : '') + '</h2><p>Préstamos que tomaste para el negocio (por ejemplo, de tu sueldo). Se van restando a medida que los devolvés.</p></div><div class="spacer"></div><button class="btn-2 btn-sm" data-act="cap-deuda">+ Préstamo</button></div>' +
+      (act.length ? '<div class="list">' + act.map((d) => { const pct = d.monto > 0 ? Math.round(d.devuelto / d.monto * 100) : 0; return '<div class="item"><div class="grow"><div class="main-t">' + esc(d.de) + (d.nota ? ' <span class="small muted">· ' + esc(d.nota) + '</span>' : '') + '</div><div class="sub-t">' + esc(d.f) + ' · prestó ' + A.ars(d.monto) + ' · devolviste ' + A.ars(d.devuelto) + ' (' + pct + '%)</div><div class="cap-bar" style="margin-top:6px"><i style="width:' + pct + '%;background:#16a34a"></i></div></div><div style="text-align:right;margin-left:10px"><b class="bad">' + A.ars(d.saldo) + '</b><div class="tiny muted">falta devolver</div><button class="btn-sm btn-good" style="margin-top:6px" data-act="cap-devolver" data-id="' + esc(d.id) + '">Devolver</button></div></div>'; }).join('') + '</div>' : '<div class="empty" style="padding:14px">No debés nada. 👌</div>') +
+      (l.length > act.length ? '<p class="tiny muted" style="margin-top:8px">' + (l.length - act.length) + ' préstamo(s) ya devuelto(s).</p>' : '') + '</div>'; };
   const toArs = (c, e) => { const a = c.cuentas.find((x) => x.id === e.cuenta); return a && a.cur === 'USD' ? e.amount * rate() : e.amount; };
-  const KIND = { compra: 'Compra de stock', cobro: 'Cobro', gasto: 'Gasto', reintegro: 'Reintegro', transfer: 'Entre cuentas', ingreso: 'Ingreso', retiro: 'Retiro', ajuste: 'Ajuste' };
+  const KIND = { prestamo: 'Préstamo', devolucion: 'Devolución de préstamo', compra: 'Compra de stock', cobro: 'Cobro', gasto: 'Gasto', reintegro: 'Reintegro', transfer: 'Entre cuentas', ingreso: 'Ingreso', retiro: 'Retiro', ajuste: 'Ajuste' };
   const movList = (k, list, showAcc) => list.length ? '<div class="list">' + list.map((e) => { const a = k.c.cuentas.find((x) => x.id === e.cuenta) || {}; return '<div class="item"' + (e.phone ? ' data-act="fin-client" data-phone="' + esc(e.phone) + '" style="cursor:pointer"' : '') + '><div class="grow"><div class="strong" style="font-size:14px">' + esc(e.nota || KIND[e.kind] || '') + '</div><div class="sub-t">' + esc(e.f || (e.at ? new Date(e.at).toLocaleDateString('es-AR') : '')) + ' · ' + esc(KIND[e.kind] || e.kind) + (showAcc ? ' · ' + esc(a.name || '') : '') + (e.by ? ' · ' + esc(e.by) : '') + '</div></div><div style="text-align:right"><b class="' + (e.amount < 0 ? 'bad' : 'good') + '">' + (e.amount < 0 ? '−' : '+') + fmt(Math.abs(e.amount), a.cur) + '</b>' + (!showAcc ? '<div class="tiny muted">saldo ' + fmt(e.saldo, a.cur) + '</div>' : '') + '</div>' + (e.id && !e.grupo ? '<button class="btn-sm btn-2" data-act="cap-del" data-id="' + esc(e.id) + '" title="Borrar este movimiento" style="margin-left:8px">✕</button>' : e.id ? '<button class="btn-sm btn-2" data-act="cap-del" data-id="' + esc(e.id) + '" title="Borrar este pase" style="margin-left:8px">✕</button>' : '') + '</div>'; }).join('') + '</div>' : '<div class="empty" style="padding:20px">Todavía no hay movimientos.</div>';
 
   /* ---------- Modales ---------- */
@@ -107,6 +121,10 @@
     A.modal(T, body, { noFocus: true });
     if (kind === 'ajuste') { const f = A.$('#capMoveForm'), h = A.$('#capAjHint'); const upd = () => { const a = c.cuentas.find((x) => x.id === f.elements.cuenta.value), v = A.num(f.elements.real.value); h.textContent = 'Saldo en el sistema: ' + fmt(k.saldo[a.id], a.cur) + (f.elements.real.value ? ' · diferencia ' + fmt(M.r2(v - k.saldo[a.id]), a.cur) : ''); }; f.addEventListener('input', upd); upd(); }
   };
+  A.capDeuda = () => { const k = A.capitalCalc(); if (!k) return; const c = k.c;
+    A.modal('Préstamo para el negocio', '<p class="small muted">Por ejemplo: te prestaste de tu sueldo para comprar dos celulares. Queda como deuda del negocio y se descuenta cuando la devolvés.</p><form id="capDeudaForm" class="grid"><div class="grid g2"><label class="f">¿Quién prestó?<input name="de" value="Yo (mi sueldo)" maxlength="40" required></label><label class="f">Monto ($)<input name="monto" inputmode="decimal" required></label></div><label class="f">¿Entró la plata a una cuenta?<select name="cuenta"><option value="">No, la usé directo para comprar</option>' + c.cuentas.filter((a) => a.cur === 'ARS').map((a) => '<option value="' + esc(a.id) + '">Sí, a ' + esc(a.name) + '</option>').join('') + '</select><small>Si compraste stock con esa plata, cargá la compra en Inventario y elegí "Con un préstamo".</small></label><label class="f">Detalle<input name="nota" maxlength="80" placeholder="Ej: para el 14 Pro Max y el 16 Pro"></label><button class="btn-good">Guardar préstamo</button></form>', { noFocus: true }); };
+  A.capDevolver = (id) => { const k = A.capitalCalc(), d = A.deudasList().find((x) => x.id === id); if (!k || !d) return;
+    A.modal('Devolver a ' + d.de, '<p class="small muted">Falta devolver ' + A.ars(d.saldo) + '. La plata sale de la cuenta que elijas.</p><form id="capDevForm" data-id="' + esc(id) + '" class="grid"><div class="grid g2"><label class="f">Devolvés ($)<input name="monto" inputmode="decimal" value="' + Math.round(d.saldo) + '" required></label><label class="f">Sale de' + accOpts(k.c, k.c.porMedio && k.c.porMedio.Efectivo, 'cuenta') + '</label></div><button class="btn-good">Registrar devolución</button></form>', { noFocus: true }); };
   A.capCuentas = () => {
     const k = A.capitalCalc(); if (!k) return; const c = k.c;
     A.modal('Cuentas', '<p class="small muted">Cambiá nombres, agregá cuentas nuevas y elegí a dónde van solos los cobros.</p><form id="capCuentasForm" class="grid"><div id="capRows" class="grid">' + c.cuentas.map((a) => rowHtml({ name: a.name, tipo: a.tipo, cur: a.cur, v: a.inicial }).replace('class="grid g4 cap-row"', 'class="grid g4 cap-row" data-id="' + esc(a.id) + '"').replace('Saldo hoy', 'Saldo inicial')).join('') + '</div><button type="button" class="btn-2 btn-sm" data-act="cap-row">+ Agregar cuenta</button>' +
@@ -145,9 +163,13 @@
   document.addEventListener('click', (ev) => {
     const b = ev.target.closest('[data-act^="cap-"]'); if (!b) return; ev.preventDefault(); const d = b.dataset;
     if (d.act === 'cap-row') { const box = A.$('#capRows'); if (box) box.insertAdjacentHTML('beforeend', rowHtml({ name: '', cur: 'ARS', tipo: 'banco', v: '' })); }
-    else if (d.act === 'cap-acc') A.capAcc(d.id); else if (d.act === 'cap-move') A.capMove(d.k); else if (d.act === 'cap-cuentas') A.capCuentas(); else if (d.act === 'cap-del') delMove(d.id);
+    else if (d.act === 'cap-deuda') A.capDeuda(); else if (d.act === 'cap-devolver') A.capDevolver(d.id); else if (d.act === 'cap-acc') A.capAcc(d.id); else if (d.act === 'cap-move') A.capMove(d.k); else if (d.act === 'cap-cuentas') A.capCuentas(); else if (d.act === 'cap-del') delMove(d.id);
   });
-  document.addEventListener('submit', (ev) => { const f = ev.target; if (f.id === 'capSetup') saveSetup(f); else if (f.id === 'capCuentasForm') saveCuentas(f); else if (f.id === 'capMoveForm') saveMove(f); });
+  const saveDeuda = (f) => A.act(async () => { const e = f.elements, m = M.r2(A.num(e.monto.value)); if (!(m > 0)) throw Error('Poné el monto.'); const next = A.clone(A.db); next.capital.deudas = (next.capital.deudas || []).concat([{ id: A.uid(), de: e.de.value.trim().slice(0, 40) || 'Yo', monto: m, cuenta: e.cuenta.value || null, nota: e.nota.value.trim().slice(0, 80), f: A.today(), at: new Date().toISOString(), pagos: [] }]); await A.saveDb(next, 'Préstamo de ' + e.de.value.trim() + ': ' + A.ars(m)); A.closeModal(); A.render(); }, 'Préstamo guardado.');
+  const saveDev = (f) => A.act(async () => { const e = f.elements, m = M.r2(A.num(e.monto.value)), d0 = A.deudasList().find((x) => x.id === f.dataset.id); if (!(m > 0)) throw Error('Poné el monto.'); if (m > d0.saldo + 0.5) throw Error('Es más de lo que falta devolver (' + A.ars(d0.saldo) + ').'); const next = A.clone(A.db), d = next.capital.deudas.find((x) => x.id === f.dataset.id); d.pagos = (d.pagos || []).concat([{ id: A.uid(), monto: m, cuenta: e.cuenta.value, f: A.today(), at: new Date().toISOString(), by: (A.me && A.me.name) || '' }]); await A.saveDb(next, 'Devolución a ' + d.de + ': ' + A.ars(m)); A.closeModal(); A.render(); }, 'Devolución registrada.');
+  A.deudaNueva = (next, de, monto, nota) => { if (!next.capital) return null; const d = { id: A.uid(), de: de || 'Yo (mi sueldo)', monto: M.r2(monto), cuenta: null, nota: nota || '', f: A.today(), at: new Date().toISOString(), pagos: [] }; next.capital.deudas = (next.capital.deudas || []).concat([d]); return d; };
+  document.addEventListener('submit', (ev) => { const f = ev.target; if (f.id === 'capDeudaForm') saveDeuda(f); else if (f.id === 'capDevForm') saveDev(f);
+    if (f.id === 'capSetup') saveSetup(f); else if (f.id === 'capCuentasForm') saveCuentas(f); else if (f.id === 'capMoveForm') saveMove(f); });
 
   /* ---------- Menú: "Capital disponible" con el monto ---------- */
   const navUpdate = () => { const el = A.$('#navCapital'); if (!el) return; let k = null; try { k = A.capitalCalc(); } catch (_) {} el.textContent = k ? A.ars(k.totalArs) : 'Configurar'; el.style.color = k && k.totalArs < 0 ? '#f87171' : ''; };

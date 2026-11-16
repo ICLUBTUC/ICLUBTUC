@@ -1960,6 +1960,15 @@
           <button onClick="{{ copyAlias }}" style="flex-shrink:0; font-family:inherit; font-size:13px; font-weight:600; color:#fff; background:#1D1D1F; border:none; border-radius:980px; padding:9px 16px; cursor:pointer; transition:background .3s;" style-hover="background:#000;">{{ copyAliasLabel }}</button>
         </div>
       </div>
+      <sc-if value="{{ mpOn }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; flex-direction:column; gap:8px; background:#F0F7FF; border:1.5px solid #B9D9FF; border-radius:16px; padding:14px 16px;">
+          <div style="display:flex; justify-content:space-between; gap:10px; align-items:baseline;"><span style="font-size:14.5px; font-weight:700; color:#1D1D1F;">Pagá con Mercado Pago</span><span style="font-size:12px; color:#6E6E73;">{{ mpSub }}</span></div>
+          <div style="display:flex; gap:8px; align-items:center;"><span style="font-size:15px; font-weight:700; color:#1D1D1F;">$</span><input value="{{ mpMonto }}" onInput="{{ setMpMonto }}" inputmode="decimal" style="flex:1; min-width:0; font-family:inherit; font-size:16px; font-weight:700; border:1.5px solid rgba(0,0,0,.12); border-radius:12px; padding:10px 12px; background:#fff;"></div>
+          <button onClick="{{ mpPay }}" style="font-family:inherit; font-size:14.5px; font-weight:700; border:none; border-radius:12px; padding:13px 16px; cursor:pointer; background:#009EE3; color:#fff;" style-hover="background:#0086C3;">{{ mpLabel }}</button>
+          <span style="font-size:12px; color:#6E6E73; line-height:1.45;">Con tarjeta, dinero en cuenta o efectivo. Se suma la comisión de Mercado Pago y el pago se registra solo en tu cuenta.</span>
+          <span style="font-size:12.5px; color:#B0700F; font-weight:600;">{{ mpMsg }}</span>
+        </div>
+      </sc-if>
       <a href="{{ payHref }}" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:space-between; gap:12px; text-decoration:none; background:#1D1D1F; color:#fff; border-radius:16px; padding:15px 18px; transition:background .3s;" style-hover="background:#000; color:#fff;">
         <span style="font-size:14.5px; font-weight:600;">Enviar comprobante por WhatsApp</span>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
@@ -5097,7 +5106,24 @@ class Component extends DCLogic {
       setCalcCompra: (e) => this.setState({ calcCompra: e.target.value }),
 
       showPay: this.state.payOpen,
-      openPay: () => this.setState({ payOpen: true, aliasCopied: false }),
+      ...(() => { /* Pagar con Mercado Pago: el link lo arma el servidor; la comisión la paga el cliente. */
+        const plans = client ? (client.movs || []).filter((m) => m.tipo === 'Compra' && m.finan).map((pm) => { try { return { pm, pc: this._planCalc(client, pm) }; } catch (_) { return null; } }).filter((x) => x && x.pc && x.pc.pendiente > 0.5) : [];
+        const first = plans[0], q = first && first.pc.prox, def = q ? Math.round((q.req - q.paid) * 100) / 100 : first ? first.pc.pendiente : 0;
+        const val = this.state.mpMonto != null ? this.state.mpMonto : (def ? String(Math.round(def)) : '');
+        return {
+          mpOn: !!(client && !isAdmin && first), mpMonto: val, mpMsg: this.state.mpMsg || '', mpLabel: this.state.mpBusy ? 'Generando link…' : 'Pagar con Mercado Pago',
+          mpSub: q ? 'Cuota ' + q.n + ' de ' + first.pc.n + (first.pm.prodName ? ' · ' + first.pm.prodName : '') : 'Tu saldo pendiente',
+          setMpMonto: (e) => this.setState({ mpMonto: e.target.value.replace(/[^\d.,]/g, ''), mpMsg: '' }),
+          mpPay: async () => {
+            const monto = Number(String(val).replace(/\./g, '').replace(',', '.')); if (!(monto >= 100)) { this.setState({ mpMsg: 'Poné cuánto querés pagar.' }); return; }
+            this.setState({ mpBusy: true, mpMsg: '' });
+            try { const r = await fetch('/api/mp-link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: this._api().token, phone: clientKey, doc: first.pm.doc, monto, cuota: q ? q.n + '/' + first.pc.n : '' }) }); const j = await r.json().catch(() => ({ ok: false }));
+              if (!j.ok) throw new Error(j.error || 'No pudimos generar el link.'); this.setState({ mpBusy: false, mpMsg: 'Te llevamos a Mercado Pago: vas a pagar ' + this._fmt(j.total) + ' (incluye la comisión de Mercado Pago).' }); window.location.href = j.url;
+            } catch (e) { this.setState({ mpBusy: false, mpMsg: /no está activo|Falta|404/.test(e.message || '') ? 'El pago con Mercado Pago todavía no está disponible. Transferí al alias.' : (e.message || 'No pudimos generar el link.') }); }
+          }
+        };
+      })(),
+      openPay: () => this.setState({ payOpen: true, aliasCopied: false, mpMonto: null, mpMsg: '' }),
       closePay: () => this.setState({ payOpen: false }),
       copyAliasLabel: this.state.aliasCopied ? '¡Copiado!' : 'Copiar',
       copyAlias: () => {
