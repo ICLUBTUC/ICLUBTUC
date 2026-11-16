@@ -38,7 +38,9 @@
   A.widgetDef = (k) => W[k];
   A.registerWidget = (k, def, auto) => { W[k] = def; if (auto) { DEFAULT.splice(AUTO.length, 0, k); AUTO.push(k); } };
   A.widgetKeys = () => Object.keys(W);
-  const widgetsOn = () => { const w = panel().widgets; if (!(Array.isArray(w) && w.length)) return DEFAULT.filter((k) => W[k] && (!A.widgetAllowed || A.widgetAllowed(k))); const known = panel().widgetsKnown || []; const extra = AUTO.filter((k) => !w.includes(k) && !known.includes(k)); return extra.concat(w).filter((k) => W[k] && (!A.widgetAllowed || A.widgetAllowed(k))); };
+  /* Las tareas van siempre primero en el Inicio. */
+  const widgetsOn = () => { const l = widgetsOn0(); return W.tareas && (!A.widgetAllowed || A.widgetAllowed('tareas')) ? ['tareas'].concat(l.filter((k) => k !== 'tareas')) : l; };
+  const widgetsOn0 = () => { const w = panel().widgets; if (!(Array.isArray(w) && w.length)) return DEFAULT.filter((k) => W[k] && (!A.widgetAllowed || A.widgetAllowed(k))); const known = panel().widgetsKnown || []; const extra = AUTO.filter((k) => !w.includes(k) && !known.includes(k)); return extra.concat(w).filter((k) => W[k] && (!A.widgetAllowed || A.widgetAllowed(k))); };
   const wHead = (t, extra) => '<div class="card-head" style="margin-bottom:10px"><h2>' + t + '</h2><div class="spacer"></div>' + (extra || '') + '</div>';
   const remind = (d) => 'Hola ' + A.first(d.client) + ', te escribimos de ICLUB. ' + (d.dias < 0 ? 'Tu cuota ' + d.n + ' de ' + d.total + ' (' + d.product + ') venció el ' + d.date : 'Te recordamos que tu cuota ' + d.n + ' de ' + d.total + ' (' + d.product + ') vence el ' + d.date) + ' por ' + ars(d.amount) + '. ¡Gracias!';
   const miniRow = (d) => { const mora = d.dias < 0 ? A.mora(d.amount, -d.dias) : 0; return '<div class="item"><div class="grow"><a class="strong" style="color:inherit;text-decoration:none;font-size:15.5px" href="#cliente/' + encodeURIComponent(d.phone) + '">' + esc(d.client) + '</a><div class="sub-t">' + esc(d.product) + ' · ' + d.n + '/' + d.total + ' · ' + (d.dias < 0 ? '<b class="bad">hace ' + plural(-d.dias, 'día', 'días') + '</b>' : d.dias === 0 ? '<b>hoy</b>' : esc(A.dayName(d.dt))) + (mora ? ' · <b class="warn">mora ' + ars(mora) + '</b>' : '') + '</div></div><div class="strong ' + (d.dias < 0 ? 'bad' : '') + ' nowrap">' + ars(d.amount) + '</div><button class="btn-sm btn-good" data-act="pay" data-phone="' + esc(d.phone) + '" data-doc="' + esc(d.doc) + '">Cobrar</button><a class="btn btn-sm btn-2" target="_blank" rel="noopener" href="' + A.waLink(d.phone, remind(d)) + '" title="Recordatorio por WhatsApp">WA</a></div>'; };
@@ -81,7 +83,7 @@
   A.extra.inicio = () => {
     const h = new Date().getHours(), today = new Date();
     return head(h < 12 ? 'Buen día' : h < 20 ? 'Buenas tardes' : 'Buenas noches', today.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }) + ' · resumen de tu negocio', '<button class="btn-2" data-act="dash-edit">Personalizar inicio</button><button class="btn-good" data-act="qp-focus">$ Registrar pago</button><a class="btn btn-brand" href="#vender">+ Registrar venta</a>') +
-      quickPay() + '<div class="dash">' + widgetsOn().map((k) => '<section class="card w w' + W[k].s + '" data-w="' + k + '">' + W[k].fn() + '</section>').join('') + '</div>';
+      (W.tareas && widgetsOn()[0] === 'tareas' ? '<div class="dash" style="margin-bottom:16px"><section class="card w w12" data-w="tareas">' + W.tareas.fn() + '</section></div>' : '') + quickPay() + '<div class="dash">' + widgetsOn().filter((k) => k !== 'tareas').map((k) => '<section class="card w w' + W[k].s + '" data-w="' + k + '">' + W[k].fn() + '</section>').join('') + '</div>';
   };
   A.dashEdit = () => {
     const on = widgetsOn(), all = on.concat(Object.keys(W).filter((k) => !on.includes(k)));

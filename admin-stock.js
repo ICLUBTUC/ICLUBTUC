@@ -82,7 +82,33 @@
   /* ---------- Cargar stock pegando una lista (como la escribís en WhatsApp) ---------- */
   const num = (t) => { t = String(t).toLowerCase().replace(/\$|\s/g, ''); let k = 1; if (/k$/.test(t)) { k = 1000; t = t.slice(0, -1); } if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) t = t.replace(/\./g, '').replace(',', '.'); else t = t.replace(',', '.'); const n = parseFloat(t); return Number.isFinite(n) ? n * k : NaN; };
   const catDe = (n) => /funda|templad|vidrio|cable|cargador|cabezal|auricular|airpods|soporte|correa|power ?bank|adaptador|malla|protector|lightning|usb/i.test(n) ? 'Accesorios' : /iphone|ipad|apple watch|macbook/i.test(n) ? 'Apple' : /\btv\b|smart tv|televisor/i.test(n) ? 'Smart TV' : /samsung|galaxy|motorola|moto |xiaomi|redmi|poco|celular|infinix|realme/i.test(n) ? 'Celulares' : 'Accesorios';
-  A.parseLista = (txt) => String(txt || '').split(/\n|;/).map((raw) => raw.trim()).filter((l) => l && /[a-záéíóúñ]/i.test(l)).map((raw) => {
+  /* Listas en tabla (copiadas de Excel, WhatsApp o un chat): Producto | Modelo | Cant. | Precio unit. | Subtotal.
+     Ignora encabezado, resumen y total para no cargar dos veces. */
+  const celdas = (l) => (/\t/.test(l) ? l.split('\t') : /\|/.test(l) ? l.replace(/^\s*\||\|\s*$/g, '').split('|') : l.split(/\s{2,}/)).map((c) => c.trim());
+  const esResumen = (l) => /^[^a-z0-9]*(resumen|total|subtotal)\b/i.test(l) || /→|=>/.test(l) || /^[\s|:-]+$/.test(l);
+  const parseTabla = (txt) => {
+    const lines = String(txt || '').split('\n'); let col = null; const rows = [];
+    for (const raw of lines) {
+      const l = raw.trim(); if (!l) continue;
+      if (/^[^a-z0-9]*resumen\b/i.test(l)) break;
+      if (esResumen(l)) continue;
+      const c = celdas(raw);
+      if (!col && c.length >= 2 && c.some((x) => /^producto|^art[ií]culo|^descrip/i.test(x)) && c.some((x) => /^cant/i.test(x))) {
+        col = {}; c.forEach((x, i) => { const k = x.toLowerCase(); if (/^producto|^art[ií]culo|^descrip/.test(k)) col.p = i; else if (/^modelo|^equipo|^para/.test(k)) col.m = i; else if (/^cant/.test(k)) col.q = i; else if (/^subtotal|^total/.test(k)) col.t = i; else if (/venta/.test(k)) col.v = i; else if (/precio|costo|unit|c\/u/.test(k)) col.c = i; }); continue;
+      }
+      if (!col || c.length < 2) continue;
+      const prod = c[col.p] || '', mod = col.m != null ? (c[col.m] || '') : ''; if (!/[a-záéíóúñ]/i.test(prod)) continue;
+      const q = Math.max(1, parseInt(String(c[col.q] || '1').replace(/\D/g, ''), 10) || 1);
+      let k = col.c != null ? num(c[col.c]) : NaN; if (!Number.isFinite(k) && col.t != null) { const t = num(c[col.t]); if (Number.isFinite(t)) k = t / q; }
+      const v = col.v != null ? num(c[col.v]) : NaN, usd = /usd|u\$s|us\$/i.test(raw);
+      const modTxt = mod && !/^(todos|todas|universal|-|—)$/i.test(mod) ? (/^\d/.test(mod) && !/iphone/i.test(prod + mod) ? 'iPhone ' + mod : mod) : '';
+      const name = (prod + (modTxt ? ' ' + modTxt : '')).replace(/\s+/g, ' ').trim();
+      rows.push({ raw: l, name: name.charAt(0).toUpperCase() + name.slice(1), qty: q, costo: Number.isFinite(k) ? M.r2(k) : '', venta: Number.isFinite(v) ? v : '', moneda: usd ? 'USD' : 'ARS', cat: catDe(name) });
+    }
+    return col ? rows : null;
+  };
+  A.parseLista = (txt) => parseTabla(txt) || parseLibre(String(txt || '').split('\n').filter((l) => !esResumen(l.trim())).join('\n'));
+  const parseLibre = (txt) => String(txt || '').split(/\n|;/).map((raw) => raw.trim()).filter((l) => l && /[a-záéíóúñ]/i.test(l)).map((raw) => {
     let l = ' ' + raw.replace(/^\s*[•*\-–]+\s*/, '') + ' ', qty = 1, costo = NaN, venta = NaN; const usd = /\b(usd|u\$s|us\$|d[oó]lar(es)?)\b/i.test(l);
     const mV = l.match(/(?:venta|vendo|precio de venta|pv|lo vendo a)\s*[:=]?\s*\$?\s*([\d.,]+k?)/i); if (mV) { venta = num(mV[1]); l = l.replace(mV[0], ' '); }
     const mC = l.match(/(?:\ba\b|costo|cost[oó]|c\/u|cada uno|cada una|\$)\s*[:=]?\s*\$?\s*([\d.,]+k?)/i); if (mC) { costo = num(mC[1]); l = l.replace(mC[0], ' '); }
@@ -92,7 +118,7 @@
     return { raw, name: name.charAt(0).toUpperCase() + name.slice(1), qty: Math.max(1, qty), costo: Number.isFinite(costo) ? costo : '', venta: Number.isFinite(venta) ? venta : '', moneda: usd ? 'USD' : 'ARS', cat: catDe(name) };
   }).filter((r) => r.name);
   const igual = (a) => (A.db.inventory || []).find((it) => String(it.name + (it.spec ? ' ' + it.spec : '')).trim().toLowerCase() === a.trim().toLowerCase() || String(it.name).trim().toLowerCase() === a.trim().toLowerCase());
-  A.invLista = () => A.modal('Cargar stock pegando una lista', '<p class="small muted">Pegá la lista como la tengas, una cosa por renglón. Ejemplos:<br><code>2 cables USB-C a 3.000</code> · <code>Funda iPhone 13 x3 2500 venta 6000</code> · <code>4 templados 14 Pro $1500</code><br>Antes de guardar te muestro cómo quedó para que lo revises.</p><textarea id="invListaTxt" rows="8" placeholder="Pegá acá tu lista…"></textarea><div class="row-flex" style="margin-top:8px"><button class="btn-brand" data-act="inv-lista-ver">Ver cómo queda</button></div><div id="invListaPrev"></div>', { wide: true });
+  A.invLista = () => A.modal('Cargar stock pegando una lista', '<p class="small muted">Pegá la lista como la tengas, una cosa por renglón. Ejemplos:<br><code>2 cables USB-C a 3.000</code> · <code>Funda iPhone 13 x3 2500 venta 6000</code> · <code>4 templados 14 Pro $1500</code><br>También podés pegar una tabla (Producto · Modelo · Cant. · Precio unit. · Subtotal): el resumen y el total se ignoran.<br>Antes de guardar te muestro cómo quedó para que lo revises.</p><textarea id="invListaTxt" rows="8" placeholder="Pegá acá tu lista…"></textarea><div class="row-flex" style="margin-top:8px"><button class="btn-brand" data-act="inv-lista-ver">Ver cómo queda</button></div><div id="invListaPrev"></div>', { wide: true });
   const prevHtml = (rows) => { if (!rows.length) return '<p class="small bad" style="margin-top:10px">No encontré productos en la lista.</p>';
     return '<form id="invListaForm" class="grid" style="margin-top:12px"><div class="table-wrap"><table class="table"><thead><tr><th>Producto</th><th>Categoría</th><th class="num">Cant.</th><th class="num">Costo c/u</th><th class="num">Venta c/u</th><th>Moneda</th><th></th></tr></thead><tbody>' + rows.map((r, i) => { const ex = igual(r.name); return '<tr data-i="' + i + '"><td><input name="n' + i + '" value="' + esc(r.name) + '" style="min-width:180px"><div class="tiny ' + (ex ? 'good' : 'muted') + '">' + (ex ? 'Ya existe: suma ' + r.qty + ' al stock (' + ex.stock + ' → ' + (Number(ex.stock) + r.qty) + ')' : 'Producto nuevo') + '</div></td><td><select name="c' + i + '">' + ['Accesorios', 'Apple', 'Celulares', 'Smart TV', 'Otro'].map((c) => '<option' + (c === r.cat ? ' selected' : '') + '>' + c + '</option>').join('') + '</select></td><td class="num"><input name="q' + i + '" type="number" min="1" value="' + r.qty + '" style="width:64px"></td><td class="num"><input name="k' + i + '" inputmode="decimal" value="' + esc(r.costo) + '" style="width:90px"></td><td class="num"><input name="v' + i + '" inputmode="decimal" value="' + esc(r.venta) + '" style="width:90px" placeholder="0 = regalo"></td><td><select name="m' + i + '"><option' + (r.moneda === 'ARS' ? ' selected' : '') + '>ARS</option><option' + (r.moneda === 'USD' ? ' selected' : '') + '>USD</option></select></td><td><button type="button" class="btn-sm btn-2" data-act="inv-lista-del" data-i="' + i + '">✕</button></td></tr>'; }).join('') + '</tbody></table></div>' +
       '<div class="note" id="invListaTot"></div>' + (A.isAdmin && A.isAdmin() ? '<label class="check"><input type="checkbox" name="compraOn" checked> <b>Lo compré: restar la plata</b></label><div class="grid g2">' + (cuentaOpts(lastCuenta()) || '<span class="small muted">Configurá Capital para elegir la cuenta.</span>') + '</div>' : '') + '<button class="btn-good">Cargar ' + rows.length + ' producto' + (rows.length === 1 ? '' : 's') + ' al stock</button></form>'; };

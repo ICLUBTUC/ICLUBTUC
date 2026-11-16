@@ -95,14 +95,21 @@
 
   /* Ventana modal */
   A.modal = (title, body, opt) => {
-    let d = A.$('#modal'); if (!d) { d = document.createElement('dialog'); d.id = 'modal'; document.body.appendChild(d); d.addEventListener('click', (e) => { if (e.target === d) d.close(); }); }
+    let d = A.$('#modal'); if (!d) { d = document.createElement('dialog'); d.id = 'modal'; document.body.appendChild(d);
+      /* Que no se cierre sin querer: solo un clic que empieza y termina afuera de la ventana, y nunca si ya cargaste algo. */
+      const out = (e) => { const r = d.getBoundingClientRect(); return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom; };
+      d.addEventListener('mousedown', (e) => { d._downOut = e.target === d && out(e); });
+      d.addEventListener('click', (e) => { const ok = d._downOut && e.target === d && out(e); d._downOut = false; if (ok && !d._dirty) d.close(); });
+      d.addEventListener('input', () => { d._dirty = true; }); d.addEventListener('change', () => { d._dirty = true; });
+      d.addEventListener('cancel', (e) => { if (d._dirty && !confirm('¿Salir sin guardar? Se pierde lo que cargaste.')) e.preventDefault(); }); }
+    d._dirty = false;
     d.className = 'modal' + (opt && opt.wide ? ' wide' : '');
     d.innerHTML = '<div class="modal-head"><h2>' + A.esc(title) + '</h2><button class="x" data-close aria-label="Cerrar">×</button></div><div class="modal-body">' + body + '</div>';
     if (!d.open) d.showModal(); const f = d.querySelector('input:not([type=hidden]):not([readonly]),select,textarea'); if (f && !(opt && opt.noFocus)) setTimeout(() => { const a = document.activeElement; if (!a || !d.contains(a) || !a.matches('input,select,textarea')) f.focus(); }, 30);
     return d;
   };
   A.closeModal = () => { const d = A.$('#modal'); if (d && d.open) d.close(); };
-  document.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) A.closeModal(); });
+  document.addEventListener('click', (e) => { if (!e.target.closest('[data-close]')) return; const d = A.$('#modal'); if (d && d._dirty && d.contains(e.target) && !confirm('¿Salir sin guardar? Se pierde lo que cargaste.')) return; A.closeModal(); });
 
   /* ===== Cobros ===== */
   A.planOf = (phone, doc) => { const c = A.db.clients[phone]; return c && (c.movs || []).find((m) => m.doc === doc && m.tipo === 'Compra'); };

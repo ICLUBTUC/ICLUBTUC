@@ -50,7 +50,7 @@
     const pays = movs.filter((x) => x.tipo === 'Pago').slice().sort((a, b) => d(a) - d(b));
     const otros = movs.filter((x) => x.tipo !== 'Pago');
     const prefijos = []; for (let k = 1; k <= pays.length; k++) prefijos.push(this._planCalc(Object.assign({}, client, { movs: otros.concat(pays.slice(0, k)) }), pm, { restos: [] }));
-    return rs.filter((r) => prefijos.some((pc) => { const q = pc.cuotas[r.i]; return q && !q.done && q.paid > 0.005 && Math.abs(q.req - q.paid - Number(r.monto)) < 1; }));
+    return rs.filter((r) => prefijos.some((pc) => { const q = pc.cuotas[r.i]; return q && !q.done && !q.deSobrante && q.paid > 0.005 && Math.abs(q.req - q.paid - Number(r.monto)) < 1; }));
   }
   _planCalc(client, pm, opts) {
     const n = pm.finan.n;
@@ -121,18 +121,8 @@
     });
     const TOL = 0.005;
     let ahorro = esContado ? Math.round(base - contado) : 0, credito = 0;
-    /* Cada pago se aplica a la primera cuota pendiente. Si sobra plata pero no alcanza
-       para la cuota siguiente, el sobrante se descuenta desde la ÚLTIMA cuota hacia atrás
-       (nunca se apila en la próxima) y la cuota pagada muestra el pago completo. */
-    const descontarDelFinal = (monto, desde, p) => {
-      let r = monto;
-      for (let k = cuotas.length - 1; k > desde && r > TOL; k--) {
-        const q = cuotas[k]; if (q.done) continue; const libre = Math.round((q.req - q.paid) * 100) / 100; if (!(libre > TOL)) continue;
-        const m = Math.min(libre, r); q.req = Math.round((q.req - m) * 100) / 100; q.adj = Math.round((q.adj - m) * 100) / 100; q.porSobrante = Math.round(((q.porSobrante || 0) + m) * 100) / 100; r = Math.round((r - m) * 100) / 100;
-        if (q.req - q.paid <= TOL) { q.done = true; q.pay = p; q.cubiertaPorSobrante = true; }
-      }
-      return r;
-    };
+    /* Simple: el importe de cada cuota no cambia. Los pagos llenan las cuotas en orden
+       y lo que sobra queda a cuenta de la cuota siguiente. */
     pagos.forEach((p) => {
       let rest = p.imp;
       const pd = this._parseDate(p.f) || new Date();
@@ -144,14 +134,7 @@
            (no a la que ya estaba vencida o en curso). */
         if (p.sinInt && q.paid === 0 && !primera && q.dt && pd < q.dt) { q.req = Math.round((capImp + q.adj) * 100) / 100; q.sinInt = true; }
         const need = Math.round((q.req - q.paid) * 100) / 100;
-        if (!primera && rest < need - TOL && p.imp >= cuotaBase - TOL) {
-          /* Sobrante de un pago que ya completó una cuota: va contra la última cuota. */
-          const sobra = rest, quedo = descontarDelFinal(sobra, i, p), usado = Math.round((sobra - quedo) * 100) / 100;
-          if (ultima && usado > 0) { ultima.paid = Math.round((ultima.paid + usado) * 100) / 100; ultima.sobrante = Math.round(((ultima.sobrante || 0) + usado) * 100) / 100; }
-          rest = quedo;
-          if (rest > TOL) { q.paid = Math.round((q.paid + rest) * 100) / 100; rest = 0; }
-          break;
-        }
+        if (!primera) q.deSobrante = true; /* le llegó lo que sobró de un pago que ya completó otra cuota */
         primera = false;
         const take = Math.min(need, rest);
         q.paid = Math.round((q.paid + take)*100)/100; rest = Math.round((rest - take)*100)/100;
