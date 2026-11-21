@@ -38,7 +38,7 @@
       if (acc.cur === 'USD' && !usd) v = v / rate(); if (acc.cur !== 'USD' && usd) v = v * rate();
       add(cu, -v, { at: g.at, f: g.f, kind: 'gasto', nota: 'Gasto · ' + (g.concepto || '') + (g.cat ? ' (' + g.cat + ')' : '') });
     }
-    for (const p of A.db.ahorros || []) for (const a of p.aportes || []) { if (!despues(c, a)) continue; add(a.cuenta || cuentaDe(c, 'Efectivo'), Number(a.ars) || 0, { at: a.at, f: a.f, kind: 'cobro', nota: 'Aporte plan de ahorro · ' + p.name, by: a.by }); }
+    for (const p of A.db.ahorros || []) for (const a of p.aportes || []) { if (!despues(c, a) || a.tipo === 'canje') continue; /* un equipo no es plata: va al stock */ add(a.cuenta || cuentaDe(c, 'Efectivo'), Number(a.ars) || 0, { at: a.at, f: a.f, kind: 'cobro', nota: 'Aporte plan de ahorro · ' + p.name, by: a.by }); }
     for (const dd of c.deudas || []) {
       if (dd.cuenta) add(dd.cuenta, Number(dd.monto) || 0, { at: dd.at, f: dd.f, kind: 'prestamo', nota: 'Préstamo de ' + dd.de + (dd.nota ? ' · ' + dd.nota : ''), id: dd.id, deuda: true });
       for (const pg of dd.pagos || []) add(pg.cuenta, -(Number(pg.monto) || 0), { at: pg.at, f: pg.f, kind: 'devolucion', nota: 'Devolución a ' + dd.de, deuda: true });

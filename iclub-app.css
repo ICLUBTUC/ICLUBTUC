@@ -204,3 +204,5 @@ body.app h1,body.app .kpi .num,body.app .flow-dot,body.app .brand-name{font-fami
 .tar-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px}.tar-head h2{margin:0}
 .tar-filtros{display:flex;gap:8px;align-items:center}.tar-filtros .tar-sel{width:auto!important;max-width:180px;min-height:36px;margin:0}
 .tar-item>.grow{flex:1;min-width:0}
+.ah-plata[hidden],.ah-canje[hidden],#canjeBox[hidden],#payCuentaBox[hidden]{display:none!important}
+.ah-forma{display:flex;gap:10px;flex-wrap:wrap}.ah-forma .check{padding:10px 14px;border:1px solid var(--line,#e2e8f0);border-radius:12px;cursor:pointer}.canje-box{gap:8px}
