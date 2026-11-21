@@ -206,3 +206,6 @@ body.app h1,body.app .kpi .num,body.app .flow-dot,body.app .brand-name{font-fami
 .tar-item>.grow{flex:1;min-width:0}
 .ah-plata[hidden],.ah-canje[hidden],#canjeBox[hidden],#payCuentaBox[hidden]{display:none!important}
 .ah-forma{display:flex;gap:10px;flex-wrap:wrap}.ah-forma .check{padding:10px 14px;border:1px solid var(--line,#e2e8f0);border-radius:12px;cursor:pointer}.canje-box{gap:8px}
+.ah-form .ah-h{margin:10px 0 0;font-size:14px;font-weight:800;color:var(--brand,#0a84ff);border-top:1px solid var(--line,#e2e8f0);padding-top:12px}
+.ah-form .ah-h:first-child{border-top:0;padding-top:0;margin-top:0}
+.ah-resumen{line-height:1.5}
