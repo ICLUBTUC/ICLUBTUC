@@ -113,7 +113,7 @@
     try { const fotos = await bajar(id), box = A.$('#tarFotosBox'); if (!box) return;
       box.innerHTML = '<div class="tar-th big">' + fotos.map((f, i) => '<a href="' + esc(f.data) + '" download="tarea-' + (i + 1) + '.jpg" title="Descargar"><img src="' + esc(f.data) + '" alt=""></a>').join('') + '</div><div class="row-flex" style="margin-top:6px">' + fotos.map((f, i) => '<a class="btn btn-2 btn-sm" href="' + esc(f.data) + '" download="tarea-' + (i + 1) + '.jpg">⬇ Foto ' + (i + 1) + '</a>').join('') + '</div>';
       const files = fotos.map(toFile), s = { text: txt, files };
-      if (navigator.canShare && navigator.canShare(s)) { A._tarShare = s; const btn = A.$('#tarShareBtn'); if (btn) btn.hidden = false; }
+      if (A.esCelu && A.esCelu() && navigator.canShare && navigator.canShare(s)) { A._tarShare = s; const btn = A.$('#tarShareBtn'); if (btn) btn.hidden = false; }
     } catch (e) { const box = A.$('#tarFotosBox'); if (box) box.innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; }
   };
   A.tareaFotos = async (id) => { const x = byId(id); if (!x) return; A.modal('Fotos · ' + x.t.slice(0, 50), '<div id="tarVer" class="small muted">Cargando…</div>', { wide: true, noFocus: true });

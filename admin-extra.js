@@ -347,9 +347,11 @@
 
 
   /* ===================== COMPROBANTES EN PDF ===================== */
+  /* Compartir (WhatsApp, etc.) solo en el celu. En la compu se descarga directo: Windows abre un menú "Compartir" que no sirve. */
+  A.esCelu = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '') || (navigator.maxTouchPoints > 1 && /Mac/i.test(navigator.platform || ''));
   A.sharePdf = async (doc, phone, text) => {
     const name = doc.__name || 'ICLUB comprobante.pdf';
-    try { const file = new File([doc.output('blob')], name, { type: 'application/pdf' }); if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: name.replace(/\.pdf$/, ''), text }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    try { const file = new File([doc.output('blob')], name, { type: 'application/pdf' }); if (A.esCelu() && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: name.replace(/\.pdf$/, ''), text }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
     doc.save(name); if (phone) window.open(A.waLink(phone, text + '\n\n(Te adjunto el PDF del comprobante.)'), '_blank', 'noopener');
     A.toast('PDF descargado. Adjuntalo en el chat de WhatsApp que se abrió.');
   };
