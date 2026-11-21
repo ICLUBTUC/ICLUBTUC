@@ -73,7 +73,7 @@
         if (row.highlight) { fill(C.blueSoft); doc.rect(M, y - 4.2, CW, h, 'F'); } else if (ri % 2) { fill(C.soft); doc.rect(M, y - 4.2, CW, h, 'F'); }
         let x = M; cols.forEach((c, i) => { const v = cells[i];
           if (c.pill && v[0] && v[0].text) pill(v[0].text, c.align === 'right' ? x + c.ww - 3 : x + 3, y - 0.2, v[0].tone, c.align === 'right' ? 'right' : 'left');
-          else { font(8.4, !!c.bold || !!row.bold); color(c.tone ? c.tone(row) : C.ink); v.forEach((ln, j) => t(ln, c.align === 'right' ? x + c.ww - 3 : c.align === 'center' ? x + c.ww / 2 : x + 3, y + j * 4.2, { align: c.align || 'left' })); }
+          else { v.forEach((ln, j) => { if (c.sub && j > 0) { font(6.8); color(C.muted); } else { font(8.4, !!c.bold || !!row.bold); color(c.tone ? c.tone(row) : C.ink); } t(ln, c.align === 'right' ? x + c.ww - 3 : c.align === 'center' ? x + c.ww / 2 : x + 3, y + j * (c.sub ? 3.6 : 4.2), { align: c.align || 'left' }); }); }
           x += c.ww; });
         y += h;
       });
@@ -100,9 +100,9 @@
       y += h + 6;
     }
     function totals(lines) {
-      const w = 92, x = W - M - w; const h = lines.length * 7 + 4; ensure(h + 4);
+      const w = 92, x = W - M - w; const h = lines.reduce((a, l) => a + (l.sub ? 10.5 : 7), 0) + 4; ensure(h + 4);
       fill(C.soft); doc.roundedRect(x, y, w, h, 3, 3, 'F'); let yy = y + 8;
-      lines.forEach((l, i) => { const last = l.strong; if (last) { fill(C.navy); doc.roundedRect(x, yy - 5.2, w, 8.4, 2.2, 2.2, 'F'); } font(last ? 9.4 : 8.6, !!last); color(last ? C.white : C.muted); t(l[0], x + 5, yy); color(last ? C.white : (l.tone || C.ink)); font(last ? 10.5 : 9, true); t(l[1], x + w - 5, yy, { align: 'right' }); yy += 7; });
+      lines.forEach((l, i) => { const last = l.strong; if (last) { fill(C.navy); doc.roundedRect(x, yy - 5.2, w, l.sub ? 11.6 : 8.4, 2.2, 2.2, 'F'); } font(last ? 9.4 : 8.6, !!last); color(last ? C.white : C.muted); t(l[0], x + 5, yy); color(last ? C.white : (l.tone || C.ink)); font(last ? 10.5 : 9, true); t(l[1], x + w - 5, yy, { align: 'right' }); if (l.sub) { font(6.8); color(last ? [200, 210, 225] : C.muted); t(l.sub, x + w - 5, yy + 3.6, { align: 'right' }); yy += 3.5; } yy += 7; });
       lastTot = { y: y, h: h, page: doc.getCurrentPageInfo().pageNumber }; y += h + 5;
     }
     let lastTot = null;
@@ -326,52 +326,68 @@ const proxTxt = (q) => { const hoy = new Date(); hoy.setHours(0, 0, 0, 0); const
   }
   function forMov(db, phone, idx) { const m = db.clients[phone].movs[idx]; if (!m) throw Error('Comprobante inexistente.'); if (m.tipo === 'Pago') return pago(db, phone, idx); if (m.tipo === 'Compra' || m.tipo === 'Saldo anterior') return compra(db, phone, idx); return simple(db, phone, idx); }
 
-  /* ---------- Plan de ahorro: comprobante de cada aporte y estado completo del plan ----------
-     Recibe los datos ya calculados por el panel (o el portal): { p, k, minPct, rate, aportes:[...], faltan:[...] }. */
+  /* ---------- Plan de ahorro (mismo estilo que los comprobantes de pago) ----------
+     Todo en pesos y, en chico, su valor en dólares. El precio del plan es fijo en USD:
+     lo pagado se muestra con los pesos que realmente entraron y lo que falta, al dólar de hoy. */
   const usdF = (n) => { const v = r2(n); return 'USD ' + (Math.abs(v - Math.round(v)) > 0.004 ? nf2.format(v) : nf0.format(Math.round(v))); };
-  function ahorroRows(x) { return [['Nombre', x.p.name || ''], ['Teléfono', x.p.phone || '']]; }
+  const equipoTxt = (p) => [p.equipo, p.color, p.estadoEq].filter(Boolean).join(' · ');
+  /* Reparte los aportes (hasta el N°) en las cuotas del plan, en dólares, guardando los pesos que entraron. */
+  function ahorroCuotas(x, upto) {
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0); const R = x.rate || 1;
+    const cs = x.plan.map((q) => ({ n: q.n, d: q.f, dt: parseDMY(q.f), usd: q.usd, pu: 0, pa: 0, por: [] }));
+    x.aportes.slice(0, upto == null ? x.aportes.length : upto).forEach((a, ai) => { let rest = a.usd; const tasa = a.usd > 0 ? a.ars / a.usd : R;
+      for (const q of cs) { if (rest <= 0.004) break; const f = r2(q.usd - q.pu); if (f <= 0.004) continue; const m = Math.min(f, rest); q.pu = r2(q.pu + m); q.pa = r2(q.pa + m * tasa); q.por.push(ai + 1); rest = r2(rest - m); } });
+    return cs.map((q) => { const done = q.usd - q.pu <= 0.009, falta = r2(Math.max(0, q.usd - q.pu)); return Object.assign(q, { done, faltaUsd: falta, req: r2(q.pa + falta * R), paid: q.pa, resta: r2(falta * R), st: done ? { text: 'Pagada', tone: 'good' } : q.pu > 0.009 ? { text: q.dt && q.dt < hoy ? 'Parcial · atrasada' : 'Parcial', tone: 'warn' } : q.dt && q.dt < hoy ? { text: 'Atrasada', tone: 'bad' } : { text: 'Pendiente', tone: 'muted' } }); });
+  }
+  function parseDMY(s) { const m = String(s || '').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null; }
+  const conUsd = (ars, usd) => money(ars) + '\n' + usdF(usd);
+  function ahorroTabla(d, x, cs, highlight) {
+    d.table([{ label: 'Cuota', w: 13, align: 'center', bold: true }, { label: 'Vencimiento', w: 25 }, { label: 'Importe', w: 27, align: 'right', sub: true }, { label: 'Pagado', w: 27, align: 'right', sub: true }, { label: 'Resta', w: 27, align: 'right', sub: true }, { label: 'Estado', w: 37, align: 'right', pill: true }],
+      cs.map((q) => { const row = [q.n + '/' + cs.length, q.d, conUsd(q.req, q.usd), q.paid > 0.004 ? conUsd(q.paid, q.pu) : money(0), q.resta > 0.004 ? conUsd(q.resta, q.faltaUsd) : money(0), q.st]; if (highlight && q.por.some((n) => highlight.includes(n))) row.highlight = true; return row; }));
+  }
+  function ahorroRows(x) { return [['Nombre', x.p.name || ''], ['Teléfono', x.p.phone || '']].concat(x.p.dni ? [['DNI', x.p.dni]] : []); }
   function ahorroAporte(db, x, n) {
     const a = x.aportes[n - 1]; if (!a) throw Error('Aporte inexistente.');
-    const d = setup(db, 'Comprobante de aporte', 'Plan de ahorro · N° ' + n, a.f);
-    const hasta = r2(x.aportes.slice(0, n).reduce((s, y) => s + y.usd, 0)), falta = r2(Math.max(0, x.p.usd - hasta)), pct = x.p.usd > 0 ? Math.min(100, Math.round(hasta / x.p.usd * 100)) : 0;
-    if (a.canje) d.hero('Recibimos un equipo', usdF(a.usd), 'Plan canje: ' + a.equipo, null, 'good');
-    else d.hero('Recibimos', a.ars, 'Equivale a ' + usdF(a.usd) + ' (dólar a ' + money(a.rate) + ').', null, 'good');
-    d.boxes([{ title: 'Cliente', rows: ahorroRows(x) }, { title: 'Aporte', rows: [['Número', n + ' de ' + x.aportes.length], ['Fecha', a.f + (a.hora ? ' · ' + a.hora : '')], ['Forma', a.canje ? 'Equipo (plan canje)' : 'Pesos'], ['Recibió', a.by || '']] }]);
-    d.section('Tu plan de ahorro', equipoTxt(x.p) + ' · ' + usdF(x.p.usd));
-    d.progress(Math.min(x.k.n, Math.floor(hasta / x.k.cuota + 1e-6)), x.k.n, 'Avance después de este aporte · ' + pct + '%');
-    d.totals([['Precio del equipo (fijo)', usdF(x.p.usd)], ['Este aporte', usdF(a.usd)], ['Aportado hasta este aporte', usdF(hasta)], Object.assign(['Te falta', usdF(falta)], { strong: true })]);
-    if (falta <= 0.009) d.paragraph('¡Completaste el plan! ' + (x.cond.entrega || 'Coordinemos la entrega de tu equipo.'), 9.4, C.green);
-    else d.paragraph('Te faltan ' + usdF(falta) + ' (≈ ' + money(falta * x.rate) + ' al dólar de hoy). Tu cuota es de ' + usdF(x.k.cuota) + (x.prox ? ' y el próximo pago es el ' + x.prox : '') + '.' + (pct >= x.minPct ? ' Ya podés retirar el equipo antes de terminar.' : ' Con el ' + x.minPct + '% aportado ya podés retirarlo.'), 9.4, C.ink);
-    d.stamp('RECIBIDO', a.f + (a.by ? '\nRECIBIÓ: ' + String(a.by).toUpperCase() : ''));
-    d.foot = 'Los aportes en pesos se convierten a dólares al valor del día en que se pagan.';
-    return d.finish(d.B.name + ' Aporte ' + n + ' plan de ahorro ' + (x.p.name || '') + '.pdf');
+    const p = x.p, R = x.rate || 1, d = setup(db, 'Comprobante de aporte', 'Plan de ahorro · N° ' + n, a.f);
+    const cs = ahorroCuotas(x, n), hechas = cs.filter((q) => q.done).length, apUsd = r2(cs.reduce((s, q) => s + q.pu, 0)), apArs = r2(x.aportes.slice(0, n).reduce((s, y) => s + y.ars, 0)), faltaUsd = r2(Math.max(0, p.usd - apUsd)), prox = cs.find((q) => !q.done);
+    d.hero(a.canje ? 'Recibimos un equipo' : 'Recibimos', a.ars, a.canje ? 'Equipo: ' + a.equipo + ' · ' + usdF(a.usd) : 'Equivale a ' + usdF(a.usd) + ' (dólar ' + money(a.rate) + ')', null, 'good');
+    d.boxes([{ title: 'Cliente', rows: ahorroRows(x) }, { title: 'Aporte', rows: [['Comprobante', 'N° ' + n + ' de ' + x.aportes.length], ['Fecha', a.f + (a.hora ? ' · ' + a.hora : '')], ['Forma', a.canje ? 'Equipo (plan canje)' : 'Pesos'], ['Dólar del día', a.canje ? '—' : money(a.rate)], ['Recibió', a.by || ''], ['Plan', equipoTxt(p)]] }]);
+    d.section('Plan de ahorro', cs.length + ' cuotas ' + x.freqTxt);
+    d.progress(hechas, cs.length, 'Avance del plan después de este aporte');
+    ahorroTabla(d, x, cs, [n]);
+    if (prox) d.paragraph('Tu próxima cuota es la ' + prox.n + ' de ' + cs.length + ', el ' + prox.d + ': ' + money(prox.resta) + ' (' + usdF(prox.faltaUsd) + ' al dólar de hoy, ' + money(R) + ').', 9.4, C.ink);
+    else d.paragraph('¡Completaste el plan! ' + (x.cond.entrega || 'Coordinemos la entrega de tu equipo.'), 9.4, C.green);
+    d.totals([Object.assign(['Precio del plan', money(p.usd * R)], { sub: usdF(p.usd) + ' fijos' }), Object.assign(['Este aporte', money(a.ars)], { sub: usdF(a.usd) }), Object.assign(['Aportado en total', money(apArs)], { sub: usdF(apUsd) }), Object.assign(['Te falta', money(faltaUsd * R)], { strong: true, sub: usdF(faltaUsd) + ' al dólar de hoy' })]);
+    if (faltaUsd > 0.009) d.payBox();
+    d.stamp('PAGADO', a.f + (a.hora ? ' · ' + a.hora : '') + (a.by ? '\nRECIBIÓ: ' + String(a.by).toUpperCase() : ''));
+    d.foot = 'El plan es en dólares: cada pago en pesos se toma al dólar del día en que pagás. Lo que falta se muestra al dólar de hoy.';
+    return d.finish(d.B.name + ' Comprobante aporte ' + n + ' plan de ahorro ' + (p.name || '') + '.pdf');
   }
-  const equipoTxt = (p) => [p.equipo, p.color, p.estadoEq].filter(Boolean).join(' · ');
   function ahorroPlan(db, x) {
-    const p = x.p, k = x.k, hoy = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const p = x.p, k = x.k, R = x.rate || 1, hoy = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const d = setup(db, 'Plan de ahorro', p.name || '', hoy);
-    const est = p.estado === 'entregado' ? ['Entregado', 'good'] : p.estado === 'retirado' ? ['Retirado', 'info'] : p.estado === 'cancelado' ? ['Cancelado', 'muted'] : k.falta <= 0.009 ? ['Completo', 'good'] : k.atrasado > 0.5 ? ['Atrasado', 'bad'] : ['Al día', 'info'];
-    d.hero('Llevás aportado', usdF(k.aportado), k.pct + '% de ' + usdF(p.usd) + (k.falta > 0.009 ? ' · te faltan ' + usdF(k.falta) : ' · plan completo'), est[0], est[1]);
-    d.boxes([{ title: 'Cliente', rows: ahorroRows(x).concat(p.dni ? [['DNI', p.dni]] : []).concat([['Inicio del plan', p.f || '']]) },
-      { title: 'Equipo', rows: [['Modelo', p.equipo || ''], ['Color', p.color || 'A elegir'], ['Estado', p.estadoEq || ''], ['Incluye', p.incluye || ''], ['Precio fijo', usdF(p.usd)]] }]);
-    d.boxes([{ title: 'Cómo pagás', rows: [['Pagos', k.n + ' ' + x.freqTxt], ['Cada pago', usdF(k.cuota)], ['Primer pago', x.primero], ['Último pago', x.ultimo], ['Medio', p.medio || '']] },
-      { title: 'Cómo vas', rows: [['Aportado', usdF(k.aportado)], ['Falta', usdF(k.falta) + (k.falta > 0.009 ? ' (≈ ' + money(k.falta * x.rate) + ')' : '')], ['Pagos hechos', Math.min(k.n, k.pagadas) + ' de ' + k.n], ['Atrasado', k.atrasado > 0.5 ? usdF(k.atrasado) : 'No'], ['Próximo pago', k.falta > 0.009 && x.prox ? x.prox : '—']] }]);
-    d.progress(Math.min(k.n, k.pagadas), k.n, 'Avance · ' + k.pct + '%');
-    d.section('Aportes realizados', x.aportes.length + (x.aportes.length === 1 ? ' aporte' : ' aportes'));
-    if (x.aportes.length) d.table([{ label: 'N°', w: 10 }, { label: 'Fecha', w: 26 }, { label: 'Forma', w: 62 }, { label: 'Pesos', w: 30, align: 'right' }, { label: 'Dólar', w: 24, align: 'right' }, { label: 'USD', w: 26, align: 'right', bold: true }],
-      x.aportes.map((a, i) => [String(i + 1), a.f, a.canje ? 'Equipo: ' + a.equipo : 'Pesos' + (a.by ? ' · recibió ' + a.by : ''), a.canje ? '—' : money(a.ars), a.canje ? '—' : money(a.rate), usdF(a.usd)]));
-    else d.paragraph('Todavía no hay aportes.', 9, C.muted);
-    if (x.faltan.length) { d.section('Pagos que faltan', 'en pesos: al dólar del día que pagás');
-      d.table([{ label: 'Pago', w: 18 }, { label: 'Fecha', w: 34 }, { label: 'USD', w: 34, align: 'right', bold: true }, { label: 'En pesos hoy', w: 92, align: 'right' }], x.faltan.map((q) => [q.n + '/' + k.n, q.f, usdF(q.usd), '≈ ' + money(q.usd * x.rate)])); }
-    d.totals([['Precio del equipo (fijo)', usdF(p.usd)], ['Aportado', usdF(k.aportado)], Object.assign(['Falta', usdF(k.falta)], { strong: true })]);
-    d.section('Condiciones del plan');
-    const cs = ['El precio queda fijo en dólares: ' + usdF(p.usd) + '. No cambia aunque suba el dólar.', 'Cada pago en pesos se convierte a dólares al valor del día en que pagás (dólar ICLUB ' + money(x.rate) + ' hoy). Cada pago tiene su comprobante.', 'Podés pagar más de una cuota o adelantar cuando quieras: se descuenta de lo que falta.', 'Con el ' + x.minPct + '% aportado podés retirar el equipo antes: lo que falta se financia en cuotas con el recargo vigente' + (p.estado === 'activo' && k.falta > 0.009 ? ' (hoy: ' + k.restantes + ' cuota' + (k.restantes === 1 ? '' : 's') + ' de ' + usdF(k.cuotaRetiro) + ', ' + k.rec + '% de recargo)' : '') + '.', x.cond.entrega, x.cond.atraso, x.cond.cancela].filter(Boolean);
-    cs.forEach((c, i) => d.paragraph((i + 1) + '. ' + c, 8.8, C.ink));
-    if (p.notas) { d.section('Acuerdos especiales'); d.paragraph(p.notas, 9, C.ink); }
+    const cs = ahorroCuotas(x), hechas = cs.filter((q) => q.done).length, apArs = r2(x.aportes.reduce((s, y) => s + y.ars, 0)), atr = cs.filter((q) => !q.done && q.st.tone !== 'muted' && q.st.text !== 'Parcial');
+    const est = p.estado === 'entregado' ? ['Entregado', 'good'] : p.estado === 'retirado' ? ['Retirado', 'info'] : p.estado === 'cancelado' ? ['Cancelado', 'muted'] : k.falta <= 0.009 ? ['Completo', 'good'] : atr.length ? ['Con atraso', 'bad'] : ['Al día', 'good'];
+    d.hero(k.falta > 0.009 ? 'Te falta' : 'Plan completo', k.falta > 0.009 ? k.falta * R : apArs, k.falta > 0.009 ? usdF(k.falta) + ' al dólar de hoy (' + money(R) + ') · llevás ' + money(apArs) + ' (' + usdF(k.aportado) + ')' : 'Aportaste ' + money(apArs) + ' (' + usdF(k.aportado) + ').', est[0], est[1]);
+    d.boxes([{ title: 'Cliente', rows: ahorroRows(x).concat([['Inicio del plan', p.f || '']]) },
+      { title: 'Equipo', rows: [['Modelo', p.equipo || ''], ['Color', p.color || 'A elegir'], ['Estado', p.estadoEq || ''], ['Incluye', p.incluye || ''], ['Precio', money(p.usd * R) + ' (' + usdF(p.usd) + ' fijos)']] }]);
+    d.boxes([{ title: 'Cómo pagás', rows: [['Cuotas', cs.length + ' ' + x.freqTxt], ['Cada cuota', money(k.cuota * R) + ' (' + usdF(k.cuota) + ')'], ['Primera', x.primero], ['Última', x.ultimo], ['Medio', p.medio || '']] },
+      { title: 'Cómo vas', rows: [['Aportado', money(apArs) + ' (' + usdF(k.aportado) + ')'], ['Falta', money(k.falta * R) + ' (' + usdF(k.falta) + ')'], ['Cuotas pagas', hechas + ' de ' + cs.length], ['Atrasadas', atr.length ? String(atr.length) : 'Ninguna'], ['Próxima', k.falta > 0.009 && x.prox ? x.prox : '—']] }]);
+    d.section('Plan de cuotas', cs.length + ' cuotas ' + x.freqTxt);
+    d.progress(hechas, cs.length, 'Avance del plan');
+    ahorroTabla(d, x, cs);
+    if (x.aportes.length) { d.section('Aportes realizados', x.aportes.length + (x.aportes.length === 1 ? ' aporte' : ' aportes'));
+      d.table([{ label: 'N°', w: 10, align: 'center', bold: true }, { label: 'Fecha', w: 26 }, { label: 'Forma', w: 62 }, { label: 'Dólar', w: 26, align: 'right' }, { label: 'Importe', w: 30, align: 'right', bold: true, sub: true }],
+        x.aportes.map((a, i) => [String(i + 1), a.f, a.canje ? 'Equipo: ' + a.equipo : 'Pesos' + (a.by ? ' · recibió ' + a.by : ''), a.canje ? '—' : money(a.rate), conUsd(a.ars, a.usd)])); }
+    d.totals([Object.assign(['Precio del plan', money(p.usd * R)], { sub: usdF(p.usd) + ' fijos' }), Object.assign(['Aportado', money(apArs)], { sub: usdF(k.aportado) }), Object.assign(['Te falta', money(k.falta * R)], { strong: true, sub: usdF(k.falta) + ' al dólar de hoy' })]);
     if (p.estado === 'activo' && k.falta > 0.009) d.payBox();
+    d.section('Condiciones del plan');
+    const cs2 = ['El precio queda fijo en dólares: ' + usdF(p.usd) + '. No cambia aunque suba el dólar.', 'Cada cuota se paga en pesos al dólar del día en que pagás (hoy ' + money(R) + ', o sea ' + money(k.cuota * R) + ' por cuota). Cada pago tiene su comprobante.', 'Podés pagar más de una cuota o adelantar cuando quieras: se descuenta de lo que falta.', 'Con el ' + x.minPct + '% aportado podés retirar el equipo antes: lo que falta se financia en cuotas con el recargo vigente' + (p.estado === 'activo' && k.falta > 0.009 ? ' (hoy: ' + k.restantes + ' cuota' + (k.restantes === 1 ? '' : 's') + ' de ' + money(k.cuotaRetiro * R) + ', ' + k.rec + '% de recargo)' : '') + '.', x.cond.entrega, x.cond.atraso, x.cond.cancela].filter(Boolean);
+    cs2.forEach((c, i) => d.paragraph((i + 1) + '. ' + c, 8.8, C.ink));
+    if (p.notas) { d.section('Acuerdos especiales'); d.paragraph(p.notas, 9, C.ink); }
     d.ensure(30); d.y += 14; const doc = d.doc, L = 16, Wd = 210; doc.setDrawColor(150, 160, 175); doc.setLineWidth(0.3); doc.line(L, d.y, L + 70, d.y); doc.line(Wd - L - 70, d.y, Wd - L, d.y);
     doc.setFont('ICLUB', 'normal'); doc.setFontSize(8); doc.setTextColor(110, 120, 135); doc.text('Firma del cliente · ' + (p.name || ''), L, d.y + 5); doc.text('Por ' + d.B.name, Wd - L, d.y + 5, { align: 'right' }); d.y += 10;
-    d.foot = 'Plan sin interés. Fechas de "Pagos que faltan" según el calendario acordado; los pesos son una referencia al dólar de hoy.';
+    d.foot = 'Plan sin interés en dólares. Lo pagado figura con los pesos que entraron; lo que falta, al dólar de hoy.';
     return d.finish(d.B.name + ' Plan de ahorro ' + (p.name || '') + '.pdf');
   }
 
