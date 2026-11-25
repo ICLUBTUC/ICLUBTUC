@@ -209,3 +209,38 @@ body.app h1,body.app .kpi .num,body.app .flow-dot,body.app .brand-name{font-fami
 .ah-form .ah-h{margin:10px 0 0;font-size:14px;font-weight:800;color:var(--brand,#0a84ff);border-top:1px solid var(--line,#e2e8f0);padding-top:12px}
 .ah-form .ah-h:first-child{border-top:0;padding-top:0;margin-top:0}
 .ah-resumen{line-height:1.5}
+
+/* Fondos de gastos */
+.fd-card{margin-bottom:16px}
+.fd-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:4px 0 12px}
+.fd-kpi{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border:1px solid var(--line,#e2e8f0);border-radius:14px;background:#fff}
+.fd-kpi span{font-size:12px;color:var(--muted,#64748b)}.fd-kpi b{font-size:20px}.fd-kpi small{font-size:11.5px;color:var(--muted,#64748b)}
+.fd-kpi.bad{background:#fef2f2;border-color:#fecaca}.fd-kpi.bad b{color:#b91c1c}.fd-kpi.good{background:#f0fdf4;border-color:#bbf7d0}.fd-kpi.good b{color:#15803d}
+.fd-alerta{padding:10px 14px;border-radius:12px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.fd-alerta.bad{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}.fd-alerta.good{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+.fd-btns{display:inline-flex;gap:6px;flex-wrap:wrap}
+.fd-meta{margin:6px 0 10px}.fd-meta-t{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;font-size:14px;margin-bottom:6px}
+.fd-bar{height:12px;border-radius:99px;background:#e5e7eb;overflow:hidden}.fd-bar i{display:block;height:100%;background:linear-gradient(90deg,#0a84ff,#22c55e);border-radius:99px}
+.fd-det{margin-top:10px;border-top:1px solid var(--line,#e2e8f0);padding-top:10px}.fd-det summary{cursor:pointer;font-weight:700}
+.fd-tabla td,.fd-tabla th{white-space:nowrap}.fd-tabla tr.fd-hoy td{background:#eff6ff}.fd-tabla tfoot td{border-top:2px solid var(--line,#e2e8f0)}
+@media (max-width:700px){.fd-kpis{grid-template-columns:1fr 1fr}}
+
+/* Cotizador */
+.cot-wrap{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:18px;align-items:start}
+.cot-side{position:sticky;top:16px;display:grid;gap:10px}
+.cot-prev{background:#05070c;border-radius:22px;padding:10px;box-shadow:0 20px 50px rgba(2,6,23,.35)}
+.cot-prev canvas{display:block;width:100%;height:auto;border-radius:14px}
+.cot-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cot-acts .btn{justify-content:center}
+.cot-eq{border:1px solid var(--line,#e2e8f0);border-radius:16px;padding:12px 14px;margin-bottom:10px;background:#fff;display:grid;gap:6px}
+.cot-eq.reco{border-color:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.15)}
+.cot-eq-h{display:flex;align-items:center;gap:10px}
+.cot-precio{display:flex;flex-direction:column;justify-content:flex-end;padding:6px 10px;border-radius:12px;background:var(--soft,#f8fafc)}.cot-precio span{font-size:12px;color:var(--muted,#64748b)}.cot-precio b{font-size:20px}.cot-precio small{color:var(--muted,#64748b)}
+.cot-gan{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;padding:8px 10px;border-radius:10px;background:#fffbeb;border:1px dashed #fcd34d}
+.cot-planes{display:flex;flex-wrap:wrap;gap:6px}.cot-planes span{padding:4px 10px;border-radius:99px;background:var(--soft,#f1f5f9);font-size:13px}
+.cot-planes span.main{font-weight:700}.cot-planes span.cerca{background:#dcfce7;color:#166534;font-weight:800;box-shadow:0 0 0 2px #22c55e inset}.cot-planes i{font-style:normal;font-size:11px}
+.cot-n{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.cot-n label{display:inline-flex;align-items:center;justify-content:center;min-width:42px;height:38px;border-radius:10px;border:1px solid var(--line,#e2e8f0);cursor:pointer;font-weight:700;user-select:none}
+.cot-n label.on{background:var(--brand,#0a84ff);color:#fff;border-color:transparent}.cot-n input{display:none}
+.cot-buscar{width:auto!important;max-width:200px;min-height:36px}
+.item.cot-late{background:#fef2f2}
+@media (max-width:1100px){.cot-wrap{grid-template-columns:1fr}.cot-side{position:static;max-width:420px;margin:0 auto;width:100%}}
+.cot-panel+*,.card-head select[data-act=cot-est]{width:auto!important;min-height:36px}
